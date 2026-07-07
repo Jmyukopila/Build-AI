@@ -1,0 +1,7 @@
+{
+  "id": "casa-basica",
+  "nombre": "Casa básica 3D",
+  "icono": "casa",
+  "descripcion": "Crea el volumen de una casa sencilla para empezar a trabajar",
+  "prompt": "Crea una casa sencilla de una planta: 10 × 8 metros, muros de 2,7 metros de alto y 20 cm de espesor, con cubierta a dos aguas. Usa el programa 3D que esté conectado (Blender o SketchUp). Cuando termines, dime qué has creado."
+}

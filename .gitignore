@@ -1,0 +1,20 @@
+# Datos de usuario y claves — nunca deben subirse al repositorio
+config.json
+sesiones/
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Editores / SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

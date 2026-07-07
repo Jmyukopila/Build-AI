@@ -1,0 +1,7 @@
+{
+  "id": "muros-revit",
+  "nombre": "Muros en Revit",
+  "icono": "muros",
+  "descripcion": "Crea muros básicos en el nivel activo de Revit",
+  "prompt": "En Revit, crea los muros perimetrales de una planta rectangular de 12 × 9 metros en el nivel más bajo del proyecto, usando el tipo de muro básico genérico. Cuéntame qué muros has creado y en qué nivel."
+}

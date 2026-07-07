@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BuildAI — Tu asistente de IA para arquitectura</title>
+  <link rel="icon" type="image/png" href="/ui/assets/favicon.png">
+  <link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+  <div id="fondo-lateral" class="fondo-lateral oculto"></div>
+
+  <aside id="lateral" class="oculto">
+    <div class="marca">
+      <img class="logo-plate" src="/ui/assets/logo.png" alt="BuildAI — Asistente de IA para arquitectos">
+    </div>
+
+    <div class="tabs-lateral" data-tab-activo="programas" role="tablist">
+      <span class="tab-realce" aria-hidden="true"></span>
+      <button type="button" class="tab-lateral activo" data-tab="programas" role="tab">
+        <span class="icono" id="icono-panel-programas"></span>
+        <span>Programas</span>
+      </button>
+      <button type="button" class="tab-lateral" data-tab="skills" role="tab">
+        <span class="icono" id="icono-panel-skills"></span>
+        <span>Tareas</span>
+      </button>
+      <button type="button" class="tab-lateral" data-tab="sesiones" role="tab">
+        <span class="icono" id="icono-panel-sesiones"></span>
+        <span>Historial</span>
+      </button>
+    </div>
+
+    <div class="panel-lateral-cuerpos">
+      <div class="panel-tab-cuerpo" data-panel="programas">
+        <div id="programas" class="lista-programas"></div>
+        <p class="pista">El punto verde indica que el programa está conectado.</p>
+      </div>
+      <div class="panel-tab-cuerpo oculto" data-panel="skills">
+        <div id="skills" class="lista-skills"></div>
+      </div>
+      <div class="panel-tab-cuerpo oculto" data-panel="sesiones">
+        <div id="sesiones" class="lista-sesiones"></div>
+        <p class="pista">Cada conversación se guarda en tu ordenador. Pulsa una para retomarla.</p>
+      </div>
+    </div>
+
+    <div class="pie-lateral">
+      <a class="enlace-manual" href="/manual" target="_blank" rel="noopener">
+        <span id="icono-manual"></span> Manual de conexión
+      </a>
+      <div id="info-modelo" class="info-modelo"></div>
+    </div>
+  </aside>
+
+  <main id="principal">
+    <header id="barra-superior">
+      <button id="btn-menu" class="icono-btn" title="Mostrar/ocultar panel lateral"></button>
+      <h2 class="titulo-barra">Conversación</h2>
+      <div class="acciones-barra">
+        <button id="btn-exportar" class="icono-btn" title="Descargar la conversación (Markdown)"></button>
+        <button id="btn-ajustes" class="icono-btn" title="Ajustes de IA"></button>
+        <button id="btn-nueva" class="icono-btn" title="Nueva conversación"></button>
+      </div>
+    </header>
+
+    <div id="chat">
+      <div class="mensaje asistente bienvenida">
+        <div class="burbuja">
+          <strong>Hola, soy BuildAI.</strong><br><br>
+          Puedo trabajar dentro de <b>Revit, AutoCAD, SketchUp y Blender</b> por ti:
+          crear muros, dibujar plantas, modelar volúmenes, organizar capas…
+          Solo tienes que pedírmelo con tus palabras, sin tecnicismos.<br><br>
+          <b>Para empezar:</b>
+          <ol class="pasos-bienvenida">
+            <li>Pulsa <b>Ajustes de IA</b> (icono de engranaje arriba) y elige proveedor:
+              OpenRouter y OpenCode Zen son gratis con clave, y Ollama es gratis y 100% local.</li>
+            <li>Abre tu programa de arquitectura y conéctalo (icono de ayuda junto a su nombre).</li>
+            <li>Escríbeme abajo lo que necesitas, por ejemplo:
+              <em>"Crea en Blender una casa sencilla de una planta de 10×8 metros"</em>.</li>
+          </ol>
+          <p class="nota-bienvenida">¿Dudas para conectar un programa? Consulta el
+            <a href="/manual" target="_blank" rel="noopener">manual de conexión</a>.</p>
+        </div>
+      </div>
+    </div>
+
+    <form id="formulario">
+      <textarea id="entrada" rows="1"
+        placeholder="Escribe aquí lo que necesitas… (Enter para enviar, Mayús+Enter para nueva línea)"></textarea>
+      <button id="btn-enviar" type="submit" title="Enviar"></button>
+    </form>
+  </main>
+
+  <!-- Ventana de ajustes -->
+  <div id="modal-ajustes" class="modal oculto">
+    <div class="modal-caja modal-ajustes">
+      <div class="modal-cabecera">
+        <h2><span class="icono" id="icono-cabecera-ajustes"></span>Ajustes de IA</h2>
+        <button id="btn-x-ajustes" class="icono-btn" title="Cerrar"></button>
+      </div>
+      <p class="pista intro-ajustes">Elige qué inteligencia artificial usar. Si no tienes ninguna,
+        empieza con <b>OpenRouter</b> u <b>OpenCode Zen</b> (gratis con clave) o
+        <b>Ollama</b> (gratis y 100% local, sin clave).</p>
+
+      <section class="seccion-ajustes">
+        <h3 class="seccion-titulo"><span class="icono" id="icono-seccion-proveedor"></span>Proveedor</h3>
+        <select id="sel-proveedor"></select>
+        <p id="nota-proveedor" class="pista"></p>
+      </section>
+
+      <section class="seccion-ajustes">
+        <h3 class="seccion-titulo"><span class="icono" id="icono-seccion-acceso"></span>Acceso</h3>
+        <div id="campo-clave">
+          <div id="toggle-auth" class="switch-segmentado oculto" data-modo-activo="apikey">
+            <span class="switch-realce" aria-hidden="true"></span>
+            <button type="button" class="switch-opcion activo" data-modo="apikey">
+              <span class="icono" id="icono-switch-apikey"></span>Clave API
+            </button>
+            <button type="button" class="switch-opcion" data-modo="oauth">
+              <span class="icono" id="icono-switch-oauth"></span>OAuth
+            </button>
+          </div>
+
+          <div id="modo-apikey">
+            <label>Clave de API
+              <input id="inp-clave" type="password" placeholder="Pega aquí tu clave (se guarda solo en tu ordenador)">
+            </label>
+          </div>
+
+          <div id="modo-oauth" class="oculto">
+            <button id="btn-login-oauth" class="btn-oauth btn-primario" type="button">
+              <span class="icono" id="icono-oauth-btn"></span>Iniciar sesión con <span id="oauth-proveedor"></span>
+            </button>
+            <p class="pista">Se abrirá el navegador para que autorices. Vuelve aquí al terminar.</p>
+          </div>
+        </div>
+        <p id="estado-clave" class="pista"></p>
+      </section>
+
+      <section class="seccion-ajustes">
+        <h3 class="seccion-titulo"><span class="icono" id="icono-seccion-modelo"></span>Modelo</h3>
+        <input id="inp-modelo" type="text" list="lista-modelos" autocomplete="off"
+          placeholder="Elige de la lista o escribe el nombre del modelo">
+        <datalist id="lista-modelos"></datalist>
+        <p id="estado-modelos" class="pista"></p>
+      </section>
+
+      <div class="modal-botones">
+        <button id="btn-cerrar-ajustes" class="secundario">Cancelar</button>
+        <button id="btn-guardar-ajustes">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ventana de ayuda de conexión -->
+  <div id="modal-ayuda" class="modal oculto">
+    <div class="modal-caja">
+      <div class="modal-cabecera">
+        <h2 id="ayuda-titulo"></h2>
+        <button id="btn-x-ayuda" class="icono-btn" title="Cerrar"></button>
+      </div>
+      <pre id="ayuda-texto"></pre>
+      <p id="ayuda-resultado" class="pista oculto"></p>
+      <p class="pista"><a id="ayuda-enlace-manual" href="/manual" target="_blank" rel="noopener">Ver el manual completo →</a></p>
+      <div class="modal-botones">
+        <button id="btn-conectar-auto"></button>
+        <button id="btn-cerrar-ayuda" class="secundario">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/ui/icons.js"></script>
+  <script src="/ui/app.js"></script>
+</body>
+</html>

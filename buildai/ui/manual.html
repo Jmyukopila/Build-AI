@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manual de conexión — BuildAI</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --fondo: #f3f5f9; --panel: #ffffff; --borde: #e3e8f0;
+      --texto: #1b2333; --texto-suave: #667085;
+      --acento: #2563eb; --acento-suave: #eef3ff;
+      --verde: #16a34a; --verde-suave: #f0fdf4;
+      --ambar: #b45309; --ambar-suave: #fffbeb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fondo: #111318; --panel: #1a1d24; --borde: #2c313c;
+        --texto: #e7eaf0; --texto-suave: #9aa2b1;
+        --acento: #3b82f6; --acento-suave: #1b2740;
+        --verde: #22c55e; --verde-suave: #12241a;
+        --ambar: #fbbf24; --ambar-suave: #2a2110;
+      }
+    }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--fondo); color: var(--texto);
+      line-height: 1.65; font-size: 15.5px;
+    }
+    .contenido { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
+    header.cabecera {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
+    }
+    header.cabecera .volver {
+      margin-left: auto; font-size: 14px; text-decoration: none;
+      color: var(--acento); border: 1px solid var(--borde);
+      padding: 8px 14px; border-radius: 10px; background: var(--panel);
+    }
+    header.cabecera .volver:hover { background: var(--acento-suave); }
+    h1 { font-size: 26px; letter-spacing: -0.4px; }
+    .subtitulo { color: var(--texto-suave); margin-bottom: 28px; }
+    h2 {
+      font-size: 20px; margin: 40px 0 10px; padding-top: 18px;
+      border-top: 1px solid var(--borde); letter-spacing: -0.2px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    h3 { font-size: 15px; margin: 18px 0 6px; }
+    p, ul, ol { margin: 8px 0; }
+    ul, ol { padding-left: 24px; }
+    li { margin: 4px 0; }
+    a { color: var(--acento); }
+    code, kbd {
+      font-family: Consolas, monospace; font-size: 13px;
+      background: var(--acento-suave); padding: 2px 6px; border-radius: 6px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin: 14px 0;
+      background: var(--panel); border-radius: 12px; overflow: hidden;
+      font-size: 14px;
+    }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--borde); }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto-suave); }
+    tr:last-child td { border-bottom: none; }
+    .tarjeta {
+      background: var(--panel); border: 1px solid var(--borde);
+      border-radius: 12px; padding: 16px 18px; margin: 12px 0;
+    }
+    .tarjeta.pasos { border-left: 4px solid var(--verde); background: var(--verde-suave); }
+    .tarjeta.aviso { border-left: 4px solid var(--ambar); background: var(--ambar-suave); }
+    .etiqueta {
+      display: inline-block; font-size: 12px; font-weight: 600;
+      background: var(--acento-suave); color: var(--acento);
+      border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: middle;
+    }
+    details { margin: 10px 0; }
+    summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+    .indice { background: var(--panel); border: 1px solid var(--borde); border-radius: 12px; padding: 16px 20px; }
+    .indice ul { list-style: none; padding-left: 4px; }
+    @media print {
+      body { background: white; color: black; }
+      header.cabecera .volver { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="contenido">
+
+  <header class="cabecera">
+    <h1>🏗️ Manual de conexión de BuildAI</h1>
+    <a class="volver" href="/">← Volver a BuildAI</a>
+  </header>
+  <p class="subtitulo">Cómo conectar Blender, AutoCAD, SketchUp y Revit con tu asistente,
+  y qué hacer si algo no funciona. Puedes imprimir esta página (Ctrl+P).</p>
+
+  <nav class="indice">
+    <strong>Índice</strong>
+    <ul>
+      <li><a href="#como-funciona">1. Cómo funciona la conexión</a></li>
+      <li><a href="#blender">2. Blender</a></li>
+      <li><a href="#autocad">3. AutoCAD</a></li>
+      <li><a href="#sketchup">4. SketchUp</a></li>
+      <li><a href="#revit">5. Revit</a></li>
+      <li><a href="#ia">6. Configurar la inteligencia artificial</a></li>
+      <li><a href="#seguridad">7. Seguridad y buenas prácticas</a></li>
+      <li><a href="#faq">8. Preguntas frecuentes</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="como-funciona">1. Cómo funciona la conexión</h2>
+  <p>BuildAI habla con cada programa a través de un <b>puente</b>: un pequeño complemento
+  que se instala dentro del programa y solo acepta órdenes desde tu propio ordenador
+  (<code>127.0.0.1</code>). Nada sale a internet salvo tus mensajes al proveedor de IA.</p>
+  <p>En casi todos los casos <b>no tienes que instalar nada a mano</b>:</p>
+  <div class="tarjeta pasos">
+    <ol>
+      <li><b>INSTALAR.bat</b> ya busca tus programas e instala los puentes al instalar BuildAI.</li>
+      <li>Si instalas un programa después, pulsa <b>❓</b> junto a su nombre en la barra
+          lateral y luego <b>⚡ Conectar automáticamente</b>.</li>
+      <li>Abre (o reinicia) el programa. Cuando el punto se ponga <b>verde</b>, ya puedes trabajar.</li>
+    </ol>
+  </div>
+  <table>
+    <tr><th>Programa</th><th>Versiones compatibles</th><th>Necesita algo a mano</th><th>Puerto local</th></tr>
+    <tr><td>🟠 Blender</td><td>2.80 – 5.x</td><td>No</td><td>8601</td></tr>
+    <tr><td>🔴 AutoCAD</td><td>2004+ (completo, no LT)</td><td>No (solo tenerlo abierto)</td><td>— (COM)</td></tr>
+    <tr><td>🔵 SketchUp</td><td>2014+ (8+ con instalación manual)</td><td>No</td><td>8602</td></tr>
+    <tr><td>🟣 Revit</td><td>2014+ </td><td>Instalar pyRevit (gratis) una vez</td><td>48884</td></tr>
+  </table>
+
+  <h2 id="blender">2. Blender <span class="etiqueta">2.80 – 5.x</span></h2>
+  <h3>Conexión automática (recomendada)</h3>
+  <div class="tarjeta pasos">
+    <ol>
+      <li>Pulsa <b>❓</b> junto a Blender → <b>⚡ Conectar automáticamente</b>.
+          BuildAI copia el puente en todas las versiones de Blender que encuentre.</li>
+      <li>Abre (o reinicia) Blender. El puente arranca solo: <b>no hay que activar nada</b>.</li>
+    </ol>
+  </div>
+  <h3>Instalación manual (si la automática no encuentra tu Blender)</h3>
+  <ol>
+    <li>Abre Blender → <b>Edit → Preferences → Add-ons → Install…</b></li>
+    <li>Elige el archivo <code>addons\blender\buildai_blender.py</code> de la carpeta BuildAI.</li>
+    <li>Activa la casilla <b>BuildAI Bridge</b>.</li>
+  </ol>
+  <details>
+    <summary>Solución de problemas</summary>
+    <ul>
+      <li><b>El punto no se pone verde:</b> cierra y vuelve a abrir Blender; espera ~10 segundos.</li>
+      <li><b>Tienes dos Blender abiertos:</b> solo el primero atiende a BuildAI (el puente usa un
+          puerto único). Cierra el que no uses.</li>
+      <li><b>Blender anterior a 2.80:</b> no es compatible; actualiza desde
+          <a href="https://www.blender.org/download/" target="_blank" rel="noopener">blender.org</a>.</li>
+      <li><b>Comprobación avanzada:</b> en Blender, ventana <i>Toggle System Console</i>
+          debe mostrar <code>[BuildAI] Servidor escuchando en 127.0.0.1:8601</code>.</li>
+    </ul>
+  </details>
+
+  <h2 id="autocad">3. AutoCAD <span class="etiqueta">2004+ · no LT</span></h2>
+  <p>AutoCAD es el más fácil: <b>no se instala nada</b>. BuildAI se conecta mediante la
+  automatización de Windows (COM) que AutoCAD trae de serie.</p>
+  <div class="tarjeta pasos">
+    <ol>
+      <li>Abre AutoCAD con un dibujo (nuevo o existente).</li>
+      <li>El punto se pondrá verde solo, en unos 10 segundos.</li>
+    </ol>
+  </div>
+  <details>
+    <summary>Solución de problemas</summary>
+    <ul>
+      <li><b>El punto no se pone verde:</b> asegúrate de que hay un <b>dibujo abierto</b>
+          (no solo la pantalla de inicio).</li>
+      <li><b>Permisos distintos:</b> AutoCAD y BuildAI deben ejecutarse con el mismo nivel:
+          ambos normales o ambos "como administrador".</li>
+      <li><b>AutoCAD LT:</b> no está soportado — las versiones LT no ofrecen automatización COM.</li>
+      <li><b>Varias versiones instaladas:</b> BuildAI se conecta a la que esté abierta.</li>
+    </ul>
+  </details>
+
+  <h2 id="sketchup">4. SketchUp <span class="etiqueta">2014+</span></h2>
+  <h3>Conexión automática (recomendada)</h3>
+  <div class="tarjeta pasos">
+    <ol>
+      <li>Pulsa <b>❓</b> junto a SketchUp → <b>⚡ Conectar automáticamente</b>.</li>
+      <li>Abre (o reinicia) SketchUp. La extensión <b>se inicia sola</b>; verás
+          "BuildAI Bridge activo" en la barra de estado.</li>
+    </ol>
+  </div>
+  <div class="tarjeta aviso">
+    Si acabas de instalar SketchUp y nunca lo has abierto, ábrelo una vez y
+    ciérralo antes de pulsar "Conectar automáticamente" (SketchUp crea su
+    carpeta de plugins en el primer arranque).
+  </div>
+  <h3>Instalación manual</h3>
+  <ol>
+    <li>Copia <code>addons\sketchup\buildai_sketchup.rb</code> a la carpeta
+        <code>%APPDATA%\SketchUp\SketchUp 20XX\SketchUp\Plugins</code>
+        (pega esa ruta en la barra del Explorador de Windows).</li>
+    <li>Reinicia SketchUp.</li>
+  </ol>
+  <details>
+    <summary>Solución de problemas</summary>
+    <ul>
+      <li><b>Ver el estado del puente:</b> menú <b>Extensiones → BuildAI Bridge → Estado</b>.
+          Desde ahí también puedes iniciarlo o detenerlo a mano.</li>
+      <li><b>Dos SketchUp abiertos:</b> solo el primero atiende a BuildAI; cierra el otro.</li>
+      <li><b>SketchUp 2013 o anterior:</b> usa la instalación manual copiando el archivo a la
+          carpeta <code>Plugins</code> dentro de la carpeta de instalación del programa.</li>
+    </ul>
+  </details>
+
+  <h2 id="revit">5. Revit <span class="etiqueta">2014+ · requiere pyRevit</span></h2>
+  <p>Revit no admite complementos "sueltos", así que BuildAI usa
+  <a href="https://github.com/pyrevitlabs/pyRevit/releases" target="_blank" rel="noopener">pyRevit</a>,
+  una herramienta gratuita muy usada en estudios de arquitectura. Solo se instala una vez.</p>
+  <h3>Conexión automática (recomendada)</h3>
+  <div class="tarjeta pasos">
+    <ol>
+      <li>Instala pyRevit (si no lo tienes): descarga el instalador <code>.exe</code> desde
+          <a href="https://github.com/pyrevitlabs/pyRevit/releases" target="_blank" rel="noopener">github.com/pyrevitlabs/pyRevit/releases</a>
+          y pulsa siguiente → siguiente.</li>
+      <li>En BuildAI, pulsa <b>❓</b> junto a Revit → <b>⚡ Conectar automáticamente</b>.
+          BuildAI copia la extensión <b>y activa el servidor</b> por ti.</li>
+      <li>Abre (o reinicia) Revit y abre un proyecto. El punto se pondrá verde.</li>
+    </ol>
+  </div>
+  <h3>Instalación manual</h3>
+  <ol>
+    <li>Copia la carpeta <code>addons\revit\BuildAI.extension</code> a
+        <code>%APPDATA%\pyRevit\Extensions</code> (crea "Extensions" si no existe).</li>
+    <li>En Revit, pestaña <b>pyRevit → Settings → Routes</b>: activa <b>Routes Server</b>
+        y guarda (equivale a poner <code>[routes] enabled = true</code> en
+        <code>%APPDATA%\pyRevit\pyRevit_config.ini</code>).</li>
+    <li>Reinicia Revit.</li>
+  </ol>
+  <details>
+    <summary>Solución de problemas</summary>
+    <ul>
+      <li><b>Necesitas pyRevit 4.8 o superior</b> (las versiones anteriores no traen el
+          servidor Routes). En Revit: pestaña pyRevit → About.</li>
+      <li><b>El punto no se pone verde:</b> comprueba que hay un <b>proyecto abierto</b> y que
+          Routes Server está activado (pyRevit → Settings → Routes, puerto 48884).</li>
+      <li><b>pyRevit no aparece en Revit:</b> reinstala pyRevit con Revit cerrado.</li>
+      <li><b>Firewall:</b> es tráfico local; normalmente no hay que tocar nada.</li>
+    </ul>
+  </details>
+
+  <h2 id="ia">6. Configurar la inteligencia artificial</h2>
+  <p>BuildAI necesita un proveedor de IA. Pulsa <b>⚙️ Ajustes</b> en la barra superior,
+  elige proveedor y pega tu clave de API (se guarda solo en tu ordenador, en
+  <code>config.json</code>).</p>
+  <table>
+    <tr><th>Proveedor</th><th>Coste</th><th>Dónde crear la clave</th></tr>
+    <tr><td><b>OpenRouter</b> (para empezar)</td><td>Gratis (modelos ":free")</td>
+        <td><a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a></td></tr>
+    <tr><td><b>Ollama</b> (IA local)</td><td>Gratis, sin clave</td>
+        <td>No necesita clave: <a href="https://ollama.com/download" target="_blank" rel="noopener">instala Ollama</a>,
+            descarga un modelo (<code>ollama pull qwen3</code>) y BuildAI detectará tus modelos locales.</td></tr>
+    <tr><td>Anthropic (Claude)</td><td>De pago</td>
+        <td><a href="https://platform.claude.com/" target="_blank" rel="noopener">platform.claude.com</a></td></tr>
+    <tr><td>OpenAI (GPT)</td><td>De pago</td>
+        <td><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a></td></tr>
+    <tr><td>Google (Gemini)</td><td>Nivel gratuito</td>
+        <td><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></td></tr>
+    <tr><td><b>OpenCode Zen</b> (modelos gratuitos)</td><td>Gratis (Big Pickle, etc.)</td>
+        <td><a href="https://opencode.ai/zen" target="_blank" rel="noopener">opencode.ai/zen</a></td></tr>
+  </table>
+  <p>Al elegir proveedor, BuildAI rellena la lista de modelos por ti: en OpenRouter
+  muestra solo los <b>gratuitos que saben usar herramientas</b> (consultados en vivo)
+  y en Ollama <b>escanea los modelos instalados en tu ordenador</b>.</p>
+  <div class="tarjeta aviso">
+    Los modelos gratuitos tienen límites de uso y a veces manejan peor las herramientas.
+    Si el asistente "no hace nada" en tus programas, prueba otro modelo en Ajustes.
+    En Ollama, usa modelos con soporte de herramientas (qwen3, llama3.1 o superiores,
+    mistral…) — los muy pequeños pueden no ser capaces de manejar los programas.
+  </div>
+
+  <h2 id="seguridad">7. Seguridad y buenas prácticas</h2>
+  <ul>
+    <li>Todos los puentes escuchan <b>solo en tu ordenador</b> (127.0.0.1); nadie puede
+        conectarse desde fuera.</li>
+    <li>La IA <b>ejecuta código dentro de tus programas</b> para trabajar. Trabaja siempre
+        sobre <b>copias</b> de los proyectos importantes.</li>
+    <li>El agente tiene instrucciones de no borrar nada sin confirmar, pero los modelos
+        pueden equivocarse: <b>revisa los cambios</b> (y usa Ctrl+Z / deshacer si hace falta).</li>
+    <li>Tu clave de API se guarda solo en <code>config.json</code>, en tu equipo.</li>
+  </ul>
+
+  <h2 id="faq">8. Preguntas frecuentes</h2>
+  <details>
+    <summary>¿Puedo tener varios programas conectados a la vez?</summary>
+    <p>Sí. El asistente ve todos los que estén en verde y usará el que corresponda
+    (puedes pedirle, por ejemplo, "pasa este volumen de SketchUp a Blender" y hará
+    los pasos en cada programa).</p>
+  </details>
+  <details>
+    <summary>¿Por qué el punto tarda en ponerse verde?</summary>
+    <p>El estado se actualiza cada 10 segundos. Si tras medio minuto sigue rojo,
+    revisa la sección del programa en este manual.</p>
+  </details>
+  <details>
+    <summary>He actualizado mi programa a una versión nueva, ¿tengo que hacer algo?</summary>
+    <p>Pulsa <b>⚡ Conectar automáticamente</b> otra vez: BuildAI instala el puente en
+    todas las versiones que detecte, incluida la nueva.</p>
+  </details>
+  <details>
+    <summary>¿Qué información sale de mi ordenador?</summary>
+    <p>Solo tus mensajes y los resultados de las herramientas, que se envían al proveedor
+    de IA que hayas elegido para generar las respuestas. Los puentes y tus archivos
+    permanecen en local.</p>
+  </details>
+  <details>
+    <summary>¿Cómo desinstalo un puente?</summary>
+    <ul>
+      <li><b>Blender:</b> borra <code>buildai_blender.py</code> de
+          <code>%APPDATA%\Blender Foundation\Blender\X.Y\scripts\startup</code>.</li>
+      <li><b>SketchUp:</b> borra <code>buildai_sketchup.rb</code> de la carpeta Plugins.</li>
+      <li><b>Revit:</b> borra la carpeta <code>BuildAI.extension</code> de
+          <code>%APPDATA%\pyRevit\Extensions</code>.</li>
+      <li><b>AutoCAD:</b> no hay nada que desinstalar.</li>
+    </ul>
+  </details>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "id": "resumen-modelo",
+  "nombre": "Resumen del proyecto",
+  "icono": "resumen",
+  "descripcion": "Te cuenta qué hay en el modelo o dibujo abierto",
+  "prompt": "Revisa el modelo o dibujo que tengo abierto en los programas conectados y hazme un resumen claro: qué elementos hay, cuántos, en qué capas o niveles, y si detectas algo raro o desordenado."
+}

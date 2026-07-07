@@ -1,0 +1,41 @@
+CONECTAR REVIT CON BUILDAI
+==========================
+
+Revit no permite plugins "sueltos", asi que usamos pyRevit (gratuito y muy
+usado por arquitectos; compatible con Revit 2014 en adelante).
+
+FORMA FACIL (recomendada)
+-------------------------
+1) Instala pyRevit si no lo tienes:
+   https://github.com/pyrevitlabs/pyRevit/releases
+   (descarga el instalador .exe y sigue los pasos)
+
+2) En BuildAI, pulsa el boton "?" junto a Revit y luego
+   "Conectar automaticamente". BuildAI copia la extension y activa el
+   servidor Routes por ti. (INSTALAR.bat tambien lo hace solo.)
+
+3) Abre (o reinicia) Revit con un proyecto. El punto de Revit se pondra
+   verde en BuildAI.
+
+FORMA MANUAL (solo si la automatica falla)
+------------------------------------------
+1) Copia la carpeta "BuildAI.extension" (esta junto a este archivo) a:
+   %APPDATA%\pyRevit\Extensions
+   Si la carpeta "Extensions" no existe, creala. pyRevit la lee por
+   defecto: no hace falta anadirla en Settings.
+
+2) Abre %APPDATA%\pyRevit\pyRevit_config.ini (crealo si no existe) y
+   asegurate de que contiene:
+       [routes]
+       enabled = true
+   (Equivale a activar "Routes Server" en pyRevit -> Settings -> Routes.)
+
+3) Reinicia Revit y abre un proyecto.
+
+SI EL PUNTO NO SE PONE VERDE
+----------------------------
+- Necesitas pyRevit 4.8 o superior (versiones anteriores no tienen Routes).
+- Comprueba que el servidor Routes esta activado (pyRevit -> Settings ->
+  Routes -> "Routes Server", puerto 48884).
+- Comprueba que Windows Firewall no bloquea pyRevit (es trafico local,
+  normalmente no hace falta tocar nada).

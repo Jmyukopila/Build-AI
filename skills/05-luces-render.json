@@ -1,0 +1,7 @@
+{
+  "id": "luces-render",
+  "nombre": "Preparar escena para render",
+  "icono": "luces",
+  "descripcion": "Añade sol, cámara y materiales básicos en Blender",
+  "prompt": "Prepara la escena de Blender para un render arquitectónico: añade una luz de sol con ángulo natural de tarde, un cielo básico, una cámara a la altura de los ojos (1,65 m) mirando al edificio, y asigna materiales neutros a los objetos que no tengan material. No lances el render, solo deja todo preparado."
+}
