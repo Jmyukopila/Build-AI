@@ -280,6 +280,46 @@ def aviso_instalacion_arriesgada() -> str | None:
     )
 
 
+# ------------------------------------------------- Acceso directo escritorio
+
+def crear_acceso_directo() -> dict:
+    """Crea (o actualiza) el acceso directo «BuildAI» en el escritorio.
+
+    Si el código se ejecuta desde el checkout del proyecto (existe INICIAR.bat),
+    el acceso apunta al .bat; si está instalado como paquete (pip/pipx), apunta
+    a `python -m buildai.main`, que funciona desde cualquier carpeta porque los
+    datos viven en ~/.buildai. Se crea con PowerShell (proceso aparte), así que
+    no le afecta la virtualización del Python de la Store.
+    """
+    if os.name != "nt":
+        return {"ok": False, "mensaje": "El acceso directo solo se crea en Windows."}
+    raiz = Path(__file__).resolve().parent.parent
+    iniciar = raiz / "INICIAR.bat"
+    if iniciar.exists():
+        objetivo, argumentos, carpeta = iniciar, "", raiz
+    else:
+        objetivo, argumentos, carpeta = Path(sys.executable), "-m buildai.main", Path.home()
+    icono = Path(__file__).resolve().parent / "ui" / "assets" / "buildai.ico"
+    script = (
+        "$w = New-Object -ComObject WScript.Shell; "
+        "$d = [Environment]::GetFolderPath('Desktop'); "
+        "$s = $w.CreateShortcut((Join-Path $d 'BuildAI.lnk')); "
+        f"$s.TargetPath = '{objetivo}'; "
+        f"$s.Arguments = '{argumentos}'; "
+        f"$s.WorkingDirectory = '{carpeta}'; "
+        "$s.Description = 'BuildAI - Asistente de IA para arquitectos'; "
+        + (f"$s.IconLocation = '{icono},0'; " if icono.exists() else "")
+        + "$s.Save()"
+    )
+    r = subprocess.run(
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+        capture_output=True,
+    )
+    if r.returncode != 0:
+        return {"ok": False, "mensaje": f"No se pudo crear el acceso directo: {r.stderr.decode(errors='replace').strip()}"}
+    return {"ok": True, "mensaje": "Acceso directo «BuildAI» creado en el escritorio."}
+
+
 # ------------------------------------------------------------------ API
 
 _INSTALADORES = {
@@ -312,6 +352,11 @@ def instalar_todos() -> None:
         resultado = instalar(pid)
         marca = "OK " if resultado["ok"] else "-- "
         print(f"  [{marca}] {pid.capitalize()}: {resultado['mensaje']}")
+    try:
+        acceso = crear_acceso_directo()
+    except Exception as exc:
+        acceso = {"ok": False, "mensaje": f"No se pudo crear el acceso directo: {exc}"}
+    print(f"  [{'OK ' if acceso['ok'] else '-- '}] Escritorio: {acceso['mensaje']}")
     print()
 
 

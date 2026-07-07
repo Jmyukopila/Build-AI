@@ -19,9 +19,15 @@ Todo se ejecuta **en tu ordenador**: tus claves y tus modelos no salen de él
    **"Add Python to PATH"**.
 2. Haz doble clic en **`INSTALAR.bat`**.
 
+Al terminar tendrás los puentes instalados en tus programas y un **acceso
+directo "BuildAI" en el escritorio**.
+
+> 💻 ¿Prefieres la terminal? También se instala con un solo comando desde
+> GitHub: mira [Instalar desde terminal](#-instalar-desde-terminal-pip--pipx--uv).
+
 ### 2. Arrancar
-Haz doble clic en **`INICIAR.bat`**. Se abrirá la interfaz en tu navegador
-(`http://127.0.0.1:8600`).
+Haz doble clic en el acceso directo **BuildAI** del escritorio (o en
+`INICIAR.bat`). Se abrirá la interfaz en tu navegador (`http://127.0.0.1:8600`).
 
 ### 3. Configurar la IA
 Pulsa **⚙️ Ajustes de IA** y elige proveedor:
@@ -77,20 +83,39 @@ el detalle técnico si te interesa.
 
 ---
 
-## 📦 Instalar desde terminal (como programa, para otro equipo)
+## 📦 Instalar desde terminal (pip / pipx / uv)
 
-Si prefieres no usar los `.bat`, o quieres dejar BuildAI instalado como un
-programa normal para otra persona, BuildAI es un paquete de Python instalable
-con `pip`. Recomendado: instálalo dentro de un **entorno virtual** en una
-carpeta normal (Escritorio, Documentos…), no con `pip install --user`.
+BuildAI es un paquete de Python: se instala directamente desde GitHub sin
+descargar nada a mano.
+
+### Con pipx o uv (recomendado: aislado y sin líos)
+
+[pipx](https://pipx.pypa.io/) y [uv](https://docs.astral.sh/uv/) instalan la
+aplicación en su propio entorno aislado, como hace `npx`/`npm -g` en Node:
+
+```bat
+:: con pipx  (pip install pipx, una sola vez)
+pipx install git+https://github.com/Jmyukopila/Build-AI.git
+buildai-instalar   :: instala los puentes y el acceso directo del escritorio
+buildai            :: arranca y abre el navegador
+
+:: o con uv, incluso sin instalar nada (equivalente a npx):
+uvx --from git+https://github.com/Jmyukopila/Build-AI.git buildai
+```
+
+### Con pip clásico
+
+Recomendado: dentro de un **entorno virtual** en una carpeta normal
+(Escritorio, Documentos…), no con `pip install --user`.
 
 ```bat
 :: 1. Crear y activar un entorno virtual (una sola vez)
 python -m venv %USERPROFILE%\buildai-env
 %USERPROFILE%\buildai-env\Scripts\activate
 
-:: 2. Instalar BuildAI (desde la carpeta del proyecto, o desde un .whl que te pasen)
-pip install .
+:: 2. Instalar BuildAI desde GitHub (o "pip install ." desde la carpeta del
+::    proyecto, o desde un .whl que te pasen)
+pip install git+https://github.com/Jmyukopila/Build-AI.git
 
 :: 3. Instalar los puentes en los programas detectados
 buildai-instalar
