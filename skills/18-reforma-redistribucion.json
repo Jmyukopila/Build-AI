@@ -1,0 +1,7 @@
+{
+  "id": "reforma-redistribucion",
+  "nombre": "Reforma y redistribución",
+  "icono": "muros",
+  "descripcion": "Estudia alternativas de distribución, compara pros y contras y aplica la elegida",
+  "prompt": "Ayúdame a estudiar una reforma o redistribución de la vivienda del modelo conectado (si no hay nada, dímelo). Consulta primero el estado del modelo e identifícame las estancias actuales, sus superficies aproximadas y los muros de carga probables frente a los tabiques (sin cálculo estructural es una hipótesis: avísame de que un muro de carga debe verificarlo un técnico). Propón 1-2 alternativas de distribución que mejoren el uso: por ejemplo abrir la cocina al salón para un espacio de día diáfano, ganar un baño en suite, o mejorar recorridos y luz natural. Explícame los pros y contras de cada una en lenguaje sencillo (superficies resultantes, qué se gana y qué se sacrifica). Cuando elijamos una, aplícala en el modelo: mueve o elimina los tabiques necesarios (solo tabiques, nunca muros de carga sin avisar), levanta los nuevos con muro(...) dejando sus huecos de puerta, reubica cocina y baños con cocina() y bano() y reamuebla las estancias afectadas respetando pasos ≥ 0,7 m y ergonomía. Mantén cada estancia en su capa. Verifica con revisar_escena() y, en Blender, enséñame el resultado con una cámara y un render. Recuérdame que cualquier cambio que afecte a estructura o instalaciones debe validarlo un técnico."
+}

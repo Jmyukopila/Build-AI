@@ -1,0 +1,7 @@
+{
+  "id": "cocina-diseno",
+  "nombre": "Cocina de diseño",
+  "icono": "casa",
+  "descripcion": "Distribución profesional de cocina (en L, isla o península) con materiales, ergonomía, luz y render",
+  "prompt": "Diseña una cocina de nivel profesional en la estancia que te indique del modelo conectado (si no me refiero a ninguna, consulta el modelo y propón la más adecuada; si no hay casa, propón crearla). Identifica el rectángulo interior de la cocina y sus huecos. Resuelve la distribución según su forma: en una sola pared para cocinas estrechas, en L aprovechando una esquina, o con isla o península central si el espacio supera unos 3,5 m de lado (deja 90-100 cm de paso libre alrededor de la isla). Usa cocina() para la bancada con encimera, placa y fregadero y añade los muebles altos; respeta la ergonomía (encimera a 85-90 cm, ≥ 60 cm de fondo, triángulo de trabajo fregadero-placa-frigorífico). Materiales: baldosa o mármol en el suelo, un frente de muebles en madera_clara, blanco o antracita y una encimera contrastada; si hay comedor contiguo, coloca también comedor() o una mesa con sillas. Iluminación en tres capas imprescindible: focos empotrados sobre la zona de trabajo, una lámpara colgante sobre la isla o la mesa y luz general; sin ellas la cocina sale oscura. Remata con algún detalle (planta, cuadro). Deja una cámara mostrando la cocina desde una esquina y, en Blender, entrega un render fotorrealista (borrador primero, luego alta). Cuéntame qué distribución elegiste y por qué."
+}

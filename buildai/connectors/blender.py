@@ -34,12 +34,15 @@ funciones (unidades en metros, eje Z hacia arriba, puntos (x, y) en planta):
 - rejilla_pilares(origen, num_x, num_y, sep_x, sep_y, alto, nivel=0.0, lado=0.3)
   Retícula estructural de pilares (edificios de varias plantas).
 - caja(nombre, origen, dimensiones, material, capa) — volumen genérico (jardineras, muebles a medida…).
-- terreno(ancho=60, fondo=60, centro=(0,0), material="cesped") — plano de suelo en cota 0.
+- terreno(ancho=60, fondo=60, centro=(0,0), material="cesped", ondulacion=0.0) — suelo en
+  cota 0; ondulacion (m) le da relieve natural suave (prueba 0.3-0.8) para parcelas con
+  desniveles. Suelos de exterior: material="cesped", "tierra", "arena", "gravilla" o "pavimento".
 - material(nombre, color=(r,g,b), rugosidad, metalico, transparente, textura, emision) — crea o
   reutiliza materiales. Presets con acabado, textura y relieve listos: blanco, crema, gris_claro,
   hormigon, antracita, negro_mate, madera, madera_clara, parquet, marmol, ladrillo, baldosa,
   ceramica, tela_gris, tela_beige, tela_azul, hoja, teja, piedra, piedra_muro (mampostería vista),
-  cesped, pavimento, acero, metal_negro, espejo, vidrio, agua, baldosa_piscina. Para suelos
+  cesped, tierra, tierra_seca, arena, gravilla, pavimento, acero, metal_negro, espejo, vidrio,
+  agua, baldosa_piscina. Para suelos
   interiores usa material="parquet", "marmol" o "baldosa" en el forjado; `emision` (vatios) crea
   superficies que brillan con luz propia.
 - coleccion(nombre) y el parámetro capa="..." organizan los objetos por plantas/capas.
@@ -61,12 +64,27 @@ FOTORREALISMO Y RENDER — así se consiguen imágenes de nivel profesional:
   camara() + render(). Haz siempre un "borrador" primero, corrige el encuadre y repite en "alta".
 - piscina(origen, ancho=8, fondo=4, profundidad=1.5, luces=2) — piscina enterrada completa: vaso
   alicatado, agua realista, borde y luces sumergidas; recorta sola el hueco en el "Terreno".
-- arbol(centro, alto=6, tipo="frondoso"|"cipres"), arbusto(centro, alto=0.7),
-  seto(inicio, fin, alto=1.2) — vegetación; sin ella los exteriores parecen maquetas.
+- arbol(centro, alto=6, tipo="frondoso"|"cipres", semilla=None), arbusto(centro, alto=0.7),
+  seto(inicio, fin, alto=1.2) — vegetación; sin ella los exteriores parecen maquetas. Cada
+  árbol/arbusto varía solo su forma y su verde, así que reparte varios en posiciones distintas
+  para un jardín o bosque creíble.
 - foco_empotrado(posicion, altura_techo=2.7, nivel=...) — downlight de techo (en retícula cada
   1,2-1,5 m en salones/cocinas modernos); imprescindibles para renders de atardecer/noche.
 - foco_jardin(posicion) — baliza que baña de luz cálida arbustos y fachadas desde abajo.
 - tumbona(origen), barbacoa(centro) — exterior (mesas de terraza: comedor(..., material="madera")).
+- palmera(centro, alto=7) — árbol tropical/mediterráneo, para variar la vegetación.
+
+FACHADA, PARCELA Y PAISAJISMO — elementos que separan una maqueta de un proyecto acabado:
+- celosia(inicio, fin, alto=2.5, orientacion="vertical"|"horizontal") — lamas de parasol delante
+  de ventanales, en porches o como pantalla; da sombra, ritmo y textura a la fachada.
+- pergola(origen, ancho=4, fondo=3, altura=2.4) — pérgola de vigas sobre 4 pilares (terrazas,
+  porches, accesos). caja(...) sirve para voladizos, aleros y jardineras a medida.
+- valla(inicio, fin, alto=1.6, tipo="tablas"|"postes") — cierra la parcela; camino(inicio, fin,
+  ancho=1.2, material="pavimento") traza accesos y senderos de jardín.
+- farola(posicion, alto=4) — farola con luz cálida para accesos y calles (enciende de noche).
+- coche(origen, rotacion=0) — coche aparcado para dar escala y realismo al exterior.
+- revisar_escena() — CONTROL DE CALIDAD: avisa de cámara/luz/materiales que falten. Llámala antes
+  de render() y antes de dar por terminado un proyecto, y corrige lo que señale.
 
 ESTANCIAS COMPLETAS — la forma RECOMENDADA de amueblar: distribuyen una estancia rectangular
 entera con reglas de interiorismo (piezas centradas y adosadas a la pared, pasos ≥ 0,7 m,

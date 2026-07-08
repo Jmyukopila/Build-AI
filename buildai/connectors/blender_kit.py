@@ -12,6 +12,7 @@ de interfaz, para funcionar igual con Blender abierto o en segundo plano.
 """
 
 import math
+import random
 import time
 from pathlib import Path
 
@@ -44,6 +45,10 @@ _PRESETS = {
     "piedra":       {"color": (0.58, 0.55, 0.48), "rugosidad": 0.9, "textura": "hormigon"},
     "piedra_muro":  {"color": (0.60, 0.53, 0.43), "rugosidad": 0.9, "textura": "ladrillo"},
     "cesped":       {"color": (0.18, 0.33, 0.12), "rugosidad": 0.95, "textura": "cesped"},
+    "tierra":       {"color": (0.30, 0.20, 0.13), "rugosidad": 0.97, "textura": "tierra"},
+    "tierra_seca":  {"color": (0.46, 0.33, 0.20), "rugosidad": 0.97, "textura": "tierra"},
+    "arena":        {"color": (0.76, 0.68, 0.50), "rugosidad": 1.0, "textura": "arena"},
+    "gravilla":     {"color": (0.50, 0.48, 0.45), "rugosidad": 0.9, "textura": "gravilla"},
     "pavimento":    {"color": (0.55, 0.53, 0.48), "rugosidad": 0.8, "textura": "hormigon"},
     "acero":        {"color": (0.62, 0.63, 0.65), "rugosidad": 0.3, "metalico": 1.0},
     "metal_negro":  {"color": (0.05, 0.05, 0.05), "rugosidad": 0.4, "metalico": 1.0},
@@ -146,7 +151,8 @@ def material(nombre, color=None, rugosidad=None, metalico=None, transparente=Non
 # Fuerza del relieve (bump) por tipo de textura: el microrrelieve es lo que
 # hace que un material deje de parecer plástico en el render.
 _RELIEVE = {"ladrillo": 0.35, "baldosa": 0.06, "madera": 0.10, "marmol": 0.03,
-            "hormigon": 0.15, "tela": 0.25, "cesped": 0.45, "agua": 0.10}
+            "hormigon": 0.15, "tela": 0.25, "cesped": 0.45, "agua": 0.10,
+            "tierra": 0.5, "arena": 0.28, "gravilla": 0.6}
 
 
 def _conectar_relieve(nt, bsdf, tex, fuerza):
@@ -205,6 +211,40 @@ def _nodos_textura(mat, bsdf, tipo, color, escala):
         _conectar_relieve(nt, bsdf, tex, relieve)
         return
 
+    if tipo in ("cesped", "tierra", "tierra_seca", "arena", "gravilla"):
+        # Suelo natural: manchas de color a gran escala (calvas de césped, zonas
+        # secas, vetas de tierra) + un microrrelieve fino aparte. Sin la mancha,
+        # una superficie grande de suelo lee como fieltro plano de un solo tono.
+        manchas = nt.nodes.new("ShaderNodeTexNoise")
+        manchas.inputs["Scale"].default_value = escala or {
+            "cesped": 3.0, "tierra": 2.2, "tierra_seca": 2.2,
+            "arena": 4.0, "gravilla": 6.0}.get(tipo, 3.0)
+        det = _entrada(manchas, "Detail")
+        if det is not None:
+            det.default_value = 5.0
+        seco = {
+            "cesped":      (min(r * 1.7, 1.0), min(g * 1.25, 1.0), b * 0.75, 1.0),
+            "tierra":      (min(r * 1.35, 1.0), min(g * 1.30, 1.0), min(b * 1.30, 1.0), 1.0),
+            "tierra_seca": (min(r * 1.25, 1.0), min(g * 1.25, 1.0), min(b * 1.25, 1.0), 1.0),
+            "arena":       (min(r * 1.12, 1.0), min(g * 1.10, 1.0), min(b * 1.08, 1.0), 1.0),
+            "gravilla":    (min(r * 1.25, 1.0), min(g * 1.25, 1.0), min(b * 1.25, 1.0), 1.0),
+        }[tipo]
+        rampa = nt.nodes.new("ShaderNodeValToRGB")
+        rampa.color_ramp.elements[0].color = oscuro
+        rampa.color_ramp.elements[1].color = seco
+        nt.links.new(coord.outputs["Object"], manchas.inputs["Vector"])
+        nt.links.new(manchas.outputs["Fac"], rampa.inputs["Fac"])
+        nt.links.new(rampa.outputs["Color"], bsdf.inputs["Base Color"])
+        micro = nt.nodes.new("ShaderNodeTexNoise")
+        micro.inputs["Scale"].default_value = {
+            "cesped": 55.0, "arena": 90.0, "gravilla": 22.0}.get(tipo, 40.0)
+        mdet = _entrada(micro, "Detail")
+        if mdet is not None:
+            mdet.default_value = 3.0
+        nt.links.new(coord.outputs["Object"], micro.inputs["Vector"])
+        _conectar_relieve(nt, bsdf, micro, relieve)
+        return
+
     if tipo == "madera":
         tex = nt.nodes.new("ShaderNodeTexWave")
         tex.inputs["Scale"].default_value = escala or 1.2
@@ -212,13 +252,13 @@ def _nodos_textura(mat, bsdf, tipo, color, escala):
             e = _entrada(tex, entrada)
             if e is not None:
                 e.default_value = valor
-    else:  # marmol, hormigon, tela, cesped
+    else:  # marmol, hormigon, tela
         tex = nt.nodes.new("ShaderNodeTexNoise")
         tex.inputs["Scale"].default_value = escala or {
-            "marmol": 2.5, "tela": 60.0, "cesped": 22.0}.get(tipo, 14.0)
+            "marmol": 2.5, "tela": 60.0}.get(tipo, 14.0)
         detalle = _entrada(tex, "Detail")
         if detalle is not None:
-            detalle.default_value = {"marmol": 8.0, "cesped": 10.0}.get(tipo, 3.0)
+            detalle.default_value = {"marmol": 8.0}.get(tipo, 3.0)
     rampa = nt.nodes.new("ShaderNodeValToRGB")
     rampa.color_ramp.elements[0].color = oscuro
     rampa.color_ramp.elements[1].color = claro
@@ -651,11 +691,55 @@ def rejilla_pilares(origen, num_x, num_y, sep_x, sep_y, alto, nivel=0.0,
 
 # ---------------------------------------------------------- entorno y render
 
-def terreno(ancho=60, fondo=60, centro=(0, 0), material="cesped", capa=None):
-    """Plano de suelo centrado en `centro`, con la cara superior en cota 0."""
+def _malla_grid_ondulada(nombre, ancho, fondo, centro, amplitud, paso=1.5):
+    """Rejilla de suelo con la cara superior desplazada por ondas suaves de baja
+    frecuencia (relieve natural, sin picos). El borde se deja a cota 0 para que
+    case con soleras/forjados. Malla abierta; un Solidify le da grosor luego."""
     cx, cy = centro
-    return caja("Terreno", (cx - ancho / 2, cy - fondo / 2, -0.1), (ancho, fondo, 0.1),
-                material=material, capa=capa)
+    nx = max(2, int(ancho / paso))
+    ny = max(2, int(fondo / paso))
+    x0, y0 = cx - ancho / 2, cy - fondo / 2
+    verts, caras = [], []
+    for j in range(ny + 1):
+        for i in range(nx + 1):
+            x = x0 + ancho * i / nx
+            y = y0 + fondo * j / ny
+            z = amplitud * (
+                0.6 * math.sin(x * 0.11 + 1.3) * math.cos(y * 0.09 - 0.7)
+                + 0.4 * math.sin(x * 0.05 - y * 0.06 + 2.1))
+            if min(i, nx - i, j, ny - j) < 2:   # borde plano en cota 0
+                z = 0.0
+            verts.append((x, y, z))
+    for j in range(ny):
+        for i in range(nx):
+            a = j * (nx + 1) + i
+            caras.append((a, a + 1, a + nx + 2, a + nx + 1))
+    malla = bpy.data.meshes.new(nombre)
+    malla.from_pydata(verts, [], caras)
+    malla.update()
+    for cara in malla.polygons:
+        cara.use_smooth = True
+    return malla
+
+
+def terreno(ancho=60, fondo=60, centro=(0, 0), material="cesped", capa=None,
+            ondulacion=0.0):
+    """Plano de suelo centrado en `centro`, con la cara superior en cota 0.
+    `ondulacion` (m) da un relieve natural suave al terreno (0 = plano; 0.3-0.8
+    para una parcela con desniveles ligeros). El borde se mantiene a cota 0 para
+    casar con la solera y el hueco de una piscina se recorta igual de bien."""
+    cx, cy = centro
+    if not ondulacion:
+        return caja("Terreno", (cx - ancho / 2, cy - fondo / 2, -0.1), (ancho, fondo, 0.1),
+                    material=material, capa=capa)
+    malla = _malla_grid_ondulada("Terreno", ancho, fondo, centro, ondulacion)
+    obj = _nuevo_objeto("Terreno", malla, capa, material)
+    solid = obj.modifiers.new("Terreno_grosor", "SOLIDIFY")
+    if solid is not None:
+        solid.thickness = 0.3
+        solid.offset = -1.0
+    print(f"✔ Terreno {ancho:.0f}×{fondo:.0f} m con ondulación de {ondulacion:.1f} m")
+    return obj
 
 
 def _quitar_objetos(prefijos, tipos):
@@ -1334,11 +1418,22 @@ def piscina(origen, ancho=8.0, fondo=4.0, profundidad=1.5, borde=0.6, nivel=0.0,
     return vaso
 
 
-def _mat_vegetacion():
+# Variantes de verde para que una masa de árboles no parezca de clones.
+_VEG_VARIANTES = [
+    (0.045, 0.085, 0.035),   # verde oscuro estándar
+    (0.060, 0.100, 0.030),   # más claro y seco
+    (0.030, 0.070, 0.050),   # más frío/azulado
+]
+
+
+def _mat_vegetacion(variante=0):
     """Follaje de exterior: oscuro y grumoso (las copas reales se auto-sombrean
-    y en las fotos leen casi en silueta, no verde brillante)."""
-    return bpy.data.materials.get("Vegetacion") or material(
-        "Vegetacion", color=(0.045, 0.085, 0.035), rugosidad=0.95, textura="tela", escala=5)
+    y en las fotos leen casi en silueta, no verde brillante). `variante` (0-2)
+    elige un tono de verde distinto para dar variedad entre plantas."""
+    variante = int(variante) % len(_VEG_VARIANTES)
+    nombre = "Vegetacion" if variante == 0 else f"Vegetacion{variante}"
+    return bpy.data.materials.get(nombre) or material(
+        nombre, color=_VEG_VARIANTES[variante], rugosidad=0.95, textura="tela", escala=5)
 
 
 def _mat_corteza():
@@ -1346,10 +1441,16 @@ def _mat_corteza():
         "Corteza", color=(0.16, 0.12, 0.09), rugosidad=0.95, textura="madera", escala=2)
 
 
-def arbol(centro, alto=6.0, tipo="frondoso", nivel=0.0, capa=None):
+def arbol(centro, alto=6.0, tipo="frondoso", nivel=0.0, capa=None, semilla=None):
     """Árbol de jardín en (x, y): "frondoso" (copa irregular) o "cipres"
-    (columnar, para alinear junto a muros). Los árboles enmarcan la casa y
+    (columnar, para alinear junto a muros). Cada árbol varía solo su forma y su
+    tono de verde (según `semilla`, o su posición si no la das) para que una
+    hilera o un bosque no parezcan de clones. Los árboles enmarcan la casa y
     llenan el fondo del encuadre: sin ellos los renders parecen maquetas."""
+    rnd = random.Random(semilla if semilla is not None
+                        else f"{centro[0]:.2f},{centro[1]:.2f},{tipo}")
+    def jit(v, frac):
+        return v * (1.0 + rnd.uniform(-frac, frac))
     if tipo == "cipres":
         r = alto * 0.14
         esferas = [((0, 0, alto * f), r * (1.08 - f * 0.8))
@@ -1359,28 +1460,34 @@ def arbol(centro, alto=6.0, tipo="frondoso", nivel=0.0, capa=None):
         copa = alto * 0.55
         rc = copa / 2
         zc = alto - rc
-        esferas = [((0, 0, zc), rc),
-                   ((rc * 0.70, rc * 0.30, zc - rc * 0.45), rc * 0.62),
-                   ((-rc * 0.60, rc * 0.45, zc - rc * 0.35), rc * 0.58),
-                   ((rc * 0.20, -rc * 0.65, zc - rc * 0.50), rc * 0.55),
-                   ((-rc * 0.35, -rc * 0.40, zc + rc * 0.30), rc * 0.50),
-                   ((rc * 0.45, rc * 0.10, zc + rc * 0.42), rc * 0.45)]
+        base = [((0, 0, zc), rc),
+                ((rc * 0.70, rc * 0.30, zc - rc * 0.45), rc * 0.62),
+                ((-rc * 0.60, rc * 0.45, zc - rc * 0.35), rc * 0.58),
+                ((rc * 0.20, -rc * 0.65, zc - rc * 0.50), rc * 0.55),
+                ((-rc * 0.35, -rc * 0.40, zc + rc * 0.30), rc * 0.50),
+                ((rc * 0.45, rc * 0.10, zc + rc * 0.42), rc * 0.45)]
+        # Se altera la posición y el tamaño de cada masa de copa, no su altura.
+        esferas = [((jit(x, 0.18), jit(y, 0.18), z), jit(rad, 0.12))
+                   for (x, y, z), rad in base]
         alto_tronco = alto - copa * 0.75
     tronco = _pieza("Arbol_tronco", capa, _mat_corteza(),
                     cilindros=[(0, 0, 0, alto_tronco, max(0.07, alto * 0.028))])
-    copa_obj = _pieza("Arbol", capa, _mat_vegetacion(), esferas=esferas)
+    copa_obj = _pieza("Arbol", capa, _mat_vegetacion(rnd.randint(0, 2)), esferas=esferas)
     _situar([tronco, copa_obj], centro, nivel, 0)
     print(f"✔ {copa_obj.name}: {tipo} de {alto:.1f} m")
     return copa_obj
 
 
-def arbusto(centro, alto=0.7, nivel=0.0, capa=None):
+def arbusto(centro, alto=0.7, nivel=0.0, capa=None, semilla=None):
     """Arbusto redondeado en (x, y); en grupos de 2-3 junto a fachadas y muros
-    (ponles un foco_jardin delante para el efecto de la foto nocturna)."""
-    obj = _pieza("Arbusto", capa, _mat_vegetacion(), esferas=[
+    (ponles un foco_jardin delante para el efecto de la foto nocturna). Varía
+    solo su forma y verde según `semilla` (o su posición) para no clonarse."""
+    rnd = random.Random(semilla if semilla is not None
+                        else f"{centro[0]:.2f},{centro[1]:.2f}")
+    obj = _pieza("Arbusto", capa, _mat_vegetacion(rnd.randint(0, 2)), esferas=[
         ((0, 0, alto * 0.55), alto * 0.50),
-        ((alto * 0.38, alto * 0.15, alto * 0.42), alto * 0.36),
-        ((-alto * 0.32, -alto * 0.20, alto * 0.46), alto * 0.33),
+        ((alto * rnd.uniform(0.28, 0.46), alto * 0.15, alto * 0.42), alto * 0.36),
+        ((-alto * rnd.uniform(0.24, 0.40), -alto * 0.20, alto * 0.46), alto * 0.33),
     ])
     _situar([obj], centro, nivel, 0)
     return obj
@@ -1429,6 +1536,194 @@ def barbacoa(centro, nivel=0.0, capa=None):
     pomo = _pieza("Barbacoa_pomo", capa, "acero", cilindros=[(0, 0, 0.94, 1.01, 0.02)])
     _situar([cuerpo, pomo], centro, nivel, 0)
     return cuerpo
+
+
+# ------------------------------------------- fachada, parcela y paisajismo
+
+def celosia(inicio, fin, alto=2.5, nivel=0.0, orientacion="vertical",
+            separacion=0.12, espesor=0.04, capa=None, material="madera"):
+    """Celosía / lamas de parasol entre dos puntos (x, y): tira de listones que
+    tamiza el sol y da textura a la fachada (delante de ventanales, en porches o
+    como valla-pantalla). `orientacion`: "vertical" (listones de pie) u
+    "horizontal" (tumbados); `separacion` es la luz entre listones."""
+    x0, y0 = inicio
+    x1, y1 = fin
+    largo = math.hypot(x1 - x0, y1 - y0)
+    if largo < 0.05:
+        print("✘ celosia ignorada: demasiado corta")
+        return None
+    lama = max(0.02, espesor)
+    paso = lama + max(0.02, separacion)
+    cajas = []
+    if orientacion == "horizontal":
+        for i in range(max(2, int(alto / paso))):
+            z = i * paso
+            cajas.append(((0, -lama / 2, z), (largo, lama / 2, z + lama)))
+    else:
+        for i in range(max(2, int(largo / paso))):
+            x = i * paso
+            cajas.append(((x, -lama / 2, 0), (x + lama, lama / 2, alto)))
+    obj = _nuevo_objeto("Celosia", _malla_cajas("Celosia", cajas), capa, material)
+    _colocar(obj, x0, y0, nivel, math.atan2(y1 - y0, x1 - x0))
+    print(f"✔ {obj.name}: {largo:.1f} m, {len(cajas)} lamas {orientacion}es")
+    return obj
+
+
+def pergola(origen, ancho=4.0, fondo=3.0, altura=2.4, rotacion=0, nivel=0.0,
+            capa=None, material="madera", lamas=True):
+    """Pérgola de vigas sobre 4 pilares: sombra de terrazas, porches y accesos.
+    `origen` es la esquina (x, y); ocupa `ancho`×`fondo` y `altura` de alto."""
+    p = 0.10
+    z = altura
+    cajas = [((cx - p, cy - p, 0), (cx + p, cy + p, z))
+             for cx, cy in ((0, 0), (ancho, 0), (0, fondo), (ancho, fondo))]
+    cajas += [((0, -p, z - 0.12), (ancho, p, z)),
+              ((0, fondo - p, z - 0.12), (ancho, fondo + p, z)),
+              ((-p, 0, z - 0.12), (p, fondo, z)),
+              ((ancho - p, 0, z - 0.12), (ancho + p, fondo, z))]
+    if lamas:
+        n = max(2, int(ancho / 0.35))
+        for i in range(n + 1):
+            x = min(i * 0.35, ancho)
+            cajas.append(((x - 0.03, 0, z), (x + 0.03, fondo, z + 0.10)))
+    obj = _nuevo_objeto("Pergola", _malla_cajas("Pergola", cajas), capa, material)
+    _colocar(obj, origen[0], origen[1], nivel, math.radians(rotacion))
+    print(f"✔ {obj.name}: {ancho:.1f}×{fondo:.1f} m, alto {altura:.1f} m")
+    return obj
+
+
+def valla(inicio, fin, alto=1.6, nivel=0.0, tipo="tablas", capa=None, material="madera"):
+    """Valla/cerca recta entre dos puntos (x, y) para cerrar una parcela.
+    tipo: "tablas" (listones verticales juntos, opaca) o "postes" (postes con
+    dos travesaños, ligera)."""
+    x0, y0 = inicio
+    x1, y1 = fin
+    largo = math.hypot(x1 - x0, y1 - y0)
+    if largo < 0.05:
+        print("✘ valla ignorada: demasiado corta")
+        return None
+    n_post = max(2, int(largo / 2.0) + 1)
+    cajas = [((min(i * largo / (n_post - 1), largo) - 0.06, -0.06, 0),
+              (min(i * largo / (n_post - 1), largo) + 0.06, 0.06, alto))
+             for i in range(n_post)]
+    if tipo == "tablas":
+        for i in range(max(2, int(largo / 0.16))):
+            x = i * 0.16
+            cajas.append(((x, -0.02, 0.05), (x + 0.11, 0.02, alto - 0.05)))
+    else:
+        for zf in (alto * 0.35, alto * 0.75):
+            cajas.append(((0, -0.03, zf - 0.04), (largo, 0.03, zf + 0.04)))
+    obj = _nuevo_objeto("Valla", _malla_cajas("Valla", cajas), capa, material)
+    _colocar(obj, x0, y0, nivel, math.atan2(y1 - y0, x1 - x0))
+    print(f"✔ {obj.name}: {largo:.1f} m ({tipo})")
+    return obj
+
+
+def camino(inicio, fin, ancho=1.2, nivel=0.0, material="pavimento", capa=None):
+    """Camino/sendero recto entre dos puntos (x, y): accesos y senderos de jardín.
+    Se apoya sobre el terreno (cota 0)."""
+    x0, y0 = inicio
+    x1, y1 = fin
+    largo = math.hypot(x1 - x0, y1 - y0)
+    if largo < 0.05:
+        print("✘ camino ignorado: demasiado corto")
+        return None
+    obj = _nuevo_objeto("Camino", _malla_cajas(
+        "Camino", [((0, -ancho / 2, 0), (largo, ancho / 2, 0.04))]), capa, material)
+    _colocar(obj, x0, y0, nivel, math.atan2(y1 - y0, x1 - x0))
+    print(f"✔ {obj.name}: {largo:.1f} × {ancho:.1f} m")
+    return obj
+
+
+def palmera(centro, alto=7.0, nivel=0.0, capa=None):
+    """Palmera en (x, y): tronco esbelto y corona de hojas. Da carácter
+    mediterráneo/tropical a jardines y piscinas."""
+    seg = 6
+    cilindros = [(0, 0, alto * i / seg, alto * (i + 1) / seg,
+                  max(0.06, 0.16 * (1 - i / (seg * 1.6)))) for i in range(seg)]
+    tronco = _pieza("Palmera_tronco", capa, _mat_corteza(), cilindros=cilindros)
+    corona = [((0, 0, alto + 0.1), alto * 0.10)]
+    corona += [((math.cos(2 * math.pi * k / 7) * alto * 0.28,
+                 math.sin(2 * math.pi * k / 7) * alto * 0.28, alto - 0.15), alto * 0.11)
+               for k in range(7)]
+    copa = _pieza("Palmera", capa, _mat_vegetacion(1), esferas=corona)
+    _situar([tronco, copa], centro, nivel, 0)
+    print(f"✔ {copa.name}: palmera de {alto:.1f} m")
+    return copa
+
+
+def farola(posicion, alto=4.0, nivel=0.0, fuerza=120, capa=None):
+    """Farola de exterior en (x, y): poste con luminaria y luz cálida. Para
+    accesos, caminos y calles; se enciende de noche/atardecer."""
+    poste = _pieza("Farola", capa, "metal_negro",
+                   cilindros=[(0, 0, 0, alto, 0.05)],
+                   cajas=[((-0.14, -0.14, alto), (0.14, 0.14, alto + 0.18))])
+    emisivo = bpy.data.materials.get("Farola_luz_mat") or material(
+        "Farola_luz_mat", color=(1.0, 0.86, 0.6), rugosidad=0.4, emision=8)
+    farol = _nuevo_objeto("Farola_farol", _malla_piezas(
+        "Farola_farol", cajas=[((-0.11, -0.11, alto + 0.01), (0.11, 0.11, alto + 0.15))]),
+        capa, emisivo)
+    _situar([poste, farol], posicion, nivel, 0)
+    _luz_puntual("Farola_luz", (posicion[0], posicion[1], nivel + alto + 0.05),
+                 fuerza, True, radio=0.12)
+    print(f"✔ {poste.name}: farola de {alto:.1f} m")
+    return poste
+
+
+def coche(origen, rotacion=0, nivel=0.0, color=(0.15, 0.16, 0.18), capa=None):
+    """Coche sencillo aparcado, para dar escala y realismo al exterior. `origen`
+    es la esquina trasera izquierda; mide ~4,4 × 1,8 m."""
+    largo, ancho = 4.4, 1.8
+    pintura = material(f"Coche_{len(bpy.data.materials)}", color=color,
+                       rugosidad=0.25, metalico=0.6)
+    cuerpo = _pieza("Coche", capa, pintura, cajas=[
+        ((0.3, 0, 0.35), (largo - 0.3, ancho, 0.85)),
+        ((1.2, 0.12, 0.82), (largo - 1.3, ancho - 0.12, 1.35)),
+    ], suave=0.06)
+    lunas = _pieza("Coche_lunas", capa, "vidrio",
+                   cajas=[((1.25, 0.10, 0.85), (largo - 1.35, ancho - 0.10, 1.30))])
+    ruedas = [((rx, ry, 0.0), (rx + 0.62, ry + 0.28, 0.52))
+              for rx in (0.55, largo - 1.17) for ry in (-0.02, ancho - 0.26)]
+    llantas = _pieza("Coche_ruedas", capa, "negro_mate", cajas=ruedas)
+    _situar([cuerpo, lunas, llantas], origen, nivel, rotacion)
+    print(f"✔ {cuerpo.name}: coche {largo:.1f} m")
+    return cuerpo
+
+
+def revisar_escena():
+    """Control de calidad: revisa la escena y avisa de los fallos típicos de un
+    render (sin cámara, sin luz cuando hay mobiliario, objetos sin material).
+    Llámala antes de render() o de dar por terminado un proyecto y corrige lo
+    que señale. Recuerda además poner cielo(...) para la luz ambiente."""
+    objetos = list(bpy.data.objects)
+    camaras = [o for o in objetos if o.type == "CAMERA"]
+    luces = [o for o in objetos if o.type == "LIGHT"]
+    mallas = [o for o in objetos if o.type == "MESH" and not o.hide_render
+              and o.display_type != "WIRE"]
+    muebles = ("Cama", "Sofa", "Sillon", "Mesa", "Cocina", "Comedor", "Armario",
+               "Estanteria", "Lavabo", "Inodoro", "Ducha", "Banera", "Silla")
+    hay_interior = any(o.name.startswith(muebles) for o in mallas)
+    sin_material = [o.name for o in mallas
+                    if not o.data.materials or all(m is None for m in o.data.materials)]
+    avisos = []
+    if not camaras:
+        avisos.append("No hay cámara: añade camara(...) antes de render().")
+    if not luces:
+        avisos.append("Hay mobiliario pero NINGUNA luz: las estancias saldrán negras. "
+                      "Ilumina cada estancia con techo." if hay_interior
+                      else "No hay luces en la escena.")
+    if sin_material:
+        muestra = ", ".join(sin_material[:8]) + (" …" if len(sin_material) > 8 else "")
+        avisos.append(f"{len(sin_material)} objeto(s) sin material (saldrán grises): {muestra}")
+    print(f"🔎 Escena: {len(mallas)} objetos visibles, {len(luces)} luces, "
+          f"{len(camaras)} cámara(s), {len(bpy.data.materials)} materiales.")
+    if avisos:
+        print("Puntos a corregir para un buen render:")
+        for a in avisos:
+            print("  • " + a)
+    else:
+        print("✔ Sin fallos críticos detectados: lista para renderizar.")
+    return "revisado"
 
 
 # --------------------------------------------------- cielo físico y render

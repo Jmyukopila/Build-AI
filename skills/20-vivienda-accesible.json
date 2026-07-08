@@ -1,0 +1,7 @@
+{
+  "id": "vivienda-accesible",
+  "nombre": "Vivienda accesible",
+  "icono": "casa",
+  "descripcion": "Revisa y adapta la casa para accesibilidad: puertas, pasillos, giro de silla, baño y rampas",
+  "prompt": "Revisa y adapta la vivienda del modelo conectado para que sea accesible (apta para personas con movilidad reducida o silla de ruedas), o diséñala accesible desde cero si no hay nada. Consulta el estado del modelo y comprueba o aplica los criterios de accesibilidad: puertas con 80 cm de paso libre mínimo (ensancha las que no lleguen), pasillos de al menos 120 cm para el cruce de una silla, y espacio de giro de 150 cm de diámetro libre en el baño y las estancias principales. En el baño, distribuye los aparatos dejando ese giro y un espacio de transferencia junto al inodoro, y una ducha a ras de suelo sin escalón. Evita escalones en los recorridos; donde haya desnivel, sustitúyelo o complementa la escalera con una rampa de pendiente máxima 6-8 % y 120 cm de ancho (modélala con el kit). En la cocina, deja frente de trabajo con aproximación. Ve marcándome cada punto que ya cumplía y cada uno que has tenido que corregir, con sus medidas. Reamuebla lo que muevas respetando esas holguras. Verifica con revisar_escena() y, en Blender, muéstrame el resultado con cámara y render. Acláramelo: para una vivienda que se vaya a construir hay que verificar la normativa de accesibilidad vigente del lugar."
+}

@@ -1,0 +1,7 @@
+{
+  "id": "diseno-bioclimatico",
+  "nombre": "Diseño bioclimático",
+  "icono": "luces",
+  "descripcion": "Optimiza orientación, protección solar, ventilación y vegetación para eficiencia y confort",
+  "prompt": "Optimiza el diseño bioclimático de la vivienda o edificio del modelo conectado para mejorar su confort y eficiencia energética (si no hay nada, dímelo). Consulta el estado del modelo. Pregúntame la orientación y el hemisferio si influye y no lo sé. Aplica y explícame estas estrategias pasivas: orienta y dimensiona los huecos según la orientación (grandes ventanales a sur en el hemisferio norte para captar el sol de invierno, huecos pequeños a norte; invierte en el hemisferio sur); protege los huecos de sur del sol alto de verano con aleros o voladizos de 60-90 cm (con caja o forjado) o con celosia(...) y pergola(...) en las fachadas más expuestas; favorece la ventilación cruzada con aberturas en fachadas opuestas; y usa la vegetación como control solar (árboles de hoja frondosa al sur para sombra de verano, cipreses como barrera de viento al norte). Si el modelo lo admite, indica dónde irían las placas solares en cubierta (represéntalas con cajas). Marca cada intervención sobre el modelo y resume el porqué de cada decisión en lenguaje sencillo, dejando claro que el comportamiento energético real debe calcularlo un técnico con las condiciones concretas del lugar. En Blender, enseña el resultado con cielo, cámara y render, pasando revisar_escena() antes."
+}

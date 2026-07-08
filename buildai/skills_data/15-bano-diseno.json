@@ -1,0 +1,7 @@
+{
+  "id": "bano-diseno",
+  "nombre": "Baño tipo spa",
+  "icono": "casa",
+  "descripcion": "Baño de aspecto hotel/spa: distribución de aparatos, materiales, espejo, luz y render",
+  "prompt": "Diseña un baño de aspecto profesional, tipo hotel o spa, en la estancia que te indique del modelo conectado (si no indico ninguna, consulta el modelo y elige un baño; si no hay casa, propón crearla). Identifica su rectángulo interior y sus huecos, y distribuye los aparatos con criterio: la ducha (o una bañera si el espacio lo permite) en la esquina del fondo, el inodoro apartado de la puerta y el lavabo con un espejo grande sobre él, todos adosados a la pared y con espacio de uso libre delante. Usa bano() como base y ajusta o añade piezas — ducha(), banera(), lavabo(), inodoro(), espejo_pared() — según el tamaño. Materiales de baño: suelo y paredes en baldosa o mármol, con un tono de acento (por ejemplo el frente de la ducha en un color) y detalles cálidos de madera en el mueble del lavabo, combinados con la regla 60-30-10. Ilumina bien: un foco empotrado de techo y, si puedes, luz junto al espejo; un baño sin luz sale negro en el render. Remata con toalla, una planta pequeña y algún objeto. Deja una cámara mostrando el baño y, en Blender, entrega un render fotorrealista (borrador y luego alta). Explícame la distribución elegida."
+}

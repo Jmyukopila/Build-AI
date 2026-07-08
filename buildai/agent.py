@@ -9,6 +9,7 @@ muestre el progreso en tiempo real.
 from pathlib import Path
 
 from . import config as cfg
+from . import memoria
 from .connectors import CONECTORES, buscar_herramienta
 from .providers import crear_proveedor, ErrorProveedor
 
@@ -100,6 +101,49 @@ Confort y diseño bioclimático:
 - Aleros/voladizos de 60–90 cm protegen huecos sur del sol alto de verano sin
   bloquear el sol bajo de invierno.
 
+## Estilos y lenguajes arquitectónicos
+
+Domina los principales estilos para que cada proyecto tenga un lenguaje
+coherente y reconocible, no una mezcla sin criterio. Si el usuario nombra un
+estilo, aplícalo en TODO (volumen, cubierta, huecos, materiales y entorno); si
+pide algo «bonito» o «ambicioso» sin concretarlo, propón 1-2 estilos adecuados
+al lugar y al programa antes de construir. Los materiales entre comillas son
+presets del kit; entre paréntesis van las funciones con las que se resuelven.
+
+- **Moderna (Movimiento Moderno / racionalista)**: volúmenes prismáticos puros,
+  cubierta plana (cubierta_plana), ventanas horizontales corridas, fachada lisa
+  «blanco» sin ornamento, planta libre. «La forma sigue a la función».
+- **Contemporánea**: la evolución actual de lo moderno — volúmenes limpios pero
+  con mezcla cálida de 2-3 materiales («blanco» u «hormigon» + «madera» +
+  «antracita»), grandes ventanales (ventanal) y voladizos marcados, fuerte
+  relación con el jardín. Es el lenguaje por defecto de una «casa moderna» de hoy.
+- **Minimalista**: reducción extrema, casi monomaterial («blanco» u «hormigon»),
+  pocos huecos pero precisos y enrasados, cero decoración; el detalle es la
+  ausencia de detalle.
+- **Mediterránea**: muros encalados («blanco»/«crema»), cubierta de «teja» a dos
+  aguas (cubierta_dos_aguas) o plana transitable, huecos más pequeños y
+  verticales con contraventanas de «madera», pérgolas (pergola), celosías
+  (celosia), patios y porches; palmeras y setos en el jardín.
+- **Rústica / rural / tradicional**: «piedra_muro» (mampostería vista) y «madera»
+  a la vista, cubierta inclinada de «teja», huecos pequeños, aleros de madera;
+  se funde con el paisaje.
+- **Clásica**: composición simétrica y jerárquica, huecos verticales alineados y
+  de igual tamaño con recercados, zócalo, cornisa de remate y acceso destacado;
+  materiales sobrios («piedra», «crema»).
+- **Industrial / loft**: «ladrillo» visto y «hormigon», estructura y conductos a
+  la vista, grandes ventanales de retícula metálica («acero»/«metal_negro»),
+  espacios diáfanos de gran altura; interiores de «parquet» u «hormigon».
+- **Nórdica / escandinava**: «madera_clara» y «blanco», cubierta a dos aguas
+  sencilla de fuerte pendiente, mucha luz natural, calidez y sencillez.
+- **Brutalista / hormigón visto**: volúmenes rotundos y masivos de «hormigon»
+  visto, huecos profundos que dibujan sombra, expresión franca de la estructura.
+- **High-tech**: estructura de «acero» y «vidrio» a la vista, ligereza,
+  modulación y transparencia; ideal en edificios y equipamientos.
+
+Para un edificio o conjunto ambicioso, fija el estilo en la fase de programa y
+mantén su lenguaje en cada planta y en el entorno: esa coherencia es lo que
+distingue una obra de autor de un collage de ideas.
+
 Convenciones de dibujo y BIM al usar los programas:
 - Organiza por capas/función (muros, puertas, ventanas, acotación, textos,
   mobiliario) con nombres claros y consistentes.
@@ -188,7 +232,9 @@ sigue esta receta en Blender (es la diferencia entre una maqueta y una foto):
    mostrar volúmenes; cielo("noche") para dramatismo.
 4. **Encuadra**: camara() a 1,6-2 m de altura desde una esquina para fachadas
    (lente 30-35); en interiores lente 24 desde una esquina a 1,5 m.
-5. **Renderiza en dos pasos**: render(calidad="borrador") para comprobar el
+5. **Revisa antes de renderizar**: llama a revisar_escena() y corrige lo que
+   señale (cámara, luces o materiales que falten) antes de gastar un render.
+6. **Renderiza en dos pasos**: render(calidad="borrador") para comprobar el
    encuadre, corrige lo que se vea mal y termina con render(calidad="alta").
 El render aparece automáticamente como imagen en el chat: no pidas al usuario
 que abra archivos ni le des rutas. Solo Blender puede renderizar; si trabaja
@@ -211,6 +257,9 @@ Normas de trabajo:
 - Si el usuario pide algo de un programa que no está conectado, dile con qué
   programas puedes trabajar ahora y cómo conectar el que falta (hay un botón
   de ayuda junto a cada programa en la barra lateral).
+- Antes de dar por terminado un proyecto en Blender, pasa el control de calidad
+  (revisar_escena) y corrige lo que falte; en otros programas, consulta el estado
+  y comprueba que lo construido coincide con el plan.
 - Al terminar, resume en 2-3 frases qué has hecho, sin tecnicismos.
 - Nunca borres trabajo del usuario sin confirmárselo antes."""
 
@@ -220,7 +269,11 @@ def _sistema(conectados: list) -> str:
         nombres = ", ".join(c.nombre for c in conectados)
     else:
         nombres = "ninguno (puedes conversar y aconsejar, pero no tocar modelos)"
-    return SISTEMA_BASE.format(programas=nombres)
+    base = SISTEMA_BASE.format(programas=nombres)
+    aprendizajes = memoria.perfil_texto()
+    if aprendizajes:
+        base += "\n\n" + aprendizajes
+    return base
 
 
 def _herramientas(conectados: list) -> list:

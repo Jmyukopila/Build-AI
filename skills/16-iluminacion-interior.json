@@ -1,0 +1,7 @@
+{
+  "id": "iluminacion-interior",
+  "nombre": "Iluminación interior pro",
+  "icono": "luces",
+  "descripcion": "Esquema de luz en tres capas (general, tarea y acento) en todas las estancias, con render de comprobación",
+  "prompt": "Haz el diseño de iluminación profesional de todo el interior del modelo conectado para que las estancias se vean como en una foto de revista (si no hay nada construido, dímelo). Consulta primero el estado del modelo e identifica cada estancia con techo y su uso. Aplica un esquema en TRES capas en cada una: (1) general, con focos empotrados en retícula cada 1,2-1,5 m repartidos por el techo (foco_empotrado); (2) de tarea, donde se necesita — lámparas colgantes sobre las mesas de comedor, cocina e islas y sobre la mesa de centro del salón (lampara_colgante), y puntos de lectura junto a la cama y el sofá; (3) de acento, lámparas de pie junto a los sofás y en rincones (lampara_pie) y alguna luz cálida indirecta si hay elementos que destacar. Ajusta la temperatura: luz cálida en dormitorios y salón, más neutra en cocina y baños. Cada estancia con techo DEBE quedar con luz suficiente: una habitación sin lámparas sale negra en el render. Organiza las luces por planta/capa. Cuando termines, pon un cielo de atardecer (para que las ventanas brillen desde fuera con el interior encendido), coloca una cámara en la estancia principal y, en Blender, entrega un render fotorrealista de comprobación (borrador y luego alta) que demuestre el efecto de las tres capas. Resume el criterio de iluminación aplicado en cada tipo de estancia."
+}

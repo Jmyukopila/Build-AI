@@ -1,0 +1,7 @@
+{
+  "id": "local-comercial",
+  "nombre": "Local comercial / tienda",
+  "icono": "casa",
+  "descripcion": "Diseña un local con escaparate, recorrido de cliente, mostrador, iluminación comercial y render",
+  "prompt": "Diseña el interior de un local comercial o tienda en el espacio del modelo conectado (si no hay nada construido, dímelo y propón crear una caja de local diáfano, por ejemplo 10 × 12 m con escaparate a fachada). Consulta el estado del modelo. Resuelve el local con criterio comercial: un escaparate acristalado a la calle (ventanal(...)), una zona de exposición con recorrido claro para el cliente, mostrador o caja bien situado (cerca de la salida y con visión del local), un almacén o trastienda y un aseo. Amuéblalo con estanterías y expositores (estanteria(...), mesas y muebles a medida con caja(...)), separando zonas por capas. Materiales y ambiente de comercio moderno: suelos de baldosa, mármol o microcemento (hormigon), paredes neutras y un material de acento (madera, antracita) en el mostrador o una pared destacada. Iluminación comercial POTENTE y en capas: retícula de focos empotrados generales, focos que iluminen los expositores y el escaparate, y luz de acento sobre el producto; un comercio oscuro no vende. Si hay rótulo o nombre, dale material emisivo. Remata con cielo, una cámara mostrando el interior desde la entrada y, en Blender, un render fotorrealista (revisar_escena() antes; borrador y luego alta). Explícame el criterio comercial aplicado."
+}
