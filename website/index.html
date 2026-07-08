@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BuildAI — el asistente de IA para arquitectos</title>
+<meta name="description" content="BuildAI conecta una IA con Revit, AutoCAD, SketchUp y Blender para trabajar hablando en tu idioma. Todo corre en tu ordenador. Descarga gratis para Windows.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314171b'/%3E%3Cpath d='M6 24V13.5L16 7l10 6.5V24M6 24h20M9 24v-8h5v8m3-8h5v8' stroke='%234a90c4' stroke-width='1.6' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta property="og:title" content="BuildAI — el asistente de IA para arquitectos">
+<meta property="og:description" content="Controla Revit, AutoCAD, SketchUp y Blender hablando en tu idioma. Todo corre en tu ordenador.">
+<meta property="og:type" content="website">
+<noscript><style>.reveal, .reveal *{opacity:1!important; transform:none!important;}</style></noscript>
+<style>
+  /* ============ tokens ============ */
+  :root{
+    --ink:#14171b; --paper:#1a1e23; --paper-alta:#20242a;
+    --line:#323844; --line-fuerte:#454c5a;
+    --texto:#eef1f5; --grafito:#8b93a2;
+    --blueprint:#4a90c4; --blueprint-hi:#7fc0ee; --blueprint-suave:rgba(74,144,196,.14);
+    --marcador:#e2653f; --marcador-suave:rgba(226,101,63,.15);
+    --verde:#3fceA0;
+    --radio:10px;
+    --f-display:-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    --f-cuerpo:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --f-mono:ui-monospace,"Cascadia Code","SFMono-Regular",Consolas,"Roboto Mono",monospace;
+  }
+  :root[data-theme="light"]{
+    --ink:#eef1f4; --paper:#f7f8fa; --paper-alta:#ffffff;
+    --line:#c9d0da; --line-fuerte:#aab3c0;
+    --texto:#171a1f; --grafito:#5b6472;
+    --blueprint:#2f6ea3; --blueprint-hi:#1d5786; --blueprint-suave:rgba(47,110,163,.10);
+    --marcador:#c94f28; --marcador-suave:rgba(201,79,40,.10);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --ink:#eef1f4; --paper:#f7f8fa; --paper-alta:#ffffff;
+      --line:#c9d0da; --line-fuerte:#aab3c0;
+      --texto:#171a1f; --grafito:#5b6472;
+      --blueprint:#2f6ea3; --blueprint-hi:#1d5786; --blueprint-suave:rgba(47,110,163,.10);
+      --marcador:#c94f28; --marcador-suave:rgba(201,79,40,.10);
+    }
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important;}
+  }
+  body{
+    background:
+      repeating-linear-gradient(0deg, transparent 0 39px, color-mix(in srgb, var(--blueprint) 7%, transparent) 39px 40px),
+      repeating-linear-gradient(90deg, transparent 0 39px, color-mix(in srgb, var(--blueprint) 7%, transparent) 39px 40px),
+      var(--ink);
+    color:var(--texto);
+    font:16px/1.6 var(--f-cuerpo);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  img,svg{display:block;}
+  .envoltura{max-width:1120px; margin:0 auto; padding:0 24px;}
+  ::selection{background:var(--blueprint-suave); color:var(--texto);}
+  :focus-visible{outline:2px solid var(--blueprint-hi); outline-offset:3px; border-radius:3px;}
+
+  .etiqueta{
+    font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--grafito);
+  }
+
+  /* ============ keyframes ============ */
+  @keyframes entra{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes crecer-h{ from{width:0;} to{width:22px;} }
+  @keyframes crecer-v{ from{height:0;} to{height:22px;} }
+  @keyframes pulso-luz{ 0%,100%{opacity:1;} 50%{opacity:.45;} }
+  @keyframes pulso-suave{ 0%,100%{opacity:.35;} 50%{opacity:1;} }
+  @keyframes parpadeo{ 0%,100%{opacity:0;} 50%{opacity:1;} }
+
+  /* ============ nav ============ */
+  header.nav{
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:blur(10px);
+    background:color-mix(in srgb, var(--ink) 78%, transparent);
+    border-bottom:1px solid var(--line);
+    transition:border-color .3s, box-shadow .3s;
+  }
+  header.nav.con-sombra{border-bottom-color:var(--line-fuerte); box-shadow:0 8px 24px -16px rgba(0,0,0,.5);}
+  .nav .envoltura{display:flex; align-items:center; justify-content:space-between; height:60px;}
+  .marca{display:flex; align-items:center; gap:9px; font-family:var(--f-display); font-weight:800; font-size:16.5px; letter-spacing:-.01em; text-decoration:none;}
+  .marca svg{width:24px; height:24px; flex:none; transition:transform .4s cubic-bezier(.2,.9,.3,1.3);}
+  .marca:hover svg{transform:rotate(-8deg) scale(1.06);}
+  .nav-links{display:flex; align-items:center; gap:26px; font-size:13.5px; color:var(--grafito);}
+  .nav-links a{text-decoration:none; position:relative;}
+  .nav-links a:not(.btn-nav)::after{
+    content:""; position:absolute; left:0; right:100%; bottom:-4px; height:1px; background:var(--blueprint-hi);
+    transition:right .25s ease;
+  }
+  .nav-links a:not(.btn-nav):hover::after{right:0;}
+  .nav-links a:not(.btn-nav):hover{color:var(--texto);}
+  .btn-nav{
+    padding:7px 14px; border-radius:7px; border:1px solid var(--line-fuerte);
+    color:var(--texto)!important; font-family:var(--f-mono); font-size:12.5px; transition:.15s;
+  }
+  .btn-nav:hover{border-color:var(--blueprint); background:var(--blueprint-suave); transform:translateY(-1px);}
+  @media (max-width:720px){ .nav-links a:not(.btn-nav){display:none;} }
+
+  /* ============ hero: hoja de planos ============ */
+  .hoja{
+    max-width:1120px; margin:36px auto 0; position:relative;
+    border:1px solid var(--line); border-radius:16px;
+    background:color-mix(in srgb, var(--paper) 92%, transparent);
+  }
+  .esquina{position:absolute; pointer-events:none; overflow:hidden;}
+  .esquina.tl{top:-1px; left:-1px; border-top:2px solid var(--blueprint); border-left:2px solid var(--blueprint); border-radius:16px 0 0 0; width:22px; height:22px; animation:crecer-h .5s .1s both, crecer-v .5s .1s both;}
+  .esquina.tr{top:-1px; right:-1px; border-top:2px solid var(--blueprint); border-right:2px solid var(--blueprint); border-radius:0 16px 0 0; width:22px; height:22px; animation:crecer-h .5s .18s both, crecer-v .5s .18s both;}
+  .esquina.bl{bottom:-1px; left:-1px; border-bottom:2px solid var(--blueprint); border-left:2px solid var(--blueprint); border-radius:0 0 0 16px; width:22px; height:22px; animation:crecer-h .5s .18s both, crecer-v .5s .18s both;}
+  .esquina.br{bottom:-1px; right:-1px; border-bottom:2px solid var(--blueprint); border-right:2px solid var(--blueprint); border-radius:0 0 16px 0; width:22px; height:22px; animation:crecer-h .5s .26s both, crecer-v .5s .26s both;}
+
+  /* retícula CAD que sigue al cursor */
+  .reticula-h, .reticula-v{position:absolute; pointer-events:none; opacity:0; transition:opacity .25s; z-index:4;}
+  .reticula-h{left:0; right:0; height:1px; top:var(--my, 50%); background:color-mix(in srgb, var(--blueprint) 55%, transparent);}
+  .reticula-v{top:0; bottom:0; width:1px; left:var(--mx, 50%); background:color-mix(in srgb, var(--blueprint) 55%, transparent);}
+  .coord-lectura{
+    position:absolute; left:14px; top:14px; z-index:5; opacity:0; transition:opacity .25s;
+    font-family:var(--f-mono); font-size:11px; color:var(--blueprint-hi);
+    background:color-mix(in srgb, var(--ink) 82%, transparent); border:1px solid var(--line);
+    padding:4px 9px; border-radius:6px; pointer-events:none; font-variant-numeric:tabular-nums;
+  }
+  .hoja.activa .reticula-h, .hoja.activa .reticula-v, .hoja.activa .coord-lectura{opacity:1;}
+  @media (pointer:coarse), (max-width:720px){ .reticula-h, .reticula-v, .coord-lectura{display:none;} }
+
+  .hero{padding:76px 56px 0; text-align:center; position:relative;}
+  @media (max-width:640px){ .hero{padding:56px 20px 0;} }
+  .hero .etiqueta{display:inline-flex; align-items:center; gap:8px; margin-bottom:26px; animation:entra .6s .3s both;}
+  .hero .etiqueta .punto{width:6px; height:6px; border-radius:50%; background:var(--verde); box-shadow:0 0 7px var(--verde); animation:pulso-luz 2.4s ease-in-out infinite;}
+
+  h1{
+    font-family:var(--f-display); font-weight:800; letter-spacing:-.025em;
+    font-size:clamp(32px, 5.2vw, 56px); line-height:1.06; text-wrap:balance;
+    margin-bottom:20px; animation:entra .6s .4s both;
+  }
+  h1 em{
+    font-style:normal;
+    background:linear-gradient(95deg, var(--blueprint-hi), var(--blueprint) 65%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p.sub{
+    max-width:560px; margin:0 auto 38px; color:var(--grafito); font-size:17.5px; text-wrap:balance;
+    animation:entra .6s .5s both;
+  }
+
+  .btn-descarga{
+    display:inline-flex; align-items:center; gap:11px;
+    padding:15px 28px; border-radius:9px; border:1px solid color-mix(in srgb, var(--blueprint) 55%, var(--line));
+    background:linear-gradient(180deg, color-mix(in srgb, var(--blueprint) 85%, white 15%), var(--blueprint) 55%, color-mix(in srgb, var(--blueprint) 80%, black 20%));
+    color:#0a1116; font-weight:700; font-size:16px; text-decoration:none;
+    box-shadow:0 8px 24px -8px color-mix(in srgb, var(--blueprint) 65%, transparent);
+    transition:filter .15s, box-shadow .15s, transform .15s;
+  }
+  .btn-descarga:hover{filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 14px 32px -6px color-mix(in srgb, var(--blueprint) 70%, transparent);}
+  .btn-descarga:active{transform:translateY(0); filter:brightness(.98);}
+  .btn-descarga svg{width:19px; height:19px; overflow:visible;}
+  .btn-descarga .flecha{transition:transform .25s cubic-bezier(.3,.8,.4,1.4); transform-box:fill-box; transform-origin:center;}
+  .btn-descarga:hover .flecha{transform:translateY(2.5px);}
+  .cta{display:flex; flex-direction:column; align-items:center; gap:16px; margin-bottom:40px; animation:entra .6s .6s both;}
+  .cta .nota{font-family:var(--f-mono); font-size:12px; color:var(--grafito);}
+  .cta .nota a{color:var(--blueprint-hi); text-decoration:none; border-bottom:1px solid transparent; transition:border-color .2s;}
+  .cta .nota a:hover{border-color:var(--blueprint-hi);}
+
+  /* bloque de título técnico (rótulo de plano) */
+  .rotulo{
+    display:grid; grid-template-columns:repeat(4, 1fr);
+    border-top:1px solid var(--line);
+  }
+  .rotulo .celda{
+    padding:16px 18px; border-right:1px solid var(--line); text-align:left;
+    animation:entra .5s both;
+  }
+  .rotulo .celda:nth-child(1){animation-delay:.62s;}
+  .rotulo .celda:nth-child(2){animation-delay:.70s;}
+  .rotulo .celda:nth-child(3){animation-delay:.78s;}
+  .rotulo .celda:nth-child(4){animation-delay:.86s;}
+  .rotulo .celda:last-child{border-right:none;}
+  .rotulo .celda .etiqueta{display:block; margin-bottom:5px;}
+  .rotulo .celda .valor{font-family:var(--f-mono); font-size:14px; font-variant-numeric:tabular-nums;}
+  @media (max-width:720px){
+    .rotulo{grid-template-columns:repeat(2,1fr);}
+    .rotulo .celda:nth-child(2){border-right:none;}
+  }
+
+  /* ventana mock de la app, dentro de la hoja */
+  .vista-app{padding:40px 56px 0; animation:entra .6s .8s both;}
+  @media (max-width:640px){ .vista-app{padding:28px 16px 0;} }
+  .ventana{
+    max-width:820px; margin:0 auto; border-radius:12px; overflow:hidden;
+    border:1px solid var(--line); background:var(--paper-alta);
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.55);
+  }
+  .barra-ventana{display:flex; align-items:center; gap:7px; padding:10px 15px; background:var(--paper); border-bottom:1px solid var(--line);}
+  .barra-ventana i{width:9px; height:9px; border-radius:2px; background:var(--line-fuerte);}
+  .barra-ventana span{margin-left:8px; font-family:var(--f-mono); font-size:11.5px; color:var(--grafito);}
+  .cuerpo-ventana{padding:22px; text-align:left; display:grid; grid-template-columns:150px 1fr; gap:18px;}
+  @media (max-width:560px){ .cuerpo-ventana{grid-template-columns:1fr;} }
+  .panel-lateral{display:flex; flex-direction:column; gap:7px;}
+  .fila-programa{
+    display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:7px;
+    background:var(--ink); border:1px solid var(--line); font-size:12.5px; color:var(--grafito);
+    transition:border-color .2s;
+  }
+  .fila-programa:hover{border-color:var(--line-fuerte);}
+  .fila-programa .luz{width:6px; height:6px; border-radius:50%; background:var(--verde); box-shadow:0 0 5px var(--verde); flex:none; animation:pulso-luz 2.6s ease-in-out infinite;}
+  .fila-programa:nth-child(2) .luz{animation-delay:.4s;}
+  .fila-programa:nth-child(4) .luz{animation-delay:.8s;}
+  .fila-programa .luz.apagada{background:var(--line-fuerte); box-shadow:none; animation:none;}
+  .chat-mock{display:flex; flex-direction:column; gap:9px;}
+  .burbuja{padding:10px 13px; border-radius:9px; font-size:13px; max-width:90%; opacity:0; animation:entra .5s both;}
+  .burbuja.usuario{align-self:flex-end; background:var(--blueprint-suave); border:1px solid color-mix(in srgb, var(--blueprint) 30%, transparent); animation-delay:1.05s;}
+  .burbuja.ia{align-self:flex-start; background:var(--ink); border:1px solid var(--line); color:var(--grafito); font-family:var(--f-mono); font-size:12px;}
+  .burbuja.ia:nth-of-type(2){animation-delay:1.3s;}
+  .burbuja.ia:nth-of-type(3){animation-delay:1.55s;}
+  .burbuja.ia b{color:var(--blueprint-hi); font-weight:600;}
+  .cursor-trabajando{display:inline-block; width:6px; height:11px; margin-left:2px; background:var(--blueprint-hi); vertical-align:-1px; animation:parpadeo 1s step-end infinite;}
+
+  .pie-hoja{padding:28px 56px 34px; display:flex; align-items:center; justify-content:center; gap:10px;}
+  @media (max-width:640px){ .pie-hoja{padding:22px 16px 28px;} }
+  .pie-hoja .linea{flex:1; height:1px; background:var(--line);}
+  .pie-hoja .etiqueta{white-space:nowrap;}
+
+  /* ============ secciones ============ */
+  section{padding:88px 0;}
+  .titulo-fila{display:flex; align-items:baseline; gap:16px; margin-bottom:44px;}
+  .titulo-fila .linea{flex:1; height:1px; background:var(--line); transform:scaleX(0); transform-origin:left; transition:transform .8s ease;}
+  .titulo-fila.visible .linea{transform:scaleX(1);}
+  h2{
+    font-family:var(--f-display); font-weight:800; letter-spacing:-.02em;
+    font-size:clamp(24px, 3vw, 32px); text-wrap:balance; white-space:nowrap;
+  }
+  p.intro{color:var(--grafito); max-width:520px; margin:-28px 0 44px; font-size:15px;}
+
+  .rejilla-4{display:grid; grid-template-columns:repeat(4, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radio); overflow:hidden;}
+  @media (max-width:900px){ .rejilla-4{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:520px){ .rejilla-4{grid-template-columns:1fr;} }
+  .tarjeta{
+    background:var(--paper); padding:26px 22px;
+    opacity:0; transform:translateY(16px);
+    transition:background .2s, transform .45s ease, opacity .45s ease, box-shadow .2s;
+  }
+  .rejilla-4.visible .tarjeta{opacity:1; transform:translateY(0);}
+  .rejilla-4.visible .tarjeta:nth-child(1){transition-delay:.02s;}
+  .rejilla-4.visible .tarjeta:nth-child(2){transition-delay:.09s;}
+  .rejilla-4.visible .tarjeta:nth-child(3){transition-delay:.16s;}
+  .rejilla-4.visible .tarjeta:nth-child(4){transition-delay:.23s;}
+  .tarjeta:hover{background:var(--paper-alta); transform:translateY(-3px); box-shadow:0 16px 30px -18px rgba(0,0,0,.5);}
+  .tarjeta .glifo{width:34px; height:34px; color:var(--blueprint); margin-bottom:16px;}
+  .tarjeta .glifo svg{width:100%; height:100%; overflow:visible;}
+  .tarjeta .glifo svg path, .tarjeta .glifo svg rect{
+    stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 1s ease .2s;
+  }
+  .rejilla-4.visible .tarjeta .glifo svg path,
+  .rejilla-4.visible .tarjeta .glifo svg rect{stroke-dashoffset:0;}
+  .tarjeta:hover .glifo{transform:scale(1.08); transition:transform .25s cubic-bezier(.3,.8,.4,1.4);}
+  .tarjeta h3{font-family:var(--f-display); font-size:15.5px; font-weight:700; margin-bottom:6px;}
+  .tarjeta p{font-size:13.5px; color:var(--grafito); line-height:1.55;}
+
+  /* pasos: cadena de cota */
+  .pasos{display:grid; grid-template-columns:repeat(4,1fr); gap:0; position:relative; margin-top:8px;}
+  @media (max-width:820px){ .pasos{grid-template-columns:repeat(2,1fr); gap:28px 20px;} }
+  .paso{position:relative; padding-top:26px; padding-right:20px; opacity:0; transform:translateY(12px); transition:opacity .5s ease, transform .5s ease;}
+  .pasos.visible .paso{opacity:1; transform:translateY(0);}
+  .pasos.visible .paso:nth-child(1){transition-delay:.05s;}
+  .pasos.visible .paso:nth-child(2){transition-delay:.16s;}
+  .pasos.visible .paso:nth-child(3){transition-delay:.27s;}
+  .pasos.visible .paso:nth-child(4){transition-delay:.38s;}
+  .paso::before{
+    content:""; position:absolute; top:0; left:0; right:20px; height:1px; background:var(--line-fuerte);
+    transform:scaleX(0); transform-origin:left; transition:transform .6s ease .15s;
+  }
+  .pasos.visible .paso::before{transform:scaleX(1);}
+  .paso::after{
+    content:""; position:absolute; top:-3px; left:0; width:1px; height:7px; background:var(--line-fuerte);
+  }
+  @media (max-width:820px){ .paso::before, .paso::after{display:none;} .paso{padding-top:0;} }
+  .paso .num{font-family:var(--f-mono); font-size:12px; color:var(--blueprint-hi); margin-bottom:10px; display:block;}
+  .paso h3{font-family:var(--f-display); font-size:15px; font-weight:700; margin-bottom:7px;}
+  .paso p{font-size:13.5px; color:var(--grafito); line-height:1.55;}
+
+  /* ============ franja privacidad ============ */
+  .franja-privacidad{
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    background:var(--paper); padding:52px 0;
+  }
+  .franja-privacidad .envoltura{
+    display:flex; align-items:flex-start; gap:24px;
+    opacity:0; transform:translateY(14px); transition:opacity .55s ease, transform .55s ease;
+  }
+  .franja-privacidad .envoltura.visible{opacity:1; transform:translateY(0);}
+  .franja-privacidad .glifo{flex:none; width:40px; height:40px; color:var(--blueprint);}
+  .franja-privacidad .glifo svg{width:100%; height:100%;}
+  .franja-privacidad h3{font-family:var(--f-display); font-size:17px; font-weight:700; margin-bottom:7px;}
+  .franja-privacidad p{color:var(--grafito); font-size:14.5px; max-width:620px; line-height:1.6;}
+  @media (max-width:640px){ .franja-privacidad .envoltura{flex-direction:column;} }
+
+  /* ============ terminal ============ */
+  .terminal-caja{
+    max-width:680px; margin:0 auto; background:var(--ink); border:1px solid var(--line);
+    border-radius:var(--radio); overflow:hidden;
+    opacity:0; transform:translateY(14px); transition:opacity .55s ease, transform .55s ease;
+  }
+  .terminal-caja.visible{opacity:1; transform:translateY(0);}
+  .terminal-tabs{display:flex; border-bottom:1px solid var(--line); background:var(--paper); position:relative;}
+  .terminal-tab{
+    padding:10px 18px; font-family:var(--f-mono); font-size:12.5px; color:var(--grafito); cursor:pointer;
+    border-right:1px solid var(--line); user-select:none; background:transparent; border-top:none; border-left:none; border-bottom:none;
+    transition:color .2s;
+  }
+  .terminal-tab.activa{color:var(--texto); background:var(--ink);}
+  .indicador-tab{position:absolute; bottom:-1px; height:2px; background:var(--blueprint-hi); transition:left .25s ease, width .25s ease;}
+  .terminal-cuerpo{position:relative;}
+  pre.codigo{
+    display:none; margin:0; padding:20px 22px; overflow-x:auto; font-size:12.5px;
+    font-family:var(--f-mono); color:var(--texto); line-height:1.75;
+  }
+  pre.codigo.activa{display:block; animation:entra .3s both;}
+  pre.codigo .com{color:var(--grafito);}
+  pre.codigo .cmd{color:var(--blueprint-hi);}
+  .btn-copiar{
+    position:absolute; top:9px; right:11px; padding:5px 10px; font-family:var(--f-mono); font-size:11.5px;
+    border:1px solid var(--line); background:var(--paper); color:var(--grafito);
+    border-radius:6px; cursor:pointer; transition:.15s;
+  }
+  .btn-copiar:hover{color:var(--texto); border-color:var(--blueprint);}
+  .btn-copiar.copiado{color:var(--verde); border-color:var(--verde);}
+
+  /* ============ cta final ============ */
+  .cta-final{text-align:center; padding:0 0 96px;}
+  .cta-final h2{white-space:normal; margin-bottom:14px;}
+  .cta-final p{color:var(--grafito); margin-bottom:30px; font-size:15.5px;}
+
+  footer{border-top:1px solid var(--line); padding:26px 0;}
+  footer .envoltura{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;}
+  footer .marca-pie{font-family:var(--f-mono); font-size:12px; color:var(--grafito);}
+  footer .enlaces-pie{display:flex; gap:20px; font-size:12.5px;}
+  footer a{text-decoration:none; color:var(--grafito); position:relative;}
+  footer a::after{content:""; position:absolute; left:0; right:100%; bottom:-3px; height:1px; background:var(--grafito); transition:right .2s ease;}
+  footer a:hover::after{right:0;}
+  footer a:hover{color:var(--texto);}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="envoltura">
+    <a class="marca" href="#top">
+      <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" style="fill:var(--paper-alta)"/><path d="M6 24V13.5L16 7l10 6.5V24M6 24h20M9 24v-8h5v8m3-8h5v8" style="stroke:var(--blueprint)" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      BuildAI
+    </a>
+    <nav class="nav-links">
+      <a href="#programas">Programas</a>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#terminal">Terminal</a>
+      <a class="btn-nav" href="https://github.com/Jmyukopila/Build-AI" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="envoltura">
+    <div class="hoja" id="hoja">
+      <span class="esquina tl"></span><span class="esquina tr"></span><span class="esquina bl"></span><span class="esquina br"></span>
+      <div class="reticula-h"></div>
+      <div class="reticula-v"></div>
+      <div class="coord-lectura" id="coordLectura">X 0.0m&nbsp;&nbsp;Y 0.0m</div>
+
+      <div class="hero">
+        <div class="etiqueta"><span class="punto"></span> DISPONIBLE · WINDOWS 10/11</div>
+        <h1>Diseña hablando con<br><em>tus propios programas</em></h1>
+        <p class="sub">
+          BuildAI conecta un modelo de IA con Revit, AutoCAD, SketchUp y Blender.
+          Describe lo que necesitas y lo construye ahí mismo, sin que escribas una línea de código.
+        </p>
+
+        <div class="cta">
+          <a class="btn-descarga" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <g class="flecha"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/></g>
+              <path d="M5 21h14"/>
+            </svg>
+            Descargar BuildAI-Setup.exe
+          </a>
+          <div class="nota">Sin permisos de administrador · <a href="#terminal">otras formas de instalar ↓</a></div>
+        </div>
+      </div>
+
+      <div class="rotulo">
+        <div class="celda"><span class="etiqueta">Plataforma</span><span class="valor">Windows 10 / 11 · 64-bit</span></div>
+        <div class="celda"><span class="etiqueta">Versión</span><span class="valor">v0.1.0</span></div>
+        <div class="celda"><span class="etiqueta">Peso</span><span class="valor">≈ 21 MB</span></div>
+        <div class="celda"><span class="etiqueta">Licencia</span><span class="valor">Código abierto</span></div>
+      </div>
+
+      <div class="vista-app">
+        <div class="ventana">
+          <div class="barra-ventana"><i></i><i></i><i></i><span>BuildAI</span></div>
+          <div class="cuerpo-ventana">
+            <div class="panel-lateral">
+              <div class="fila-programa"><span class="luz"></span> Blender</div>
+              <div class="fila-programa"><span class="luz"></span> AutoCAD</div>
+              <div class="fila-programa"><span class="luz apagada"></span> SketchUp</div>
+              <div class="fila-programa"><span class="luz"></span> Revit</div>
+            </div>
+            <div class="chat-mock">
+              <div class="burbuja usuario">Crea una casa moderna de 120&nbsp;m², cubierta plana y ventanales al jardín</div>
+              <div class="burbuja ia"><b>🔧 blender_ejecutar_python</b> — levantando muros de planta baja…</div>
+              <div class="burbuja ia"><b>🔧 blender_render</b> — RENDER_GUARDADO: vista_01.png<span class="cursor-trabajando"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pie-hoja">
+        <span class="linea"></span>
+        <span class="etiqueta">BuildAI · asistente de IA para arquitectos</span>
+        <span class="linea"></span>
+      </div>
+    </div>
+  </div>
+
+  <section id="programas">
+    <div class="envoltura">
+      <div class="titulo-fila reveal"><h2>Cuatro programas, un mismo idioma</h2><span class="linea"></span></div>
+      <p class="intro">Cada uno tiene un puente local que se conecta solo: abre el programa y el punto se pone verde.</p>
+      <div class="rejilla-4 reveal">
+        <div class="tarjeta">
+          <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" pathLength="1"><path pathLength="1" d="M4 20V9l8-5 8 5v11"/><path pathLength="1" d="M9 20v-7h6v7"/><path pathLength="1" d="M4 20h16"/></svg></div>
+          <h3>Blender</h3>
+          <p>Kit paramétrico — muros, cubiertas, escaleras, ventanales — con renders que llegan directo al chat.</p>
+        </div>
+        <div class="tarjeta">
+          <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect pathLength="1" x="4" y="4" width="16" height="16"/><path pathLength="1" d="M4 9h16M9 4v16"/></svg></div>
+          <h3>AutoCAD</h3>
+          <p>Planos 2D por capas: plantas, alzados y secciones, editados con instrucciones normales.</p>
+        </div>
+        <div class="tarjeta">
+          <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path pathLength="1" d="M4 17 12 4l8 13"/><path pathLength="1" d="M4 17h16M8 17l4-7 4 7"/></svg></div>
+          <h3>SketchUp</h3>
+          <p>Modela volúmenes con la misma naturalidad con la que se lo pedirías a un compañero.</p>
+        </div>
+        <div class="tarjeta">
+          <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path pathLength="1" d="M4 21V10l8-6 8 6v11"/><path pathLength="1" d="M4 14h16M11 21v-5h2v5"/></svg></div>
+          <h3>Revit</h3>
+          <p>Elementos BIM nativos — niveles, muros, suelos, familias — nunca geometría suelta.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <div class="envoltura">
+      <div class="titulo-fila reveal"><h2>De la descarga al primer plano</h2><span class="linea"></span></div>
+      <p class="intro">Cuatro pasos, unos cinco minutos.</p>
+      <div class="pasos reveal">
+        <div class="paso"><span class="num">01 — INSTALAR</span><h3>Ejecuta el instalador</h3><p>Sin Python, sin permisos de administrador. Queda en tu menú Inicio.</p></div>
+        <div class="paso"><span class="num">02 — CONFIGURAR</span><h3>Elige tu proveedor de IA</h3><p>OpenRouter gratis, Ollama local, Claude, GPT o Gemini — pega tu clave en Ajustes.</p></div>
+        <div class="paso"><span class="num">03 — CONECTAR</span><h3>Abre tu programa</h3><p>Blender, AutoCAD, SketchUp o Revit: BuildAI los detecta solo.</p></div>
+        <div class="paso"><span class="num">04 — TRABAJAR</span><h3>Pide tu proyecto</h3><p>Escribe lo que necesitas o pulsa una tarea rápida de la barra lateral.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="franja-privacidad">
+    <div class="envoltura reveal">
+      <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+      <div>
+        <h3>Todo corre en tu ordenador</h3>
+        <p>BuildAI y sus puentes a Blender, AutoCAD, SketchUp y Revit escuchan solo en 127.0.0.1. Tus archivos y modelos no salen de tu equipo — únicamente se envían los mensajes de chat al proveedor de IA que elijas.</p>
+      </div>
+    </div>
+  </div>
+
+  <section id="terminal">
+    <div class="envoltura">
+      <div class="titulo-fila reveal"><h2>¿Prefieres la terminal?</h2><span class="linea"></span></div>
+      <p class="intro">BuildAI también se instala como paquete de Python, sin descargar nada a mano.</p>
+      <div class="terminal-caja reveal">
+        <div class="terminal-tabs">
+          <button class="terminal-tab activa" data-tab="pipx">pipx</button>
+          <button class="terminal-tab" data-tab="uv">uv</button>
+          <button class="terminal-tab" data-tab="pip">pip</button>
+          <span class="indicador-tab" id="indicadorTab"></span>
+        </div>
+        <div class="terminal-cuerpo">
+          <pre class="codigo activa" data-tab="pipx"><button class="btn-copiar">Copiar</button><span class="com"># instala en un entorno aislado, como npx/npm -g</span>
+<span class="cmd">pipx</span> install git+https://github.com/Jmyukopila/Build-AI.git
+<span class="cmd">buildai-instalar</span>   <span class="com"># puentes + acceso directo</span>
+<span class="cmd">buildai</span>            <span class="com"># arranca la ventana de la app</span></pre>
+          <pre class="codigo" data-tab="uv"><button class="btn-copiar">Copiar</button><span class="com"># equivalente a "npx", sin instalar nada de forma permanente</span>
+<span class="cmd">uvx</span> --from git+https://github.com/Jmyukopila/Build-AI.git buildai</pre>
+          <pre class="codigo" data-tab="pip"><button class="btn-copiar">Copiar</button><span class="com"># dentro de un entorno virtual (recomendado)</span>
+<span class="cmd">python</span> -m venv %USERPROFILE%\buildai-env
+%USERPROFILE%\buildai-env\Scripts\activate
+<span class="cmd">pip</span> install git+https://github.com/Jmyukopila/Build-AI.git
+<span class="cmd">buildai-instalar</span>
+<span class="cmd">buildai</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-final">
+    <div class="envoltura">
+      <h2>Empieza tu próximo proyecto hablando</h2>
+      <p>Gratis, de código abierto, y sin que tus archivos salgan de tu ordenador.</p>
+      <a class="btn-descarga" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <g class="flecha"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/></g>
+          <path d="M5 21h14"/>
+        </svg>
+        Descargar BuildAI
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="envoltura">
+    <span class="marca-pie">BUILDAI · SHEET 1/1 · 2026</span>
+    <div class="enlaces-pie">
+      <a href="https://github.com/Jmyukopila/Build-AI" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/Jmyukopila/Build-AI/releases" target="_blank" rel="noopener">Versiones</a>
+      <a href="https://github.com/Jmyukopila/Build-AI/issues" target="_blank" rel="noopener">Reportar un problema</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- pestañas de instalación por terminal, con indicador deslizante ----
+  var tabs = document.querySelectorAll(".terminal-tab");
+  var indicador = document.getElementById("indicadorTab");
+  function moverIndicador(tab){
+    if(!indicador) return;
+    indicador.style.left = tab.offsetLeft + "px";
+    indicador.style.width = tab.offsetWidth + "px";
+  }
+  tabs.forEach(function(tab){
+    tab.addEventListener("click", function(){
+      var grupo = tab.dataset.tab;
+      tabs.forEach(function(t){ t.classList.toggle("activa", t === tab); });
+      document.querySelectorAll("pre.codigo").forEach(function(p){ p.classList.toggle("activa", p.dataset.tab === grupo); });
+      moverIndicador(tab);
+    });
+  });
+  window.addEventListener("load", function(){
+    var activa = document.querySelector(".terminal-tab.activa");
+    if(activa) moverIndicador(activa);
+  });
+  window.addEventListener("resize", function(){
+    var activa = document.querySelector(".terminal-tab.activa");
+    if(activa) moverIndicador(activa);
+  });
+
+  // ---- copiar comandos ----
+  document.querySelectorAll(".btn-copiar").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var texto = btn.parentElement.innerText.replace(/^Copiar\n?/, "");
+      navigator.clipboard.writeText(texto).then(function(){
+        var original = btn.textContent;
+        btn.textContent = "¡Copiado!";
+        btn.classList.add("copiado");
+        setTimeout(function(){ btn.textContent = original; btn.classList.remove("copiado"); }, 1500);
+      });
+    });
+  });
+
+  // ---- retícula CAD que sigue al cursor sobre la hoja ----
+  var hoja = document.getElementById("hoja");
+  var coordLectura = document.getElementById("coordLectura");
+  var rafPendiente = false, ultimoEvento = null;
+  function actualizarReticula(){
+    rafPendiente = false;
+    if(!ultimoEvento) return;
+    var r = hoja.getBoundingClientRect();
+    var x = ultimoEvento.clientX - r.left, y = ultimoEvento.clientY - r.top;
+    hoja.style.setProperty("--mx", x + "px");
+    hoja.style.setProperty("--my", y + "px");
+    coordLectura.textContent = "X " + (x / 40).toFixed(1) + "m   Y " + (y / 40).toFixed(1) + "m";
+  }
+  if(hoja && window.matchMedia("(pointer:fine)").matches){
+    hoja.addEventListener("mouseenter", function(){ hoja.classList.add("activa"); });
+    hoja.addEventListener("mouseleave", function(){ hoja.classList.remove("activa"); });
+    hoja.addEventListener("mousemove", function(e){
+      ultimoEvento = e;
+      if(!rafPendiente){ rafPendiente = true; requestAnimationFrame(actualizarReticula); }
+    });
+  }
+
+  // ---- sombra de la barra de navegación al hacer scroll ----
+  var nav = document.querySelector("header.nav");
+  window.addEventListener("scroll", function(){
+    nav.classList.toggle("con-sombra", window.scrollY > 8);
+  }, { passive: true });
+
+  // ---- revelado de secciones al hacer scroll ----
+  var prefiereMenosMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var elementosRevelados = document.querySelectorAll(".reveal");
+  if("IntersectionObserver" in window && !prefiereMenosMovimiento){
+    var observador = new IntersectionObserver(function(entradas){
+      entradas.forEach(function(entrada){
+        if(entrada.isIntersecting){
+          entrada.target.classList.add("visible");
+          observador.unobserve(entrada.target);
+        }
+      });
+    }, { threshold: 0.2, rootMargin: "0px 0px -60px 0px" });
+    elementosRevelados.forEach(function(el){ observador.observe(el); });
+  } else {
+    elementosRevelados.forEach(function(el){ el.classList.add("visible"); });
+  }
+</script>
+</body>
+</html>
