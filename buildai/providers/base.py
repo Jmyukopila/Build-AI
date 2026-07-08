@@ -3,10 +3,15 @@
 El historial de conversación usa un formato neutro (independiente del
 proveedor) y cada adaptador lo traduce a su API:
 
-    {"tipo": "usuario",   "texto": "..."}
+    {"tipo": "usuario",   "texto": "...", "adjuntos": [{media_type, datos}]}
     {"tipo": "asistente", "texto": "...", "llamadas": [LlamadaHerramienta...],
      "_raw": <bloques originales del proveedor, si los necesita>}
     {"tipo": "resultado", "id": "...", "nombre": "...", "contenido": "..."}
+
+`adjuntos` es opcional: lista de imágenes que el usuario adjuntó, cada una
+{"media_type": "image/jpeg", "datos": "<base64 sin el prefijo data:>"}. Los
+vídeos llegan ya convertidos a fotogramas (imágenes) desde la interfaz. Cada
+adaptador las traduce al formato de visión de su API.
 """
 
 from dataclasses import dataclass, field

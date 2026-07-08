@@ -46,7 +46,22 @@ class ProveedorOpenAICompatible(Proveedor):
         mensajes = [{"role": "system", "content": sistema}]
         for m in historial:
             if m["tipo"] == "usuario":
-                mensajes.append({"role": "user", "content": m["texto"]})
+                if m.get("adjuntos"):
+                    contenido = []
+                    if m.get("texto"):
+                        contenido.append({"type": "text", "text": m["texto"]})
+                    for a in m["adjuntos"]:
+                        contenido.append(
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{a['media_type']};base64,{a['datos']}"
+                                },
+                            }
+                        )
+                    mensajes.append({"role": "user", "content": contenido})
+                else:
+                    mensajes.append({"role": "user", "content": m["texto"]})
             elif m["tipo"] == "asistente":
                 msg = {"role": "assistant", "content": m.get("texto") or None}
                 if m.get("llamadas"):

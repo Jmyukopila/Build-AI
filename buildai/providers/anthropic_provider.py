@@ -12,7 +12,25 @@ class ProveedorAnthropic(Proveedor):
         mensajes = []
         for m in historial:
             if m["tipo"] == "usuario":
-                mensajes.append({"role": "user", "content": m["texto"]})
+                if m.get("adjuntos"):
+                    # Imágenes primero, luego el texto: Anthropic recomienda ese
+                    # orden para que el modelo interprete mejor la petición.
+                    contenido = [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": a["media_type"],
+                                "data": a["datos"],
+                            },
+                        }
+                        for a in m["adjuntos"]
+                    ]
+                    if m.get("texto"):
+                        contenido.append({"type": "text", "text": m["texto"]})
+                    mensajes.append({"role": "user", "content": contenido})
+                else:
+                    mensajes.append({"role": "user", "content": m["texto"]})
             elif m["tipo"] == "asistente":
                 # Reenviamos los bloques originales (incluye thinking/tool_use)
                 # tal cual los devolvió la API, como exige Anthropic.

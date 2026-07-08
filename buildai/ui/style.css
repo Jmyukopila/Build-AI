@@ -659,9 +659,79 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
 /* ---------- Formulario ---------- */
 #formulario {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   padding: 14px 8% 20px;
   background: linear-gradient(transparent, var(--fondo) 30%);
+}
+.fila-entrada {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+#btn-adjuntar { flex: none; align-self: flex-end; height: 46px; width: 46px; border-radius: 14px; }
+#btn-adjuntar svg { width: 20px; height: 20px; }
+
+/* Miniaturas de las imágenes/vídeos adjuntados, sobre la caja de texto */
+.adjuntos-previa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.adjuntos-previa.oculto { display: none; }
+.adjunto-chip {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--borde);
+  background: var(--panel);
+  box-shadow: var(--sombra);
+}
+.adjunto-chip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.adjunto-chip .adjunto-marca {
+  position: absolute;
+  left: 4px; bottom: 4px;
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+}
+.adjunto-chip .adjunto-marca svg { width: 14px; height: 14px; }
+.adjunto-quitar {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 20px; height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.72);
+  color: white;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.adjunto-quitar svg { width: 12px; height: 12px; }
+.adjunto-quitar:hover { background: var(--rojo); }
+
+/* Imágenes que el usuario adjuntó, dentro de su burbuja */
+.adjuntos-mensaje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.adjuntos-mensaje img {
+  width: 130px;
+  max-height: 130px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  display: block;
+}
+.mensaje.usuario .burbuja:has(.adjuntos-mensaje) { max-width: 420px; }
+#formulario.arrastrando .fila-entrada {
+  outline: 2px dashed var(--acento);
+  outline-offset: 6px;
+  border-radius: 16px;
 }
 #entrada {
   flex: 1;
@@ -676,7 +746,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
   max-height: 160px;
 }
 #entrada:focus { outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--glow); }
-#btn-enviar { padding: 0 20px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+#btn-enviar { height: 46px; padding: 0 20px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
 #btn-enviar svg { width: 18px; height: 18px; }
 #btn-enviar:disabled { opacity: 0.5; cursor: not-allowed; }
 #btn-enviar.detener { background: var(--rojo); }

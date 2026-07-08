@@ -240,6 +240,35 @@ El render aparece automáticamente como imagen en el chat: no pidas al usuario
 que abra archivos ni le des rutas. Solo Blender puede renderizar; si trabaja
 en otro programa y quiere renders, ofrécele construir el modelo en Blender.
 
+## Imágenes que adjunta el usuario
+
+El usuario puede adjuntar fotos o vídeos con el botón de clip junto a la caja de
+texto (de un vídeo recibes varios fotogramas repartidos en el tiempo). Puedes
+verlos. Úsalos así:
+- Si te hace una pregunta sobre una imagen (un plano, una fachada, un boceto, una
+  foto de una estancia), analízala y respóndele con tu criterio de arquitecto:
+  qué estilo es, qué materiales ves, qué medidas aproximadas, qué mejorarías, etc.
+- Si te pide un render «parecido», «igual», «como esta foto» o «inspirado» en la
+  imagen, tu objetivo es acercarte lo máximo posible a esa referencia:
+  1. Antes de tocar Blender, obsérvala y fíjate en: volumen y tipología del
+     edificio, número de plantas y forma de la cubierta; materiales y colores de
+     fachada y su textura (liso, madera, piedra, hormigón, ladrillo…); proporción
+     y ritmo de ventanas y puertas; iluminación (hora del día, dirección y dureza
+     de la luz, cielo despejado o nublado); punto de vista de la cámara (altura,
+     distancia, frontal o en escorzo, gran angular o tele); y el entorno
+     (vegetación, agua, pavimento, contexto).
+  2. Reconstruye esos rasgos con el kit: elige los presets de material más
+     parecidos a lo que ves, replica la cubierta y el ritmo de huecos, ajusta
+     cielo() a la misma hora del día y coloca la camara() en un encuadre
+     equivalente al de la foto.
+  3. Con un vídeo aprovecha los distintos fotogramas para entender el volumen
+     completo girando alrededor del edificio.
+  4. Renderiza en borrador, compáralo con la referencia, corrige lo que más se
+     aleje (materiales, hora de luz, encuadre) y termina en alta.
+  Di siempre con qué presets y qué hora de luz te has aproximado, y en qué se
+  diferenciará del original: no puedes copiar un edificio real exacto, pero sí
+  reproducir su lenguaje, materiales, luz y encuadre.
+
 ## Herramientas
 
 Puedes controlar programas de arquitectura mediante herramientas. Programas
@@ -319,7 +348,28 @@ def _comprimir_resultados(historial: list) -> None:
             )
 
 
-def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None) -> None:
+def _historial_para_modelo(historial: list) -> list:
+    """Vista del historial para enviar al modelo: omite las imágenes de turnos
+    ya cerrados.
+
+    El modelo solo necesita ver los adjuntos del turno en curso (mientras
+    construye "un render como esta foto"); re-subirlos en cada paso de los turnos
+    siguientes solo dispara coste y latencia. Las imágenes siguen intactas en el
+    `historial` original, que es lo que consumen la interfaz y la sesión guardada.
+    """
+    ultimo_usuario = max(
+        (i for i, m in enumerate(historial) if m["tipo"] == "usuario"),
+        default=-1,
+    )
+    vista = []
+    for i, m in enumerate(historial):
+        if m["tipo"] == "usuario" and m.get("adjuntos") and i != ultimo_usuario:
+            m = {k: v for k, v in m.items() if k != "adjuntos"}
+        vista.append(m)
+    return vista
+
+
+def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None, adjuntos=None) -> None:
     """Procesa un turno completo del usuario.
 
     `emitir(evento: dict)` recibe eventos:
@@ -344,7 +394,10 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
     sistema = _sistema(conectados)
     herramientas = _herramientas(conectados)
 
-    historial.append({"tipo": "usuario", "texto": mensaje_usuario})
+    entrada = {"tipo": "usuario", "texto": mensaje_usuario}
+    if adjuntos:
+        entrada["adjuntos"] = adjuntos
+    historial.append(entrada)
     _recortar_historial(historial)
 
     for _ in range(MAX_PASOS):
@@ -354,7 +407,7 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
         _comprimir_resultados(historial)
         emitir({"tipo": "estado", "texto": "Pensando…"})
         try:
-            respuesta = proveedor.conversar(sistema, historial, herramientas)
+            respuesta = proveedor.conversar(sistema, _historial_para_modelo(historial), herramientas)
         except ErrorProveedor as exc:
             emitir({"tipo": "error", "texto": str(exc)})
             return

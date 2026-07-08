@@ -262,14 +262,45 @@ def cancelar():
     return {"ok": True}
 
 
+# Límites de adjuntos: la interfaz ya reduce las imágenes, pero validamos aquí
+# para no aceptar payloads gigantes ni tipos no soportados por los modelos.
+_MAX_ADJUNTOS = 12
+_MAX_BYTES_ADJUNTO = 8 * 1024 * 1024  # ~8 MB por imagen ya en base64
+
+
+def _sanear_adjuntos(bruto) -> list:
+    """Filtra la lista de adjuntos recibida: solo imágenes con base64 válido."""
+    import base64
+
+    limpios = []
+    for a in (bruto or []):
+        if len(limpios) >= _MAX_ADJUNTOS:
+            break
+        if not isinstance(a, dict):
+            continue
+        media = str(a.get("media_type") or "").lower()
+        datos = a.get("datos")
+        if not media.startswith("image/") or not isinstance(datos, str) or not datos:
+            continue
+        if len(datos) > _MAX_BYTES_ADJUNTO:
+            continue
+        try:
+            base64.b64decode(datos, validate=True)
+        except Exception:
+            continue
+        limpios.append({"media_type": media, "datos": datos})
+    return limpios
+
+
 @app.post("/api/chat")
 async def chat(peticion: Request):
     datos = await peticion.json()
     mensaje = (datos.get("mensaje") or "").strip()
+    adjuntos = _sanear_adjuntos(datos.get("adjuntos"))
 
     async def flujo():
-        if not mensaje:
-            yield _sse({"tipo": "error", "texto": "Escribe un mensaje primero."})
+        if not mensaje and not adjuntos:
+            yield _sse({"tipo": "error", "texto": "Escribe un mensaje o adjunta una imagen primero."})
             return
         if not _ocupado.acquire(blocking=False):
             yield _sse({"tipo": "error", "texto": "El asistente ya está trabajando en otra tarea. Espera a que termine."})
@@ -280,7 +311,7 @@ async def chat(peticion: Request):
 
         def trabajo():
             try:
-                ejecutar_turno(_historial, mensaje, cola.put, cancelado=_cancelar.is_set)
+                ejecutar_turno(_historial, mensaje, cola.put, cancelado=_cancelar.is_set, adjuntos=adjuntos)
             finally:
                 try:
                     sesiones.guardar(_sesion_id, _historial)

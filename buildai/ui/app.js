@@ -31,6 +31,7 @@ document.getElementById("icono-oauth-btn").innerHTML = svgIcono("globo");
 document.getElementById("icono-rasgo-construye").innerHTML = svgIcono("muros");
 document.getElementById("icono-rasgo-interiores").innerHTML = svgIcono("luces");
 document.getElementById("icono-rasgo-render").innerHTML = svgIcono("chispa");
+document.getElementById("btn-adjuntar").innerHTML = svgIcono("clip");
 
 // Encargos de ejemplo de la bienvenida: rellenan la caja para que el usuario
 // pueda ajustarlos antes de enviar
@@ -223,7 +224,24 @@ function agregarMensaje(tipo, contenido, opciones = {}) {
   d.className = "mensaje " + tipo;
   if (tipo === "usuario") {
     d.innerHTML = `<div class="burbuja"></div>`;
-    d.querySelector(".burbuja").textContent = contenido;
+    const burbuja = d.querySelector(".burbuja");
+    if (opciones.adjuntos && opciones.adjuntos.length) {
+      const cont = document.createElement("div");
+      cont.className = "adjuntos-mensaje";
+      for (const url of opciones.adjuntos) {
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "Imagen adjunta";
+        img.onclick = () => abrirLightbox(url, "adjunto.jpg");
+        cont.appendChild(img);
+      }
+      burbuja.appendChild(cont);
+    }
+    if (contenido) {
+      const p = document.createElement("div");
+      p.textContent = contenido;
+      burbuja.appendChild(p);
+    }
     transcripcion.push({ rol: "Tú", texto: contenido });
   } else if (tipo === "asistente") {
     d.innerHTML = `<div class="burbuja md">${md(contenido)}<button class="btn-copiar" title="Copiar respuesta"></button></div>`;
@@ -252,8 +270,8 @@ function agregarMensaje(tipo, contenido, opciones = {}) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function agregarMensajeUsuario(texto) {
-  agregarMensaje("usuario", texto);
+function agregarMensajeUsuario(texto, adjuntos) {
+  agregarMensaje("usuario", texto, { adjuntos });
 }
 
 /* ---------- Renders: imagen en el chat + visor ampliado ---------- */
@@ -355,6 +373,154 @@ function marcarDesarrollando() {
   e.querySelector(".chispa").innerHTML = svgIcono("herramienta");
 }
 
+/* ---------- Adjuntar imágenes y vídeos ---------- */
+
+// Reducimos las imágenes en el navegador antes de enviarlas: menos peso para
+// guardar la sesión y menos coste/tokens en los modelos de visión. 1568 px es
+// el lado máximo que aprovechan los modelos actuales sin perder detalle útil.
+const MAX_LADO = 1568;
+const CALIDAD_JPEG = 0.85;
+const FOTOGRAMAS_VIDEO = 4; // fotogramas repartidos que se extraen de un vídeo
+
+// Cada elemento: { url (data URL para la miniatura), kind, imagenes: [{media_type, datos}] }
+// Un vídeo es un solo elemento con varios fotogramas dentro de `imagenes`.
+let adjuntosPendientes = [];
+const inputArchivos = document.getElementById("input-archivos");
+
+function lienzoADataUrl(fuente, w, h) {
+  const escala = Math.min(1, MAX_LADO / Math.max(w, h));
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(w * escala));
+  c.height = Math.max(1, Math.round(h * escala));
+  c.getContext("2d").drawImage(fuente, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", CALIDAD_JPEG);
+}
+
+function procesarImagen(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const dataUrl = lienzoADataUrl(img, img.naturalWidth, img.naturalHeight);
+      resolve({ url: dataUrl, kind: "imagen", imagenes: [{ media_type: "image/jpeg", datos: dataUrl.split(",")[1] }] });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("no se pudo leer la imagen")); };
+    img.src = url;
+  });
+}
+
+function procesarVideo(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.muted = true;
+    video.preload = "auto";
+    // Salta a `t` y espera al nuevo fotograma. Si el navegador no dispara
+    // `seeked` (asignar el mismo tiempo no genera evento, o el contenedor no
+    // permite buscar), sigue tras un margen: así un vídeo raro no cuelga la
+    // carga de adjuntos para siempre.
+    const irA = (t) => new Promise((res) => {
+      let resuelto = false;
+      const fin = () => {
+        if (resuelto) return;
+        resuelto = true;
+        video.onseeked = null;
+        clearTimeout(reloj);
+        res();
+      };
+      const reloj = setTimeout(fin, 2000);
+      video.onseeked = fin;
+      video.currentTime = t;
+    });
+    video.onloadeddata = async () => {
+      const dur = isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+      const w = video.videoWidth, h = video.videoHeight;
+      const imagenes = [];
+      let portada = null;
+      try {
+        // Con duración desconocida no se puede repartir el muestreo: usamos el
+        // fotograma ya cargado en vez de buscar (buscar a 0 no dispara `seeked`).
+        const tiempos = dur
+          ? Array.from({ length: FOTOGRAMAS_VIDEO }, (_, i) => (dur * (i + 1)) / (FOTOGRAMAS_VIDEO + 1))
+          : [null];
+        for (const t of tiempos) {
+          if (t !== null) await irA(t);
+          const dataUrl = lienzoADataUrl(video, w, h);
+          if (!portada) portada = dataUrl;
+          imagenes.push({ media_type: "image/jpeg", datos: dataUrl.split(",")[1] });
+        }
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        reject(e);
+        return;
+      }
+      URL.revokeObjectURL(url);
+      resolve({ url: portada, kind: "video", imagenes });
+    };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("no se pudo leer el vídeo")); };
+    video.src = url;
+  });
+}
+
+async function agregarArchivos(files) {
+  for (const file of files) {
+    try {
+      if (file.type.startsWith("image/")) {
+        adjuntosPendientes.push(await procesarImagen(file));
+      } else if (file.type.startsWith("video/")) {
+        adjuntosPendientes.push(await procesarVideo(file));
+      } else {
+        continue;
+      }
+    } catch (e) {
+      agregarMensaje("error", lineaConIcono("advertencia",
+        `No pude leer «${file.name}»: ${e.message}. Prueba con otra imagen o vídeo (JPG, PNG, MP4).`));
+    }
+  }
+  renderAdjuntosPrevia();
+}
+
+function renderAdjuntosPrevia() {
+  const cont = document.getElementById("adjuntos-previa");
+  cont.innerHTML = "";
+  cont.classList.toggle("oculto", adjuntosPendientes.length === 0);
+  adjuntosPendientes.forEach((a, i) => {
+    const chip = document.createElement("div");
+    chip.className = "adjunto-chip";
+    chip.innerHTML = `<img alt="">
+      <span class="adjunto-marca">${svgIcono(a.kind === "video" ? "video" : "imagen")}</span>
+      <button type="button" class="adjunto-quitar" title="Quitar">${svgIcono("cerrar")}</button>`;
+    chip.querySelector("img").src = a.url;
+    chip.querySelector(".adjunto-quitar").onclick = () => {
+      adjuntosPendientes.splice(i, 1);
+      renderAdjuntosPrevia();
+    };
+    cont.appendChild(chip);
+  });
+}
+
+document.getElementById("btn-adjuntar").addEventListener("click", () => inputArchivos.click());
+inputArchivos.addEventListener("change", () => {
+  agregarArchivos(Array.from(inputArchivos.files || []));
+  inputArchivos.value = ""; // permite volver a elegir el mismo archivo
+});
+
+// Pegar (Ctrl+V) una imagen y arrastrar archivos sobre la caja también adjuntan
+entrada.addEventListener("paste", (e) => {
+  const files = Array.from(e.clipboardData?.files || []);
+  if (files.length) { e.preventDefault(); agregarArchivos(files); }
+});
+formulario.addEventListener("dragover", (e) => { e.preventDefault(); formulario.classList.add("arrastrando"); });
+formulario.addEventListener("dragleave", (e) => { if (e.target === formulario) formulario.classList.remove("arrastrando"); });
+formulario.addEventListener("drop", (e) => {
+  e.preventDefault();
+  formulario.classList.remove("arrastrando");
+  const files = Array.from(e.dataTransfer?.files || [])
+    .filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/"));
+  if (files.length) agregarArchivos(files);
+});
+
 /* ---------- Enviar mensaje ---------- */
 
 formulario.addEventListener("submit", (e) => {
@@ -364,7 +530,7 @@ formulario.addEventListener("submit", (e) => {
     return;
   }
   const texto = entrada.value.trim();
-  if (!texto) return;
+  if (!texto && !adjuntosPendientes.length) return;
   entrada.value = "";
   ajustarAltura();
   enviar(texto);
@@ -393,7 +559,13 @@ entrada.addEventListener("input", ajustarAltura);
 
 async function enviar(texto) {
   if (ocupado) return;
-  agregarMensajeUsuario(texto);
+  // Se toman los adjuntos preparados en la bandeja y se incorporan al mensaje.
+  const grupos = adjuntosPendientes;
+  const imagenesEnviar = grupos.flatMap((g) => g.imagenes);
+  const urlsPrevia = grupos.map((g) => g.url);
+  adjuntosPendientes = [];
+  renderAdjuntosPrevia();
+  agregarMensajeUsuario(texto, urlsPrevia);
 
   if (!estadoAnterior || !estadoAnterior.clave_configurada) {
     agregarMensaje("error", lineaConIcono("advertencia",
@@ -413,7 +585,7 @@ async function enviar(texto) {
     const r = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mensaje: texto }),
+      body: JSON.stringify({ mensaje: texto, adjuntos: imagenesEnviar }),
     });
     const reader = r.body.getReader();
     const dec = new TextDecoder();
@@ -542,13 +714,18 @@ function limpiarConversacion() {
   chat.querySelectorAll(".mensaje:not(.bienvenida)").forEach((m) => m.remove());
   document.querySelector(".bienvenida").classList.remove("oculto");
   transcripcion = [];
+  adjuntosPendientes = [];
+  renderAdjuntosPrevia();
 }
 
 function pintarConversacion(mensajes) {
   limpiarConversacion();
   document.querySelector(".bienvenida").classList.toggle("oculto", mensajes.length > 0);
   for (const ev of mensajes) {
-    if (ev.tipo === "usuario") agregarMensaje("usuario", ev.texto);
+    if (ev.tipo === "usuario") {
+      const urls = (ev.adjuntos || []).map((a) => `data:${a.media_type};base64,${a.datos}`);
+      agregarMensaje("usuario", ev.texto, { adjuntos: urls });
+    }
     else if (ev.tipo === "respuesta") agregarMensaje("asistente", ev.texto);
     else if (ev.tipo === "herramienta") agregarActividadHerramienta(ev);
     else if (ev.tipo === "render") agregarRender(ev.archivo);

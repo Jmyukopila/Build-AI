@@ -120,9 +120,15 @@
     </div>
 
     <form id="formulario">
-      <textarea id="entrada" rows="1"
-        placeholder="Pídeme una casa, un plano, un interior o un render… (Enter envía)"></textarea>
-      <button id="btn-enviar" type="submit" title="Enviar"></button>
+      <div id="adjuntos-previa" class="adjuntos-previa oculto"></div>
+      <div class="fila-entrada">
+        <input id="input-archivos" type="file" accept="image/*,video/*" multiple hidden>
+        <button id="btn-adjuntar" type="button" class="icono-btn"
+          title="Adjuntar fotos o vídeos"></button>
+        <textarea id="entrada" rows="1"
+          placeholder="Pídeme una casa, un plano, un interior o un render… (Enter envía)"></textarea>
+        <button id="btn-enviar" type="submit" title="Enviar"></button>
+      </div>
     </form>
   </main>
 

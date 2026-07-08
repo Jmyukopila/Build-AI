@@ -146,7 +146,10 @@ def para_ui(historial: list) -> list:
     eventos = []
     for m in historial:
         if m["tipo"] == "usuario":
-            eventos.append({"tipo": "usuario", "texto": m["texto"]})
+            evento = {"tipo": "usuario", "texto": m["texto"]}
+            if m.get("adjuntos"):
+                evento["adjuntos"] = m["adjuntos"]
+            eventos.append(evento)
         elif m["tipo"] == "resultado":
             for archivo in renders_en_resultado(m.get("contenido", "")):
                 eventos.append({"tipo": "render", "archivo": archivo})
