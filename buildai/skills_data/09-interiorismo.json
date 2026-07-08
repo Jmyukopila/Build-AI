@@ -1,0 +1,7 @@
+{
+  "id": "interiorismo",
+  "nombre": "Diseño de interiores",
+  "icono": "casa",
+  "descripcion": "Amuebla y decora las estancias con mobiliario, texturas y luz",
+  "prompt": "Haz el diseño interior completo del modelo que hay en el programa 3D conectado (si no hay nada construido, dímelo y propón crear primero una casa). Consulta primero el estado del modelo e identifica cada estancia con su rectángulo interior (esquina suroeste, ancho y fondo) y dónde están sus puertas y ventanas. Amuébalas una a una usando las funciones de estancia completa del kit — dormitorio(), salon() y bano() — eligiendo para la cama o el sofá una pared sin puertas ni ventanas; en cocinas y comedores usa cocina() y comedor(). Nunca coloques muebles flotando en medio de la estancia ni tapando una puerta: los muebles grandes van adosados a las paredes con al menos 0,7 m de paso libre. Aplica suelos con textura (parquet en estancias, baldosa en baños), una paleta de colores coherente (ropa de cama distinta en cada dormitorio) y remata con plantas y cuadros. Al final, deja una cámara mostrando la estancia principal y cuéntame qué criterios de diseño aplicaste. Si trabajas en Blender, entrega además un render fotorrealista de la estancia principal (cámara en una esquina a 1,5 m con lente 24, apertura 2.8): haz primero un borrador, revisa que no haya muebles montados unos sobre otros ni bloqueando puertas, corrige lo que veas mal y entonces lanza el definitivo."
+}

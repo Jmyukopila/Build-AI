@@ -1,0 +1,7 @@
+{
+  "id": "casa-moderna",
+  "nombre": "Casa moderna completa",
+  "icono": "casa",
+  "descripcion": "Vivienda de dos plantas con ventanales, piscina, jardín y render final",
+  "prompt": "Diseña y construye una casa moderna completa de dos plantas en el programa 3D conectado. Programa orientativo: planta baja de unos 12 × 9 metros con salón-comedor con ventanal al jardín, cocina, aseo y escalera; planta primera con 3 dormitorios, 2 baños y una terraza con barandilla sobre un voladizo. Cubierta plana con peto y combinación de materiales blanco y madera. Amuebla al menos el salón y un dormitorio para que se vean tras los vidrios, y enciende todas las luces interiores (focos empotrados y lámparas). Termina el conjunto con: terreno con césped, piscina de unos 7 × 3,5 metros con tumbonas, árboles y arbustos con focos de jardín, cielo de atardecer y una cámara a la altura de una persona mirando la fachada del jardín. Si trabajas en Blender, entrega un render fotorrealista: primero en calidad borrador para comprobar el encuadre y después el definitivo en calidad alta. Trabaja por fases (cuéntame el programa antes de empezar a construir) y organiza cada planta en su propia capa."
+}

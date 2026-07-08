@@ -13,6 +13,11 @@ dist/
 venv/
 env/
 
+# Empaquetado del instalador (generado por build_installer.ps1)
+build_pkg/dist/
+build_pkg/work/
+build_pkg/Output/
+
 # Editores / SO
 .vscode/
 .idea/

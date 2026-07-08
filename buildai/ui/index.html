@@ -12,7 +12,13 @@
 
   <aside id="lateral" class="oculto">
     <div class="marca">
-      <img class="logo-plate" src="/ui/assets/logo.png" alt="BuildAI — Asistente de IA para arquitectos">
+      <div class="marca-emblema">
+        <img class="logo-plate" src="/ui/assets/icono-marca.png" alt="">
+      </div>
+      <div class="marca-textos">
+        <span class="marca-titulo">BUILD&nbsp;AI</span>
+        <span class="marca-sub">Asistente de IA para arquitectos</span>
+      </div>
     </div>
 
     <div class="tabs-lateral" data-tab-activo="programas" role="tablist">
@@ -66,28 +72,56 @@
 
     <div id="chat">
       <div class="mensaje asistente bienvenida">
-        <div class="burbuja">
-          <strong>Hola, soy BuildAI.</strong><br><br>
-          Puedo trabajar dentro de <b>Revit, AutoCAD, SketchUp y Blender</b> por ti:
-          crear muros, dibujar plantas, modelar volúmenes, organizar capas…
-          Solo tienes que pedírmelo con tus palabras, sin tecnicismos.<br><br>
-          <b>Para empezar:</b>
-          <ol class="pasos-bienvenida">
-            <li>Pulsa <b>Ajustes de IA</b> (icono de engranaje arriba) y elige proveedor:
-              OpenRouter y OpenCode Zen son gratis con clave, y Ollama es gratis y 100% local.</li>
-            <li>Abre tu programa de arquitectura y conéctalo (icono de ayuda junto a su nombre).</li>
-            <li>Escríbeme abajo lo que necesitas, por ejemplo:
-              <em>"Crea en Blender una casa sencilla de una planta de 10×8 metros"</em>.</li>
-          </ol>
-          <p class="nota-bienvenida">¿Dudas para conectar un programa? Consulta el
-            <a href="/manual" target="_blank" rel="noopener">manual de conexión</a>.</p>
+        <div class="burbuja hero-bienvenida">
+          <h1 class="hero-titulo">Tu estudio de arquitectura con IA</h1>
+          <p class="hero-sub">Construyo, amueblo y renderizo por ti dentro de
+            <b>Blender, Revit, AutoCAD y SketchUp</b>. Pídemelo con tus palabras,
+            sin código ni tecnicismos.</p>
+
+          <div class="tarjetas-rasgos">
+            <div class="rasgo">
+              <span class="icono" id="icono-rasgo-construye"></span>
+              <b>Construye</b>
+              <small>Casas y edificios completos, planta a planta</small>
+            </div>
+            <div class="rasgo">
+              <span class="icono" id="icono-rasgo-interiores"></span>
+              <b>Amuebla e ilumina</b>
+              <small>Interiores con mobiliario, texturas y luz</small>
+            </div>
+            <div class="rasgo">
+              <span class="icono" id="icono-rasgo-render"></span>
+              <b>Renderiza</b>
+              <small>Imágenes fotorrealistas directas al chat</small>
+            </div>
+          </div>
+
+          <p class="hero-prueba">Prueba con uno de estos encargos:</p>
+          <div class="chips-ejemplo">
+            <button type="button" class="chip"
+              data-ejemplo="Crea una casa moderna de dos plantas con piscina y jardín, y enséñamela con un render fotorrealista al atardecer">
+              🌇 Casa moderna con piscina + render</button>
+            <button type="button" class="chip"
+              data-ejemplo="Haz el diseño interior del salón: sofá, alfombra, mesa de centro, televisor, cuadros e iluminación cálida en capas">
+              🛋️ Interiorismo del salón</button>
+            <button type="button" class="chip"
+              data-ejemplo="Dibuja en AutoCAD la planta acotada de una vivienda de 90 m² con dos dormitorios, por capas">
+              📐 Planta acotada en AutoCAD</button>
+            <button type="button" class="chip"
+              data-ejemplo="Levanta en Revit los niveles y muros de una vivienda de dos plantas con elementos BIM nativos">
+              🧱 Muros BIM en Revit</button>
+          </div>
+
+          <p class="nota-bienvenida">Primer uso: elige tu IA en <b>Ajustes</b> (engranaje,
+            arriba a la derecha) y conecta tu programa desde el panel <b>Programas</b>.
+            ¿Dudas? <a href="/manual" target="_blank" rel="noopener">Manual de conexión</a>.</p>
         </div>
       </div>
     </div>
 
     <form id="formulario">
       <textarea id="entrada" rows="1"
-        placeholder="Escribe aquí lo que necesitas… (Enter para enviar, Mayús+Enter para nueva línea)"></textarea>
+        placeholder="Pídeme una casa, un plano, un interior o un render… (Enter envía)"></textarea>
       <button id="btn-enviar" type="submit" title="Enviar"></button>
     </form>
   </main>
@@ -167,6 +201,15 @@
         <button id="btn-conectar-auto"></button>
         <button id="btn-cerrar-ayuda" class="secundario">Cerrar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Visor de renders a pantalla completa -->
+  <div id="lightbox" class="modal lightbox oculto">
+    <img id="lightbox-img" alt="Render ampliado">
+    <div class="lightbox-acciones">
+      <a id="lightbox-descargar" class="boton-lightbox" download title="Descargar la imagen">Descargar</a>
+      <button id="btn-x-lightbox" class="boton-lightbox" title="Cerrar (Esc)">Cerrar</button>
     </div>
   </div>
 

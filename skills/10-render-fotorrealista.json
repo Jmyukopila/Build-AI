@@ -1,0 +1,7 @@
+{
+  "id": "render-fotorrealista",
+  "nombre": "Render fotorrealista",
+  "icono": "chispa",
+  "descripcion": "Ilumina, ambienta y renderiza el modelo actual como una foto de revista",
+  "prompt": "Produce un render fotorrealista del modelo actual de Blender, como una fotografía de revista de arquitectura al atardecer. Consulta primero el estado de la escena y viste lo que falte: materiales con textura, terreno con césped, vegetación (árboles, arbustos con focos de jardín) y mobiliario visible tras los vidrios. Enciende TODAS las luces interiores (focos empotrados en retícula en cada estancia, lámparas de pie y colgantes). Pon cielo de atardecer y una cámara a la altura de una persona (1,6-2 m) que encuadre bien la fachada principal. Haz primero un render en calidad borrador para comprobar el encuadre, corrige lo que se vea mal y entrega el definitivo en calidad alta. Al final, cuéntame en 2-3 frases qué decisiones de iluminación y encuadre tomaste."
+}

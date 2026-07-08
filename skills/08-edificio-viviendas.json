@@ -1,0 +1,7 @@
+{
+  "id": "edificio-viviendas",
+  "nombre": "Edificio de viviendas",
+  "icono": "tarea",
+  "descripcion": "Bloque residencial de varias plantas con estructura, núcleo y fachadas",
+  "prompt": "Diseña y construye en el programa 3D conectado un edificio residencial de planta baja + 4 plantas tipo + ático retranqueado, sobre una parcela de unos 20 × 15 metros. Incluye: retícula de pilares, forjados de todas las plantas, núcleo de escalera, planta baja más alta con portal acristalado, fachada principal con huecos alineados en vertical y balcones con barandilla, ático con terraza y cubierta plana con peto. Organiza cada planta en su propia capa, cuéntame el programa y las alturas antes de empezar, y termina con terreno, sol y una cámara que muestre bien el edificio. Si trabajas en Blender, remata con cielo de atardecer, las luces del portal y las viviendas encendidas, y un render fotorrealista del edificio (borrador para comprobar y luego calidad alta)."
+}

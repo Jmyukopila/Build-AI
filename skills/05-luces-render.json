@@ -1,7 +1,7 @@
 {
   "id": "luces-render",
-  "nombre": "Preparar escena para render",
+  "nombre": "Iluminar la escena",
   "icono": "luces",
-  "descripcion": "Añade sol, cámara y materiales básicos en Blender",
-  "prompt": "Prepara la escena de Blender para un render arquitectónico: añade una luz de sol con ángulo natural de tarde, un cielo básico, una cámara a la altura de los ojos (1,65 m) mirando al edificio, y asigna materiales neutros a los objetos que no tengan material. No lances el render, solo deja todo preparado."
+  "descripcion": "Enciende luces, cielo y cámara en Blender sin lanzar el render",
+  "prompt": "Prepara la escena de Blender para renderizar, sin lanzar todavía el render: pon un cielo físico de tarde con su sol, enciende las luces interiores que falten (focos empotrados en retícula en cada estancia con techo y lámparas donde tenga sentido), añade focos de jardín si hay vegetación, asigna materiales con textura a los objetos que no tengan, y deja una cámara a la altura de los ojos (1,65 m) encuadrando bien el edificio. Al final dime qué has preparado y que puedo pedirte el render cuando quiera."
 }

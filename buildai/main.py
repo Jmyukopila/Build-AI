@@ -1,27 +1,38 @@
-"""Servidor local de BuildAI: API + interfaz web.
+"""Servidor local de BuildAI: API + interfaz web, mostrada en una ventana nativa.
 
-Arranque:  python -m buildai.main   (o INICIAR.bat)
-Interfaz:  http://127.0.0.1:8600
+Arranque:  python -m buildai.main   (o el acceso directo «BuildAI»)
+Interfaz:  http://127.0.0.1:8600  (servida dentro de la ventana, no en el navegador)
 """
 
 import asyncio
 import json
+import os
 import queue
+import sys
 import threading
+import time
+import urllib.request
 import webbrowser
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+
+# Empaquetado con PyInstaller en modo ventana (--noconsole): no hay stdout/stderr
+# real y las llamadas a print() revientan con AttributeError sobre None.
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
 
 from . import config as cfg
 from . import instalador
 from . import modelos as catalogo_modelos
 from . import sesiones
-from .agent import ejecutar_turno
+from .agent import CARPETA_RENDERS, ejecutar_turno
 from .connectors import CONECTORES
 from .skills import cargar_skills
 
@@ -46,6 +57,20 @@ def portada():
 @app.get("/manual")
 def manual():
     return FileResponse(CARPETA_UI / "manual.html")
+
+
+@app.get("/api/renders/{nombre}")
+def ver_render(nombre: str):
+    """Sirve un render generado por Blender. Solo nombres simples de archivo
+    dentro de la carpeta de renders (el nombre viene de eventos propios, pero
+    se valida igualmente para que no pueda salir de esa carpeta)."""
+    ruta = CARPETA_RENDERS / nombre
+    if (
+        "/" in nombre or "\\" in nombre or nombre.startswith(".")
+        or ruta.suffix.lower() != ".png" or not ruta.is_file()
+    ):
+        return Response(status_code=404)
+    return FileResponse(ruta, media_type="image/png")
 
 
 def _disponible_seguro(conector) -> bool:
@@ -286,17 +311,55 @@ def _sse(evento: dict) -> str:
 app.mount("/ui", StaticFiles(directory=CARPETA_UI), name="ui")
 
 
+def _esperar_servidor(timeout: float = 15.0) -> bool:
+    """Espera a que uvicorn responda antes de abrir la ventana, para no mostrar
+    una pantalla en blanco mientras arranca."""
+    limite = time.monotonic() + timeout
+    url = f"http://127.0.0.1:{PUERTO}"
+    while time.monotonic() < limite:
+        try:
+            urllib.request.urlopen(url, timeout=0.5)
+            return True
+        except Exception:
+            time.sleep(0.2)
+    return False
+
+
 def arrancar():
     aviso = instalador.aviso_instalacion_arriesgada()
     if aviso:
         print()
         print("  [AVISO] " + aviso.replace("\n", "\n          "))
-    print()
-    print("  BuildAI esta en marcha")
-    print(f"  Abre en tu navegador:  http://127.0.0.1:{PUERTO}")
-    print()
-    threading.Timer(1.0, lambda: webbrowser.open(f"http://127.0.0.1:{PUERTO}")).start()
-    uvicorn.run(app, host="127.0.0.1", port=PUERTO, log_level="warning")
+
+    hilo_servidor = threading.Thread(
+        target=lambda: uvicorn.run(app, host="127.0.0.1", port=PUERTO, log_level="warning"),
+        daemon=True,
+    )
+    hilo_servidor.start()
+    _esperar_servidor()
+
+    try:
+        import webview
+    except ImportError:
+        # Sin pywebview instalado (p. ej. entorno de desarrollo mínimo):
+        # el navegador es la vía de emergencia, no la experiencia normal.
+        print()
+        print("  BuildAI esta en marcha (sin ventana nativa: falta pywebview)")
+        print(f"  Abre en tu navegador:  http://127.0.0.1:{PUERTO}")
+        print()
+        webbrowser.open(f"http://127.0.0.1:{PUERTO}")
+        hilo_servidor.join()
+        return
+
+    icono = CARPETA_UI / "assets" / "buildai.ico"
+    webview.create_window(
+        "BuildAI",
+        f"http://127.0.0.1:{PUERTO}",
+        width=1280,
+        height=820,
+        min_size=(960, 640),
+    )
+    webview.start(icon=str(icono) if icono.exists() else None)
 
 
 if __name__ == "__main__":

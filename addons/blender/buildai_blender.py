@@ -15,7 +15,7 @@ archivo y activar la casilla "BuildAI Bridge".
 bl_info = {
     "name": "BuildAI Bridge",
     "author": "BuildAI",
-    "version": (1, 1, 0),
+    "version": (1, 2, 0),
     "blender": (2, 80, 0),
     "location": "Se ejecuta en segundo plano",
     "description": "Permite que BuildAI controle Blender desde la app local",
@@ -100,10 +100,16 @@ def _atender_cliente(conexion: socket.socket):
                 return
             datos += trozo
         peticion = json.loads(datos.decode("utf-8"))
+        # Los renders pueden tardar varios minutos: la petición indica cuánto esperar
+        try:
+            espera = min(max(float(peticion.get("timeout") or 120.0), 10.0), 1800.0)
+        except (TypeError, ValueError):
+            espera = 120.0
+        conexion.settimeout(espera + 15.0)
         respuesta: dict = {}
         listo = threading.Event()
         _trabajos.put((peticion, respuesta, listo))
-        if not listo.wait(timeout=125.0):
+        if not listo.wait(timeout=espera):
             respuesta = {"ok": False, "error": "Tiempo de espera agotado en Blender."}
         conexion.sendall((json.dumps(respuesta) + "\n").encode("utf-8"))
     except Exception:

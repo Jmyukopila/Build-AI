@@ -2,21 +2,33 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --fondo: #17181b;
-  --panel: #1e2024;
-  --panel-suave: #25272c;
-  --borde: #35383f;
+  --fondo: #15171b;
+  --panel: #1d2024;
+  --panel-suave: #24272c;
+  --borde: #3a3e46;
   --texto: #edf0f4;
   --texto-suave: #9ba1aa;
-  --acento: #2f8fd0;
-  --acento-suave: rgba(47, 143, 208, 0.14);
-  --acento-oscuro: #58b3ea;
-  --glow: rgba(88, 179, 234, 0.5);
+  --acento: #4a90c4;
+  --acento-suave: rgba(74, 144, 196, 0.14);
+  --acento-oscuro: #7fc0ee;
+  --glow: rgba(127, 192, 238, 0.5);
   --verde: #34d399;
   --rojo: #f87171;
   --rojo-suave: rgba(248, 113, 113, 0.12);
   --ambar: #fbbf24;
   --ambar-suave: rgba(251, 191, 36, 0.12);
+  /* Paleta metálica: bandas frías tipo acero cepillado, usadas como veta
+     sobre los paneles y como base de los botones/bordes */
+  --metal-clara: #aeb8c4;
+  --metal-media: #5b6572;
+  --metal-oscura: #2a2e35;
+  --metal-veta: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0) 28%,
+    rgba(255, 255, 255, 0.035) 52%,
+    rgba(255, 255, 255, 0) 78%,
+    rgba(255, 255, 255, 0.06) 100%);
+  --metal-borde: linear-gradient(155deg, #7c8896, #3a3e46 45%, #565f6b 100%);
   --sombra: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.4);
   --sombra-modal: 0 24px 60px rgba(0, 0, 0, 0.6);
   --radio: 12px;
@@ -27,7 +39,9 @@ html, body { height: 100%; }
 body {
   display: flex;
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-  background: radial-gradient(1100px 700px at 12% -10%, #1f2933 0%, var(--fondo) 55%);
+  background:
+    radial-gradient(1100px 700px at 12% -10%, #232a32 0%, transparent 55%),
+    linear-gradient(165deg, #191c21 0%, var(--fondo) 45%, #1a1d22 100%);
   color: var(--texto);
 }
 
@@ -72,7 +86,7 @@ body {
 #lateral {
   width: 300px;
   min-width: 300px;
-  background: var(--panel);
+  background: var(--metal-veta), var(--panel);
   border-right: 1px solid var(--borde);
   display: flex;
   flex-direction: column;
@@ -82,17 +96,55 @@ body {
 }
 
 .marca {
-  padding: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 2px 16px;
   margin-bottom: 12px;
   border-bottom: 1px solid var(--borde);
 }
+/* El arte original es un mockup fotorrealista (chapa metálica sobre una
+   pared de textura). En vez de estirarlo a un cartel grande -que se lee
+   como una foto pegada y pierde nitidez al ampliarse-, se reduce a un
+   emblema pequeño y nítido, y el nombre se compone con texto real (vector,
+   siempre nítido) al lado, como una marca normal. */
+.marca-emblema {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 38%, #333a44, #1a1d22 78%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 0 1px var(--borde);
+}
 .logo-plate {
-  display: block;
-  width: 100%;
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 150%;
   height: auto;
-  border-radius: 10px;
-  border: 1px solid var(--borde);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, var(--sombra);
+  transform: translate(-50%, -50%);
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 44%, transparent 76%);
+  mask-image: radial-gradient(circle at 50% 42%, #000 44%, transparent 76%);
+  filter: contrast(1.05) saturate(1.1);
+}
+.marca-textos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.marca-titulo {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  background: linear-gradient(120deg, var(--metal-clara) 0%, #fff 28%, var(--metal-media) 52%, var(--acento-oscuro) 78%, var(--metal-clara) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.marca-sub {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--texto-suave);
 }
 
 /* ---------- Pestañas del panel lateral (sustituyen a los desplegables) ---------- */
@@ -104,7 +156,7 @@ body {
   margin-bottom: 12px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--panel-suave);
+  background: var(--metal-veta), var(--panel-suave);
   flex-shrink: 0;
 }
 .tab-realce {
@@ -113,8 +165,8 @@ body {
   width: calc(33.333% - 4px);
   height: calc(100% - 8px);
   border-radius: 8px;
-  background: var(--acento);
-  box-shadow: 0 0 14px -2px var(--glow);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--acento) 80%, white 20%), var(--acento) 60%, color-mix(in srgb, var(--acento) 80%, black 20%));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 14px -2px var(--glow);
   transition: transform 240ms cubic-bezier(.4, 0, .2, 1);
 }
 .tabs-lateral[data-tab-activo="skills"] .tab-realce { transform: translateX(100%); }
@@ -211,7 +263,7 @@ body {
   padding: 9px 10px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--panel);
+  background: var(--metal-veta), var(--panel);
   transition: border-color var(--transicion), box-shadow var(--transicion);
 }
 .programa:hover { border-color: color-mix(in srgb, var(--acento) 40%, var(--borde)); box-shadow: var(--sombra); }
@@ -234,15 +286,16 @@ body {
   padding: 10px 11px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--panel);
+  background: var(--metal-veta), var(--panel);
   cursor: pointer;
   font-size: 13px;
   line-height: 1.35;
   color: var(--texto);
   width: 100%;
+  transition: border-color var(--transicion), background var(--transicion), transform var(--transicion);
 }
 .skill .icono { color: var(--acento); margin-top: 1px; }
-.skill:hover { border-color: var(--acento); background: var(--acento-suave); }
+.skill:hover { border-color: var(--acento); background: var(--acento-suave); transform: translateY(-1px); }
 .skill small { display: block; color: var(--texto-suave); font-size: 11px; font-weight: 400; margin-top: 2px; }
 
 .pie-lateral {
@@ -258,6 +311,7 @@ body {
   padding: 9px;
   border: 1px solid var(--borde);
   border-radius: 10px;
+  background: var(--metal-veta);
   cursor: pointer;
   transition: background var(--transicion), color var(--transicion), border-color var(--transicion);
 }
@@ -292,19 +346,23 @@ button {
   font-size: 14px;
   padding: 9px 14px;
   border-radius: 10px;
-  border: none;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--acento) 85%, white 15%), var(--acento));
+  border: 1px solid color-mix(in srgb, var(--acento) 45%, #2a2e35);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--acento) 88%, white 12%), var(--acento) 55%, color-mix(in srgb, var(--acento) 82%, black 18%));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 1px rgba(0, 0, 0, 0.25), var(--sombra);
   color: white;
   cursor: pointer;
-  transition: background var(--transicion), box-shadow var(--transicion);
+  transition: background var(--transicion), box-shadow var(--transicion), filter var(--transicion);
 }
-button:hover { background: var(--acento-oscuro); box-shadow: 0 0 0 3px var(--acento-suave); }
+button:hover { filter: brightness(1.08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 0 3px var(--acento-suave); }
 button.secundario {
-  background: transparent;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 40%), transparent;
   color: var(--texto);
   border: 1px solid var(--borde);
+  box-shadow: none;
 }
-button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
+button.secundario:hover { background: var(--panel-suave); box-shadow: none; filter: none; }
 
 /* ---------- Zona principal ---------- */
 #principal {
@@ -321,7 +379,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
   gap: 10px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--borde);
-  background: var(--panel);
+  background: var(--metal-veta), var(--panel);
   box-shadow: var(--sombra);
   z-index: 5;
 }
@@ -388,13 +446,80 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
   color: var(--texto-suave);
 }
 .pasos-bienvenida { margin: 8px 0 0 18px; display: flex; flex-direction: column; gap: 6px; }
+
+/* ---------- Bienvenida (héroe) ---------- */
+.hero-bienvenida { max-width: min(86%, 680px); padding: 20px 22px; white-space: normal; }
+.hero-titulo {
+  font-size: 22px;
+  line-height: 1.25;
+  margin-bottom: 6px;
+  background: linear-gradient(92deg, #eaf4fc 10%, var(--acento-oscuro) 55%, #9ad1f5 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-sub { color: var(--texto-suave); font-size: 14px; line-height: 1.55; }
+.tarjetas-rasgos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+.rasgo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--panel-suave);
+  font-size: 13px;
+  transition: border-color var(--transicion), transform var(--transicion);
+}
+.rasgo:hover { border-color: color-mix(in srgb, var(--acento) 45%, var(--borde)); transform: translateY(-1px); }
+.rasgo .icono { color: var(--acento); margin-bottom: 3px; }
+.rasgo .icono svg { width: 17px; height: 17px; }
+.rasgo small { color: var(--texto-suave); font-size: 11.5px; line-height: 1.4; }
+.hero-prueba {
+  margin-top: 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--texto-suave);
+}
+.chips-ejemplo { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+.chip {
+  padding: 7px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--panel-suave);
+  color: var(--texto);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--transicion), background var(--transicion), transform var(--transicion);
+}
+.chip:hover {
+  border-color: var(--acento);
+  background: var(--acento-suave);
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+@media (max-width: 720px) {
+  .tarjetas-rasgos { grid-template-columns: 1fr; }
+  .hero-bienvenida { max-width: 92%; }
+}
 .mensaje.usuario .burbuja {
-  background: var(--acento);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 45%),
+    linear-gradient(165deg, color-mix(in srgb, var(--acento) 85%, white 15%), var(--acento) 60%, color-mix(in srgb, var(--acento) 78%, black 22%));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), var(--sombra);
   color: white;
   border-bottom-right-radius: 4px;
 }
 .mensaje.asistente .burbuja {
-  background: var(--panel);
+  background: var(--metal-veta), var(--panel);
   border: 1px solid var(--borde);
   border-bottom-left-radius: 4px;
   box-shadow: var(--sombra);
@@ -422,21 +547,27 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
   max-height: 160px;
   color: inherit;
 }
-/* Indicador de trabajo: chispa animada estilo Claude + estado + tiempo */
+/* Indicador de trabajo: dos fases visualmente distintas.
+   "Pensando" -> chispa girando + puntos que laten.
+   "Desarrollando" -> icono de herramienta girando en verde + barra de
+   progreso indeterminada, para dejar claro que ya está actuando sobre
+   el programa (Blender/Revit/AutoCAD/SketchUp) y no solo razonando. */
 .escribiendo .burbuja {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-bottom: 15px;
+  position: relative;
   color: var(--texto-suave);
+  transition: border-color 260ms ease, box-shadow 260ms ease;
 }
 .chispa {
   display: inline-flex;
   color: var(--acento);
   flex-shrink: 0;
 }
-.chispa svg {
-  width: 18px;
-  height: 18px;
+.chispa svg { width: 18px; height: 18px; }
+.escribiendo.pensando .chispa svg {
   animation: chispa-girar 1.8s ease-in-out infinite;
 }
 @keyframes chispa-girar {
@@ -444,12 +575,82 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
   50%  { transform: rotate(180deg) scale(1.2); opacity: 1; }
   100% { transform: rotate(360deg) scale(0.9); opacity: 0.7; }
 }
+.escribiendo.desarrollando .chispa { color: var(--verde); }
+.escribiendo.desarrollando .chispa svg {
+  animation: herramienta-girar 1s linear infinite;
+}
+@keyframes herramienta-girar {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.escribiendo.desarrollando .burbuja {
+  border-color: color-mix(in srgb, var(--verde) 35%, var(--borde));
+  box-shadow: var(--sombra), 0 0 0 1px color-mix(in srgb, var(--verde) 16%, transparent);
+}
 .estado-texto { line-height: 1.4; }
 .tiempo-estado {
   font-size: 12px;
   opacity: 0.7;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+/* Puntos que laten mientras "piensa" */
+.puntos-latido { display: inline-flex; gap: 3px; margin-left: 1px; }
+.puntos-latido span {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  animation: punto-latido 1.2s ease-in-out infinite;
+}
+.puntos-latido span:nth-child(2) { animation-delay: 0.15s; }
+.puntos-latido span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes punto-latido {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+}
+.escribiendo.desarrollando .puntos-latido { display: none; }
+
+/* Barra de progreso indeterminada, solo visible al desarrollar */
+.barra-progreso {
+  display: none;
+  position: absolute;
+  left: 14px; right: 14px; bottom: 7px;
+  height: 2px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--verde) 16%, transparent);
+}
+.escribiendo.desarrollando .barra-progreso { display: block; }
+.barra-progreso-relleno {
+  position: absolute;
+  top: 0; bottom: 0; width: 35%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--verde), transparent);
+  animation: barra-desliza 1.1s ease-in-out infinite;
+}
+@keyframes barra-desliza {
+  0%   { left: -35%; }
+  100% { left: 100%; }
+}
+
+/* Transición arcoíris al terminar una respuesta: un barrido de color que
+   se disuelve de vuelta al color de texto normal, como remate visual de
+   que la tarea ha terminado. */
+.burbuja.md.arcoiris {
+  background-image: linear-gradient(90deg,
+    #ff6b6b, #ffb347, #ffe66d, #6bff8e, #4dd8ff, #a06bff, #ff6b6b);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: arcoiris-barrido 1.3s cubic-bezier(.4, 0, .2, 1) 1;
+}
+@keyframes arcoiris-barrido {
+  0%   { background-position: 0% 50%; }
+  85%  { background-position: 220% 50%; }
+  100% { background-position: 260% 50%; }
 }
 
 .nota-bienvenida { margin-top: 10px; font-size: 13px; color: var(--texto-suave); }
@@ -490,7 +691,8 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
 }
 .modal.oculto { display: none; }
 .modal-caja {
-  background: var(--panel);
+  background: var(--metal-veta), var(--panel);
+  border: 1px solid var(--borde);
   border-radius: 16px;
   padding: 24px;
   width: min(520px, 92vw);
@@ -508,7 +710,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
 .seccion-ajustes {
   border: 1px solid var(--borde);
   border-radius: var(--radio);
-  background: var(--panel-suave);
+  background: var(--metal-veta), var(--panel-suave);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -576,7 +778,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
   padding-right: 4px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--panel);
+  background: var(--metal-veta), var(--panel);
   transition: border-color var(--transicion), background var(--transicion);
 }
 .sesion:hover { border-color: var(--acento); }
@@ -633,6 +835,65 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; }
 .btn-copiar:hover { color: var(--acento); background: var(--panel); }
 
 .mensaje.oculto { display: none; }
+
+/* ---------- Renders en el chat ---------- */
+.mensaje.render .burbuja-render {
+  max-width: min(78%, 760px);
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--sombra);
+}
+.imagen-render {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  cursor: zoom-in;
+  transition: filter var(--transicion);
+}
+.imagen-render:hover { filter: brightness(1.06); }
+.pie-render {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 6px 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+.pie-render span { display: inline-flex; align-items: center; gap: 6px; }
+.pie-render svg { width: 13px; height: 13px; color: var(--acento); }
+
+.lightbox {
+  flex-direction: column;
+  gap: 14px;
+  background: rgba(8, 10, 14, 0.88);
+  backdrop-filter: blur(6px);
+  cursor: zoom-out;
+}
+.lightbox img {
+  max-width: 94vw;
+  max-height: 86vh;
+  border-radius: 10px;
+  box-shadow: var(--sombra-modal);
+  animation: aparecer 160ms ease both;
+}
+.lightbox-acciones { display: flex; gap: 10px; }
+.boton-lightbox {
+  padding: 8px 18px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--texto);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.boton-lightbox:hover { border-color: var(--acento); color: var(--acento); background: var(--acento-suave); box-shadow: none; }
 
 /* ---------- Responsive: panel lateral como overlay ---------- */
 @media (max-width: 860px) {

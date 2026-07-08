@@ -15,6 +15,19 @@ Todo se ejecuta **en tu ordenador**: tus claves y tus modelos no salen de él
 ## 🚀 Puesta en marcha (5 minutos)
 
 ### 1. Instalar (solo la primera vez)
+
+**Opción recomendada: instalador `BuildAI-Setup.exe`**
+
+No necesitas tener Python instalado. Ejecuta `BuildAI-Setup.exe` y sigue el
+asistente (dos clics, sin pedir permisos de administrador): instala BuildAI en
+tu carpeta de usuario y crea accesos directos en el **Menú Inicio** y, si lo
+marcas, en el **Escritorio** — igual que instalar cualquier otro programa.
+Incluye un desinstalador normal en *Agregar o quitar programas*.
+
+Si no tienes ya ese instalador, cualquiera con el código fuente puede
+generarlo en un paso — ver [Generar el instalador](#-generar-el-instalador-buildai-setupexe).
+
+**Alternativa: desde el código fuente (requiere Python)**
 1. Instala [Python 3.11+](https://www.python.org/downloads/) marcando
    **"Add Python to PATH"**.
 2. Haz doble clic en **`INSTALAR.bat`**.
@@ -26,8 +39,10 @@ directo "BuildAI" en el escritorio**.
 > GitHub: mira [Instalar desde terminal](#-instalar-desde-terminal-pip--pipx--uv).
 
 ### 2. Arrancar
-Haz doble clic en el acceso directo **BuildAI** del escritorio (o en
-`INICIAR.bat`). Se abrirá la interfaz en tu navegador (`http://127.0.0.1:8600`).
+Haz doble clic en el acceso directo **BuildAI** (Escritorio o Menú Inicio, o
+`INICIAR.bat` si vienes del código fuente). Se abre una **ventana propia de la
+aplicación** — como VS Code o Excel, no una pestaña del navegador — con la
+interfaz servida internamente en `http://127.0.0.1:8600`.
 
 ### 3. Configurar la IA
 Pulsa **⚙️ Ajustes de IA** y elige proveedor:
@@ -97,7 +112,7 @@ aplicación en su propio entorno aislado, como hace `npx`/`npm -g` en Node:
 :: con pipx  (pip install pipx, una sola vez)
 pipx install git+https://github.com/Jmyukopila/Build-AI.git
 buildai-instalar   :: instala los puentes y el acceso directo del escritorio
-buildai            :: arranca y abre el navegador
+buildai            :: arranca y abre la ventana de la app
 
 :: o con uv, incluso sin instalar nada (equivalente a npx):
 uvx --from git+https://github.com/Jmyukopila/Build-AI.git buildai
@@ -120,7 +135,7 @@ pip install git+https://github.com/Jmyukopila/Build-AI.git
 :: 3. Instalar los puentes en los programas detectados
 buildai-instalar
 
-:: 4. Arrancar (abre el navegador solo)
+:: 4. Arrancar (abre la ventana de la app)
 buildai
 ```
 
@@ -150,12 +165,40 @@ python -m build --wheel
 
 ---
 
+## 🏗️ Generar el instalador (`BuildAI-Setup.exe`)
+
+Para producir el instalador de escritorio (el de la opción recomendada más
+arriba) a partir del código fuente, en Windows con
+[Inno Setup](https://jrsoftware.org/isinfo.php) instalado
+(`winget install JRSoftware.InnoSetup`):
+
+```powershell
+powershell -File build_installer.ps1
+```
+
+El script crea (o reutiliza) un entorno virtual `.venv`, empaqueta la app con
+PyInstaller en `build_pkg\dist\BuildAI\` y compila el instalador con Inno
+Setup. El resultado queda en **`build_pkg\Output\BuildAI-Setup.exe`**, listo
+para repartir: instala sin pedir administrador, en `%LOCALAPPDATA%\Programs\BuildAI`,
+con accesos directos y desinstalador.
+
+Piezas del empaquetado, por si necesitas tocarlas:
+
+| Archivo | Qué hace |
+|---|---|
+| `build_pkg/run_buildai.py` | Punto de entrada que llama a `buildai.main.arrancar()` |
+| `build_pkg/buildai.spec` | Spec de PyInstaller: qué código y datos (interfaz, skills, addons) se empaquetan |
+| `build_pkg/BuildAI.iss` | Script de Inno Setup: carpeta de instalación, accesos directos, desinstalador |
+| `build_installer.ps1` | Encadena PyInstaller + Inno Setup en un solo comando |
+
+---
+
 ## 🧠 Cómo funciona por dentro
 
 ```
 ┌─────────────┐   chat    ┌──────────────────┐  herramientas  ┌────────────────┐
 │  Interfaz    │ ────────► │  Agente BuildAI  │ ─────────────► │ Conectores     │
-│  (navegador) │ ◄──────── │  (bucle de tools)│ ◄───────────── │ Blender 8601   │
+│ (ventana app)│ ◄──────── │  (bucle de tools)│ ◄───────────── │ Blender 8601   │
 └─────────────┘  eventos   └────────┬─────────┘   resultados   │ AutoCAD (COM)  │
                                     │                          │ SketchUp 8602  │
                               proveedor IA                     │ Revit 48884    │

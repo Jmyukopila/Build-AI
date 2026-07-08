@@ -11,6 +11,7 @@ import uuid
 from pathlib import Path
 
 from . import rutas
+from .agent import renders_en_resultado
 from .connectors import buscar_herramienta
 from .providers.base import LlamadaHerramienta
 
@@ -146,6 +147,9 @@ def para_ui(historial: list) -> list:
     for m in historial:
         if m["tipo"] == "usuario":
             eventos.append({"tipo": "usuario", "texto": m["texto"]})
+        elif m["tipo"] == "resultado":
+            for archivo in renders_en_resultado(m.get("contenido", "")):
+                eventos.append({"tipo": "render", "archivo": archivo})
         elif m["tipo"] == "asistente":
             if m.get("texto"):
                 eventos.append({"tipo": "respuesta", "texto": m["texto"]})

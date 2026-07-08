@@ -28,6 +28,19 @@ document.getElementById("icono-seccion-modelo").innerHTML = svgIcono("sliders");
 document.getElementById("icono-switch-apikey").innerHTML = svgIcono("llave");
 document.getElementById("icono-switch-oauth").innerHTML = svgIcono("globo");
 document.getElementById("icono-oauth-btn").innerHTML = svgIcono("globo");
+document.getElementById("icono-rasgo-construye").innerHTML = svgIcono("muros");
+document.getElementById("icono-rasgo-interiores").innerHTML = svgIcono("luces");
+document.getElementById("icono-rasgo-render").innerHTML = svgIcono("chispa");
+
+// Encargos de ejemplo de la bienvenida: rellenan la caja para que el usuario
+// pueda ajustarlos antes de enviar
+document.querySelectorAll(".chip").forEach((c) => {
+  c.addEventListener("click", () => {
+    entrada.value = c.dataset.ejemplo || c.textContent.trim();
+    ajustarAltura();
+    entrada.focus();
+  });
+});
 
 /* ---------- Estado y programas ---------- */
 
@@ -205,7 +218,7 @@ function md(texto) {
 
 let transcripcion = []; // conversación visible, para exportarla a Markdown
 
-function agregarMensaje(tipo, contenido) {
+function agregarMensaje(tipo, contenido, opciones = {}) {
   const d = document.createElement("div");
   d.className = "mensaje " + tipo;
   if (tipo === "usuario") {
@@ -222,6 +235,14 @@ function agregarMensaje(tipo, contenido) {
       setTimeout(() => { btn.innerHTML = svgIcono("copiar"); }, 1200);
     };
     transcripcion.push({ rol: "BuildAI", texto: contenido });
+    // Remate visual: solo cuando la respuesta llega en vivo (no al reabrir
+    // una sesión guardada) las letras hacen un barrido arcoíris y vuelven
+    // a su color normal, como señal de que la tarea ha terminado.
+    if (opciones.animarFinal) {
+      const burbuja = d.querySelector(".burbuja");
+      burbuja.classList.add("arcoiris");
+      burbuja.addEventListener("animationend", () => burbuja.classList.remove("arcoiris"), { once: true });
+    }
   } else {
     d.innerHTML = `<div class="burbuja">${contenido}</div>`;
   }
@@ -234,6 +255,44 @@ function agregarMensaje(tipo, contenido) {
 function agregarMensajeUsuario(texto) {
   agregarMensaje("usuario", texto);
 }
+
+/* ---------- Renders: imagen en el chat + visor ampliado ---------- */
+
+function agregarRender(archivo) {
+  const src = "/api/renders/" + encodeURIComponent(archivo);
+  const d = document.createElement("div");
+  d.className = "mensaje asistente render";
+  d.innerHTML = `<div class="burbuja burbuja-render">
+    <img class="imagen-render" loading="lazy" alt="Render fotorrealista">
+    <div class="pie-render"><span>${svgIcono("chispa")} Render fotorrealista</span></div>
+  </div>`;
+  const img = d.querySelector("img");
+  img.src = src;
+  img.onclick = () => abrirLightbox(src, archivo);
+  img.onerror = () => d.remove(); // el archivo ya no existe (sesión antigua)
+  const escribiendo = chat.querySelector(".escribiendo");
+  if (escribiendo) escribiendo.before(d);
+  else chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  transcripcion.push({ rol: "render", archivo });
+}
+
+function abrirLightbox(src, archivo) {
+  const caja = document.getElementById("lightbox");
+  const img = document.getElementById("lightbox-img");
+  const enlace = document.getElementById("lightbox-descargar");
+  img.src = src;
+  enlace.href = src;
+  enlace.setAttribute("download", archivo || "render.png");
+  caja.classList.remove("oculto");
+}
+
+document.getElementById("lightbox").addEventListener("click", (e) => {
+  if (e.target.id !== "lightbox-descargar") {
+    document.getElementById("lightbox").classList.add("oculto");
+  }
+});
+document.getElementById("lightbox-descargar").addEventListener("click", (e) => e.stopPropagation());
 
 function agregarActividadHerramienta(ev) {
   const detalle = ev.detalle ? `<pre>${escapeHtml(ev.detalle)}</pre>` : "";
@@ -265,8 +324,14 @@ function mostrarEscribiendo(texto) {
   let e = chat.querySelector(".escribiendo");
   if (!e) {
     e = document.createElement("div");
-    e.className = "mensaje asistente escribiendo";
-    e.innerHTML = `<div class="burbuja"><span class="chispa">${svgIcono("chispa")}</span><span class="estado-texto"></span><span class="tiempo-estado"></span></div>`;
+    e.className = "mensaje asistente escribiendo pensando";
+    e.innerHTML = `<div class="burbuja">
+      <span class="chispa">${svgIcono("chispa")}</span>
+      <span class="estado-texto"></span>
+      <span class="puntos-latido"><span></span><span></span><span></span></span>
+      <span class="tiempo-estado"></span>
+      <span class="barra-progreso"><span class="barra-progreso-relleno"></span></span>
+    </div>`;
     chat.appendChild(e);
   }
   e.querySelector(".estado-texto").textContent = texto || "Pensando…";
@@ -277,6 +342,17 @@ function mostrarEscribiendo(texto) {
 function ocultarEscribiendo() {
   const e = chat.querySelector(".escribiendo");
   if (e) e.remove();
+}
+
+// Cuando llega la primera actividad de herramienta, el indicador pasa de
+// "pensando" (razonando) a "desarrollando" (actuando sobre el programa):
+// cambia el icono, el color y añade la barra de progreso.
+function marcarDesarrollando() {
+  const e = chat.querySelector(".escribiendo");
+  if (!e || e.classList.contains("desarrollando")) return;
+  e.classList.remove("pensando");
+  e.classList.add("desarrollando");
+  e.querySelector(".chispa").innerHTML = svgIcono("herramienta");
 }
 
 /* ---------- Enviar mensaje ---------- */
@@ -353,13 +429,18 @@ async function enviar(texto) {
         const ev = JSON.parse(p.slice(6));
         if (ev.tipo === "respuesta") {
           ocultarEscribiendo();
-          agregarMensaje("asistente", ev.texto);
+          agregarMensaje("asistente", ev.texto, { animarFinal: true });
         } else if (ev.tipo === "error") {
           ocultarEscribiendo();
           agregarMensaje("error", lineaConIcono("advertencia", ev.texto));
         } else if (ev.tipo === "herramienta") {
+          // A partir de aquí ya no solo "piensa": está actuando sobre el
+          // programa conectado, así que el indicador cambia de fase.
+          marcarDesarrollando();
           // Se inserta encima del indicador, que sigue mostrando actividad
           agregarActividadHerramienta(ev);
+        } else if (ev.tipo === "render") {
+          agregarRender(ev.archivo);
         } else if (ev.tipo === "estado") {
           mostrarEscribiendo(ev.texto);
         }
@@ -470,6 +551,7 @@ function pintarConversacion(mensajes) {
     if (ev.tipo === "usuario") agregarMensaje("usuario", ev.texto);
     else if (ev.tipo === "respuesta") agregarMensaje("asistente", ev.texto);
     else if (ev.tipo === "herramienta") agregarActividadHerramienta(ev);
+    else if (ev.tipo === "render") agregarRender(ev.archivo);
   }
   chat.scrollTop = chat.scrollHeight;
 }
@@ -488,6 +570,8 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
     if (t.rol === "herramienta") {
       texto += `\n> 🔧 ${t.nombre}\n`;
       if (t.detalle) texto += `\n\`\`\`\n${t.detalle}\n\`\`\`\n`;
+    } else if (t.rol === "render") {
+      texto += `\n🖼️ Render generado: ${t.archivo} (carpeta ~/.buildai/renders)\n`;
     } else {
       texto += `\n**${t.rol}:**\n\n${t.texto}\n`;
     }

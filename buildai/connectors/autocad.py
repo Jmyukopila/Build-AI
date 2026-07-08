@@ -62,9 +62,33 @@ class ConectorAutoCAD(Conector):
                 "descripcion": (
                     "Ejecuta código Python que controla AutoCAD por COM. Variables ya "
                     "disponibles: `acad` (AutoCAD.Application), `doc` (documento activo), "
-                    "`ms` (espacio modelo). Los puntos se pasan como VARIANT: usa la "
-                    "función auxiliar `punto(x, y, z)` ya definida. Usa print() para "
-                    "devolver información. Ejemplo: linea = ms.AddLine(punto(0,0,0), punto(5,0,0))"
+                    "`ms` (espacio modelo). Los puntos se pasan como VARIANT: usa las "
+                    "funciones auxiliares ya definidas `punto(x, y, z=0)` para un punto y "
+                    "`puntos([(x1,y1), (x2,y2), …])` para la lista plana que exigen las "
+                    "polilíneas. Usa print() para devolver información.\n\n"
+                    "Unidades: las del dibujo activo (consulta doc.GetVariable('INSUNITS'): "
+                    "4=milímetros, 6=metros; en plantas de arquitectura lo habitual es mm).\n"
+                    "Método de trabajo para planos profesionales:\n"
+                    "- Crea capas por función y asigna cada entidad: "
+                    "capa = doc.Layers.Add('Muros'); entidad.Layer = 'Muros'.\n"
+                    "- Muros en planta: polilíneas con "
+                    "ms.AddLightWeightPolyline(puntos([(0,0), (5000,0), …])) — una línea "
+                    "por cara del muro, o cierra el contorno con pl.Closed = True.\n"
+                    "- Líneas y círculos: ms.AddLine(punto(...), punto(...)), "
+                    "ms.AddCircle(punto(centro), radio). Puertas: arco de abatimiento con "
+                    "ms.AddArc(punto(eje), radio, angulo_inicial, angulo_final) en radianes.\n"
+                    "- Mobiliario y carpinterías repetidas: define un bloque una vez "
+                    "(bloque = doc.Blocks.Add(punto(0,0), 'Cama150'); dibuja dentro con "
+                    "bloque.AddLine(...)) e insértalo con "
+                    "ms.InsertBlock(punto(x,y,0), 'Cama150', 1, 1, 1, rotacion_radianes).\n"
+                    "- Textos y cotas: ms.AddText('COCINA', punto(x,y), altura_texto), "
+                    "ms.AddDimAligned(punto(p1), punto(p2), punto(posicion_linea_cota)). "
+                    "Ajusta la escala de las cotas al plano: doc.SetVariable('DIMSCALE', 50) "
+                    "para 1:50 (100 para 1:100) ANTES de acotar, y pon textos con altura "
+                    "legible a esa escala (p. ej. 2.5 × escala en mm).\n"
+                    "- Colores por capa: capa.color = 1 (rojo) … 7 (blanco); asigna espesores "
+                    "conceptuales usando colores distintos para muros (grueso) y mobiliario (fino).\n"
+                    "- Al terminar una zona, encuadra con acad.ZoomExtents()."
                 ),
                 "parametros": {
                     "type": "object",
@@ -137,7 +161,14 @@ class ConectorAutoCAD(Conector):
                 pythoncom.VT_ARRAY | pythoncom.VT_R8, (float(x), float(y), float(z))
             )
 
-        entorno = {"acad": acad, "doc": doc, "ms": ms, "punto": punto}
+        def puntos(lista):
+            """Lista plana de coordenadas 2D, formato de AddLightWeightPolyline."""
+            plano = []
+            for p in lista:
+                plano.extend((float(p[0]), float(p[1])))
+            return win32com.client.VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, plano)
+
+        entorno = {"acad": acad, "doc": doc, "ms": ms, "punto": punto, "puntos": puntos}
         salida = io.StringIO()
         try:
             with contextlib.redirect_stdout(salida):

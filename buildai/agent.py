@@ -6,11 +6,34 @@ que el modelo da una respuesta final. Emite eventos para que la interfaz
 muestre el progreso en tiempo real.
 """
 
+from pathlib import Path
+
 from . import config as cfg
 from .connectors import CONECTORES, buscar_herramienta
 from .providers import crear_proveedor, ErrorProveedor
 
-MAX_PASOS = 60
+# Carpeta donde el kit de Blender guarda los renders (ver blender_kit.render).
+CARPETA_RENDERS = Path.home() / ".buildai" / "renders"
+_MARCA_RENDER = "RENDER_GUARDADO:"
+
+
+def renders_en_resultado(resultado: str) -> list:
+    """Nombres de archivo de los renders anunciados en la salida de una herramienta.
+    Solo se aceptan archivos reales dentro de la carpeta de renders: el nombre
+    viaja a la interfaz, que los pide por /api/renders/{nombre}."""
+    nombres = []
+    for linea in str(resultado).splitlines():
+        if not linea.startswith(_MARCA_RENDER):
+            continue
+        ruta = Path(linea[len(_MARCA_RENDER):].strip())
+        try:
+            if ruta.is_file() and ruta.parent.resolve() == CARPETA_RENDERS.resolve():
+                nombres.append(ruta.name)
+        except OSError:
+            continue
+    return nombres
+
+MAX_PASOS = 100  # un edificio completo necesita más pasos que una tarea puntual
 MAX_HISTORIAL = 120  # entradas; al superarlo se olvidan los turnos más antiguos
 
 # Límites de tamaño de los resultados de herramientas. Sin ellos, una tarea
@@ -90,6 +113,87 @@ Cuando apliques un valor por defecto de esta lista (porque el usuario no dio
 una medida concreta), dilo brevemente al resumir el resultado, para que el
 usuario sepa qué asumiste y pueda corregirlo.
 
+## Proyectos grandes: trabaja como un estudio de arquitectura
+
+Para cualquier encargo más ambicioso que un objeto suelto (una casa completa,
+un edificio, una urbanización), NO improvises pieza a pieza. Sigue estas fases
+y anuncia brevemente en qué fase estás:
+
+1. **Programa**: define en 3-5 líneas el programa de necesidades (plantas,
+   estancias, superficies aproximadas) y las medidas generales. Compártelo con
+   el usuario en tu primer mensaje para que pueda corregir el rumbo pronto.
+2. **Implantación**: terreno y forjado/solera de planta baja.
+3. **Estructura y muros, planta a planta**: construye cada planta completa
+   (muros con sus huecos, pilares si los hay, forjado superior) antes de subir
+   a la siguiente. Usa cotas acumuladas (planta 1 en nivel 3,0 m; planta 2 en
+   6,0 m…) y organiza cada planta en su propia capa/colección.
+4. **Comunicación vertical**: escaleras (con su hueco en el forjado) y, en
+   edificios, el núcleo de escalera/ascensor.
+5. **Cubierta y remates**: cubierta plana con peto o inclinada, aleros,
+   barandillas de terrazas.
+6. **Entorno y presentación**: terreno, acceso, sol y cámara.
+
+Adapta las fases al programa conectado: en Blender y SketchUp construyes los
+volúmenes 3D; en Revit usa SIEMPRE elementos nativos BIM (primero niveles,
+luego muros, suelos, cubiertas y familias de puertas/ventanas/mobiliario,
+nunca geometría suelta); en AutoCAD un proyecto grande son planos 2D por
+capas (una planta por nivel, alzados y secciones), salvo que el usuario pida
+3D expresamente. Presta MUCHA atención a las unidades internas de cada
+programa que se indican en la descripción de sus herramientas.
+
+Tras cada fase, consulta el estado del programa (herramienta de información)
+para verificar que lo construido coincide con tu plan antes de continuar. Si
+la tarea se pausa por límite de pasos, retómala en la fase donde quedó.
+
+Criterios de diseño por tipología (aplícalos si el usuario no concreta):
+- **Casa moderna**: volúmenes puros con cubierta plana y peto; grandes
+  ventanales a sur/jardín y huecos pequeños a norte/calle; voladizos de 1,5-2,5 m
+  marcando terrazas o el acceso; combina 2-3 materiales (blanco + madera u
+  hormigón + antracita); altura por planta 3,0 m entre forjados.
+- **Edificio de viviendas**: retícula de pilares cada 5-6 m; planta baja más
+  alta (3,5-4 m) para portal/locales; plantas tipo repetidas de 3,0 m; núcleo
+  de escalera de ~3×5 m en posición central; balcones o terrazas en fachada
+  principal; ático retranqueado con terraza.
+- **Composición**: alinea huecos en vertical entre plantas, mantén proporciones
+  de ventana coherentes (más alto que ancho en fachadas clásicas, apaisado o de
+  suelo a techo en modernas) y evita fachadas ciegas hacia la calle.
+- **Interiorismo**: amuebla estancia por estancia, cada una en su capa
+  ("Planta 0 - Salón"…), con la espalda de los muebles pegada a las paredes.
+  Ergonomía: deja 60-70 cm de paso a cada lado de la cama; en el comedor, 60 cm
+  de mesa por comensal y 90 cm libres tras las sillas; sofá a 2,5-3,5 m del
+  televisor y con mesa de centro a 40 cm; la alfombra debe abarcar al menos las
+  patas delanteras del sofá. Color: regla 60-30-10 (60 % base neutra en paredes
+  y suelos, 30 % secundario en muebles grandes, 10 % acento en textiles y
+  cuadros); combina madera y tela para dar calidez; suelos de parquet en
+  estancias y baldosa/marmol en cocinas y baños. Iluminación en tres capas:
+  general (lámparas colgantes), de tarea (mesitas, encimera, lectura) y de
+  acento; toda estancia con techo necesita sus lámparas o saldrá oscura en los
+  renders. Para enseñar un interior, coloca la cámara en una esquina a 1,5 m de
+  altura mirando hacia la zona principal. En Revit el mobiliario son familias
+  cargadas y en AutoCAD bloques en planta; las luces y cámaras de render solo
+  aplican a Blender y SketchUp.
+
+## Fotorrealismo y presentación (Blender)
+
+Cuando el usuario pida un render, una imagen «realista» o enseñar el proyecto,
+sigue esta receta en Blender (es la diferencia entre una maqueta y una foto):
+1. **Viste la escena**: materiales variados con textura (nunca todo blanco),
+   suelos interiores con parquet/mármol, mobiliario visible tras los vidrios,
+   y entorno: terreno, árboles, arbustos, setos y, si encaja, piscina.
+2. **Enciende la casa**: focos empotrados en retícula (cada 1,2-1,5 m) en cada
+   estancia con techo, lámparas de pie y colgantes, focos de jardín ante los
+   arbustos. Una casa apagada arruina cualquier render de tarde o noche.
+3. **Elige la luz**: cielo("atardecer") es la más espectacular (interiores
+   cálidos brillando tras el vidrio, piscina iluminada); cielo("dia") para
+   mostrar volúmenes; cielo("noche") para dramatismo.
+4. **Encuadra**: camara() a 1,6-2 m de altura desde una esquina para fachadas
+   (lente 30-35); en interiores lente 24 desde una esquina a 1,5 m.
+5. **Renderiza en dos pasos**: render(calidad="borrador") para comprobar el
+   encuadre, corrige lo que se vea mal y termina con render(calidad="alta").
+El render aparece automáticamente como imagen en el chat: no pidas al usuario
+que abra archivos ni le des rutas. Solo Blender puede renderizar; si trabaja
+en otro programa y quiere renders, ofrécele construir el modelo en Blender.
+
 ## Herramientas
 
 Puedes controlar programas de arquitectura mediante herramientas. Programas
@@ -150,9 +254,15 @@ def _comprimir_resultados(historial: list) -> None:
     """
     for m in historial[:-ENTRADAS_SIN_COMPRIMIR]:
         if m["tipo"] == "resultado" and len(m["contenido"]) > RESULTADO_ANTIGUO_MAX:
+            # Las líneas RENDER_GUARDADO se conservan siempre: la interfaz las
+            # necesita para volver a mostrar las imágenes al reabrir la sesión.
+            lineas = m["contenido"].splitlines()
+            marcas = [l for l in lineas if l.startswith(_MARCA_RENDER)]
+            cuerpo = "\n".join(l for l in lineas if not l.startswith(_MARCA_RENDER))
             m["contenido"] = (
-                m["contenido"][:RESULTADO_ANTIGUO_MAX]
+                cuerpo[:RESULTADO_ANTIGUO_MAX]
                 + "\n… (resultado antiguo recortado; consulta de nuevo el programa si necesitas el detalle)"
+                + ("\n" + "\n".join(marcas) if marcas else "")
             )
 
 
@@ -236,11 +346,16 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
                     resultado = conector.ejecutar(llamada.nombre, llamada.argumentos)
                 except Exception as exc:
                     resultado = f"ERROR inesperado ejecutando la herramienta: {exc}"
+                for archivo in renders_en_resultado(resultado):
+                    emitir({"tipo": "render", "archivo": archivo})
             if len(resultado) > MAX_RESULTADO:
+                marcas = [l for l in resultado.splitlines() if l.startswith(_MARCA_RENDER)]
                 resultado = (
                     resultado[:MAX_RESULTADO]
                     + "\n… (salida recortada por ser demasiado larga)"
                 )
+                if marcas and _MARCA_RENDER not in resultado:
+                    resultado += "\n" + "\n".join(marcas)
             historial.append(
                 {
                     "tipo": "resultado",

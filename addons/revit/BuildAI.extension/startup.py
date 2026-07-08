@@ -56,7 +56,9 @@ if routes:
 
             niveles = DB.FilteredElementCollector(doc)\
                 .OfClass(DB.Level).ToElements()
-            lineas.append("Niveles: " + ", ".join(sorted(n.Name for n in niveles)))
+            lineas.append("Niveles: " + ", ".join(
+                "{} ({:.2f} m)".format(n.Name, n.Elevation * 0.3048)
+                for n in sorted(niveles, key=lambda n: n.Elevation)))
 
             categorias = [
                 ("Muros", DB.BuiltInCategory.OST_Walls),
@@ -65,6 +67,8 @@ if routes:
                 ("Suelos", DB.BuiltInCategory.OST_Floors),
                 ("Cubiertas", DB.BuiltInCategory.OST_Roofs),
                 ("Habitaciones", DB.BuiltInCategory.OST_Rooms),
+                ("Mobiliario", DB.BuiltInCategory.OST_Furniture),
+                ("Luminarias", DB.BuiltInCategory.OST_LightingFixtures),
             ]
             for nombre, cat in categorias:
                 cuenta = _contar(
@@ -72,6 +76,28 @@ if routes:
                     .OfCategory(cat).WhereElementIsNotElementType()
                 )
                 lineas.append("{}: {}".format(nombre, cuenta))
+
+            # Tipos y familias disponibles: el agente los necesita para elegir
+            # bien sin inventar nombres (se listan los primeros de cada grupo).
+            try:
+                tipos_muro = [
+                    DB.Element.Name.GetValue(t) for t in
+                    DB.FilteredElementCollector(doc).OfClass(DB.WallType)
+                ]
+                lineas.append("Tipos de muro ({}): {}".format(
+                    len(tipos_muro), ", ".join(tipos_muro[:8]) or "(ninguno)"))
+                for etiqueta, cat in (("Familias de puertas", DB.BuiltInCategory.OST_Doors),
+                                      ("Familias de ventanas", DB.BuiltInCategory.OST_Windows),
+                                      ("Familias de mobiliario", DB.BuiltInCategory.OST_Furniture)):
+                    simbolos = list(
+                        DB.FilteredElementCollector(doc)
+                        .OfClass(DB.FamilySymbol).OfCategory(cat)
+                    )
+                    nombres = sorted(set(s.Family.Name for s in simbolos))
+                    lineas.append("{} ({}): {}".format(
+                        etiqueta, len(nombres), ", ".join(nombres[:6]) or "(ninguna)"))
+            except Exception:
+                pass
             return {"ok": True, "resultado": "\n".join(lineas)}
         except Exception:
             return {"ok": False, "error": traceback.format_exc()}
