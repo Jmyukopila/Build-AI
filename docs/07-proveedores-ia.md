@@ -76,7 +76,7 @@ en curso.
 
 * OpenRouter consulta modelos gratuitos que soportan tools.
 * Ollama consulta `http://127.0.0.1:11434/api/tags`.
-* OpenCode consulta `/v1/models`.
+* OpenCode consulta `https://opencode.ai/zen/v1/models`.
 * Anthropic, OpenAI y Gemini tienen listas estáticas.
 
 El resultado se cachea por proveedor. El TTL general es 3600 segundos y el de

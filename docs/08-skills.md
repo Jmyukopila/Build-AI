@@ -17,7 +17,7 @@ Los archivos se cargan exclusivamente desde
 | `icono` | No | Icono; por defecto `tarea`. |
 | `descripcion` | No | Texto auxiliar; por defecto vacío. |
 
-[`skills.cargar()`](../buildai/skills.py) ignora JSON inválido, elementos que
+[`cargar_skills()`](../buildai/skills.py) ignora JSON inválido, elementos que
 no son objetos y archivos con campos obligatorios ausentes. No normaliza
 duplicados ni valida un esquema más estricto. La carpeta raíz
 [`skills/`](../skills) es una copia distribuida/histórica y no es la ruta que

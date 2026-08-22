@@ -32,4 +32,4 @@ El manual web menciona Blender 5.x y SketchUp 8+ en algunos textos, mientras REA
 
 ## Windows-first
 
-El instalador usa `%APPDATA%`, `%ProgramFiles%`, `cmd`, PowerShell, COM y accesos `.lnk`. `pywin32` se restringe a Windows en el proyecto y [`crear_acceso_directo`](../buildai/instalador.py) falla fuera de Windows. El núcleo HTTP puede ser portable, pero las integraciones CAD/BIM y distribución no lo son.
+El instalador consulta `%APPDATA%` y `%ProgramFiles%`, usa `cmd`, PowerShell, COM y accesos `.lnk`. `pywin32` se restringe a Windows en el proyecto. [`crear_acceso_directo`](../buildai/instalador.py) no lanza una excepción fuera de Windows: devuelve `{ok:false}` con el mensaje de que el acceso directo solo se crea en Windows. El núcleo HTTP puede ser portable, pero las integraciones CAD/BIM y distribución no lo son.

@@ -22,8 +22,8 @@ paralelo; una excepción se trata como desconectado.
 
 * **Detección y canal:** socket TCP en `127.0.0.1:8601`; `_enviar` manda una
   línea JSON y espera otra línea JSON. `ping` determina disponibilidad.
-* **Herramientas:** `blender_informacion` y
-  `blender_ejecutar_python(codigo)`. El segundo antepone el contenido de
+* **Herramientas:** `blender_informacion()` sin parámetros y
+  `blender_ejecutar_python(codigo: str)`. El segundo antepone el contenido de
   [`blender_kit.py`](../buildai/connectors/blender_kit.py) y compila el código
   con nombre `<codigo>`.
 * **Puente:** [`buildai_blender.py`](../buildai/addons/blender/buildai_blender.py)
@@ -40,8 +40,10 @@ cámara y render en metros, evitando que el modelo repita detalles de `bpy`.
 
 * **Detección y canal:** COM mediante `pythoncom.CoInitialize()`. Se prueban
   `AutoCAD.Application` y los ProgID versionados `.25` hasta `.18`.
-* **Herramientas:** `autocad_informacion`,
-  `autocad_ejecutar_python(codigo)` y `autocad_comando(comando)`.
+* **Herramientas:** `autocad_informacion()` sin parámetros,
+  `autocad_ejecutar_python(codigo: str)` y
+  `autocad_comando(orden: str)`. El nombre del campo es `orden`, no
+  `comando`.
 * **Contexto Python:** el código recibe `acad`, `doc`, `ms`, `punto` y
   `puntos`; se ejecuta con `exec` y la salida se recorta con `recortar`.
 * **Puente:** no hay addon: el canal COM es parte de AutoCAD y pywin32.
@@ -51,8 +53,8 @@ cámara y render en metros, evitando que el modelo repita detalles de `bpy`.
 
 * **Detección y canal:** HTTP local en `127.0.0.1:8602`, con `GET /ping`,
   `GET /info` y `POST /ejecutar`.
-* **Herramientas:** `sketchup_informacion` y
-  `sketchup_ejecutar_ruby(codigo)`.
+* **Herramientas:** `sketchup_informacion()` sin parámetros y
+  `sketchup_ejecutar_ruby(codigo: str)`.
 * **Puente:** [`buildai_sketchup.rb`](../buildai/addons/sketchup/buildai_sketchup.rb)
   ofrece un servidor HTTP sobre TCP, cola protegida por `Mutex` y
   `UI.start_timer` para ejecutar en el hilo de SketchUp. Incluye fallback JSON
@@ -68,8 +70,8 @@ debe respetar la API de Ruby de la versión instalada.
 
 * **Detección y canal:** pyRevit Routes en
   `http://127.0.0.1:48884/buildai`, con `/ping`, `/info` y `/ejecutar`.
-* **Herramientas:** `revit_informacion` y
-  `revit_ejecutar_python(codigo)`.
+* **Herramientas:** `revit_informacion()` sin parámetros y
+  `revit_ejecutar_python(codigo: str)`.
 * **Puente:** [`startup.py`](../buildai/addons/revit/BuildAI.extension/startup.py)
   registra las rutas, abre `revit.Transaction("BuildAI")` y ejecuta con
   `doc`, `uidoc`, `DB`, `revit` y `salida`.
