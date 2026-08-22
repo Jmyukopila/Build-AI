@@ -165,7 +165,7 @@ Las funciones de ruta son los handlers de FastAPI y devuelven `FileResponse`, di
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `Conector` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
+| `Conector` | clase | Base de la que heredan los cuatro conectores; define `id`, `nombre`, `icono`, `ayuda` (texto de conexión mostrado al usuario) y los tres métodos abstractos que cada subclase implementa. | Los métodos abstractos lanzan `NotImplementedError`; no se instancia directamente. |
 | `recortar` | `recortar(texto: str, limite: int=MAX_SALIDA) -> str` | Limita la salida de una herramienta a MAX_SALIDA. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 | `disponible` | `disponible(self) -> bool` | Implementa la operación interna indicada por su nombre. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 | `herramientas` | `herramientas(self) -> list` | Implementa la operación interna indicada por su nombre. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
@@ -190,7 +190,7 @@ El conector inicializa COM y obtiene el documento activo. `autocad_informacion` 
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `ConectorAutoCAD` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
+| `ConectorAutoCAD` | clase, hereda de `Conector` | `id="autocad"`, `nombre="AutoCAD"`; `ayuda` explica que no requiere addon, solo COM de Windows. | No expone estado propio entre llamadas; cada `ejecutar` obtiene el documento activo de nuevo. |
 | `_obtener_acad` | `_obtener_acad()` | Obtiene una instancia COM de AutoCAD. | Helper interno; no constituye API estable. |
 | `disponible` | `disponible(self) -> bool` | Comprueba AutoCAD mediante COM. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 | `herramientas` | `herramientas(self) -> list` | Declara las herramientas de AutoCAD. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
@@ -206,7 +206,7 @@ El transporte usa una línea JSON por socket TCP. `disponible` envía `ping`; `e
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `ConectorBlender` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
+| `ConectorBlender` | clase, hereda de `Conector` | `id="blender"`, `nombre="Blender"`; `ayuda` describe la conexión automática del puente para todas las versiones instaladas (2.80+). | No mantiene socket abierto entre llamadas; cada `_enviar` abre y cierra su propia conexión TCP. |
 | `_enviar` | `_enviar(peticion: dict, timeout: float=60.0) -> dict` | Envía JSON por socket local y espera respuesta. | Helper interno; no constituye API estable. |
 | `disponible` | `disponible(self) -> bool` | Comprueba ping de Blender. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 | `herramientas` | `herramientas(self) -> list` | Declara las herramientas de Blender. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
@@ -220,7 +220,7 @@ El conector llama al bridge HTTP local y delega la ejecución Ruby. El bridge en
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `ConectorSketchUp` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
+| `ConectorSketchUp` | clase, hereda de `Conector` | `id="sketchup"`, `nombre="SketchUp"`; `ayuda` describe la extensión instalada automáticamente para todas las versiones (2014+). | No mantiene estado propio; cada llamada es una petición HTTP independiente al bridge. |
 | `disponible` | `disponible(self) -> bool` | Comprueba GET /ping. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 | `herramientas` | `herramientas(self) -> list` | Declara las herramientas de SketchUp. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 | `ejecutar` | `ejecutar(self, nombre: str, argumentos: dict) -> str` | Envía Ruby a POST /ejecutar. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
@@ -233,7 +233,7 @@ El bridge de Routes expone `/ping`, `/info` y `/ejecutar` bajo `/buildai`. El co
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `ConectorRevit` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
+| `ConectorRevit` | clase, hereda de `Conector` | `id="revit"`, `nombre="Revit"`; `ayuda` indica que requiere pyRevit (gratuito, 2014+) instalado por el usuario. | No mantiene estado propio; depende de que el bridge de Routes esté cargado en Revit. |
 | `disponible` | `disponible(self) -> bool` | Comprueba Routes /ping. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 | `herramientas` | `herramientas(self) -> list` | Declara las herramientas de Revit. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 | `ejecutar` | `ejecutar(self, nombre: str, argumentos: dict) -> str` | Anteponer kit y envía Python a Routes. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
@@ -246,10 +246,10 @@ El bridge de Routes expone `/ping`, `/info` y `/ejecutar` bajo `/buildai`. El co
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `ErrorProveedor` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
-| `LlamadaHerramienta` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
-| `RespuestaLLM` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
-| `Proveedor` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
+| `ErrorProveedor` | clase, hereda de `Exception` | Excepción usada por los adaptadores para envolver fallos de red, autenticación o cuota con un mensaje apto para mostrar al usuario. | Sin atributos propios; el mensaje va en el `str()` de la excepción. |
+| `LlamadaHerramienta` | `@dataclass`: `id: str`, `nombre: str`, `argumentos: dict` | Representa una petición de tool calling emitida por el modelo dentro de `RespuestaLLM.llamadas`. | Estructura de solo datos; cada adaptador la construye al traducir la respuesta de su API. |
+| `RespuestaLLM` | `@dataclass`: `texto: str=""`, `llamadas: list=[]`, `raw: object=None` | Formato neutro de salida de `Proveedor.conversar`; `raw` guarda los bloques originales del proveedor para reenviarlos en el siguiente turno (p. ej. `thinking`/`tool_use` de Anthropic). | `llamadas` puede quedar vacía si el modelo no invoca herramientas. |
+| `Proveedor` | clase | Contrato abstracto que implementan `ProveedorAnthropic` y `ProveedorOpenAICompatible`; expone `notificar`, un callback opcional que el agente asigna para mostrar esperas y reintentos. | `notificar` es `None` por defecto; `conversar` lanza `NotImplementedError` si no se sobreescribe. |
 | `conversar` | `conversar(self, sistema: str, historial: list, herramientas: list) -> RespuestaLLM` | Implementa la operación interna indicada por su nombre. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
 
 ## `buildai/providers/__init__.py`
@@ -264,7 +264,7 @@ Anthropic recibe imágenes como bloques base64 y conserva los bloques originales
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `ProveedorAnthropic` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
+| `ProveedorAnthropic` | clase, hereda de `Proveedor` | Guarda `clave` y `modelo` (por defecto `claude-opus-4-8` si no se especifica). | Sin caché ni reintentos propios; cada `conversar` es una llamada directa al SDK de Anthropic. |
 | `__init__` | `__init__(self, clave: str, modelo: str)` | Guarda clave y modelo. | Helper interno; no constituye API estable. |
 | `_convertir_historial` | `_convertir_historial(self, historial: list) -> list` | Traduce el historial al formato Anthropic. | Helper interno; no constituye API estable. |
 | `conversar` | `conversar(self, sistema: str, historial: list, herramientas: list) -> RespuestaLLM` | Realiza una llamada Claude y devuelve RespuestaLLM. | Puede propagar errores del canal o del disco; el llamador decide cómo presentarlos. |
@@ -275,7 +275,7 @@ El adaptador envía `/chat/completions`. Convierte usuario, asistente y resultad
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `ProveedorOpenAICompatible` | clase | Contrato o estructura declarada en el módulo. | Revisar sus métodos; no mantiene estado global por sí misma. |
+| `ProveedorOpenAICompatible` | clase, hereda de `Proveedor` | Guarda `base_url`, `clave`, `modelo`, `nombre` y `timeout` (180s por defecto); usado para OpenAI, OpenRouter y cualquier API compatible con Chat Completions. | `_respetar_ritmo` añade una pausa fija solo cuando `nombre` corresponde al plan gratuito de OpenRouter. |
 | `__init__` | `__init__(self, base_url: str, clave: str, modelo: str, nombre: str, timeout: float=180.0)` | Configura endpoint, credenciales, modelo y timeout. | Helper interno; no constituye API estable. |
 | `_cabeceras` | `_cabeceras(self) -> dict` | Construye cabeceras HTTP. | Helper interno; no constituye API estable. |
 | `_convertir_historial` | `_convertir_historial(self, sistema: str, historial: list) -> list` | Traduce historial a Chat Completions. | Helper interno; no constituye API estable. |
