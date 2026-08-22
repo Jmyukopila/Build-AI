@@ -10,6 +10,8 @@ Blender** para que puedas trabajar hablando en tu idioma, sin saber programar:
 Todo se ejecuta **en tu ordenador**: tus claves y tus modelos no salen de él
 (solo se envían los mensajes al proveedor de IA que elijas).
 
+📚 Consulta la documentación técnica completa del proyecto: [docs/README.md](docs/README.md).
+
 ---
 
 ## 🚀 Puesta en marcha (5 minutos)
