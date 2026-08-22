@@ -10,9 +10,15 @@ Blender** para que puedas trabajar hablando en tu idioma, sin saber programar:
 Todo se ejecuta **en tu ordenador**: tus claves y tus modelos no salen de él
 (solo se envían los mensajes al proveedor de IA que elijas).
 
-📚 Consulta la documentación técnica completa del proyecto: [docs/README.md](docs/README.md).
+| | |
+|---|---|
+| 🚀 **Quiero usarlo** | [Puesta en marcha](#-puesta-en-marcha-5-minutos) · [Problemas frecuentes](#-problemas-frecuentes) |
+| 🧑‍💻 **Quiero desarrollarlo** | [Estructura del proyecto](#-estructura-del-proyecto) · [Instalar desde terminal](#-instalar-desde-terminal-pip--pipx--uv) · [Generar el instalador](#-generar-el-instalador-buildai-setupexe) |
+| 📚 **Quiero entenderlo** | [Cómo funciona por dentro](#-cómo-funciona-por-dentro) · [Documentación técnica completa](docs/README.md) |
 
 ---
+
+# Parte 1 · Usar BuildAI
 
 ## 🚀 Puesta en marcha (5 minutos)
 
@@ -41,12 +47,14 @@ directo "BuildAI" en el escritorio**.
 > GitHub: mira [Instalar desde terminal](#-instalar-desde-terminal-pip--pipx--uv).
 
 ### 2. Arrancar
+
 Haz doble clic en el acceso directo **BuildAI** (Escritorio o Menú Inicio, o
 `INICIAR.bat` si vienes del código fuente). Se abre una **ventana propia de la
 aplicación** — como VS Code o Excel, no una pestaña del navegador — con la
 interfaz servida internamente en `http://127.0.0.1:8600`.
 
 ### 3. Configurar la IA
+
 Pulsa **⚙️ Ajustes de IA** y elige proveedor:
 
 | Proveedor | Coste | Dónde sacar la clave |
@@ -67,6 +75,7 @@ Pulsa **⚙️ Ajustes de IA** y elige proveedor:
 > los enlaces de arriba. La clave se guarda solo en `config.json`, en tu equipo.
 
 ### 4. Conectar tus programas
+
 `INSTALAR.bat` ya instala los puentes en todos los programas que detecte.
 Si instalas un programa después (o algo falla), pulsa **❓** junto al programa
 en la barra lateral y luego **⚡ Conectar automáticamente**:
@@ -85,6 +94,7 @@ programa se pone **verde** cuando está conectado.
 > en la barra lateral (o abre `http://127.0.0.1:8600/manual`).
 
 ### 5. ¡A trabajar!
+
 Escribe lo que necesitas en el chat (Enter envía, Mayús+Enter hace salto de
 línea) o pulsa una **tarea rápida** de la barra lateral. Verás en tiempo real
 cuándo la IA está trabajando dentro de tus programas (🔧) y podrás desplegar
@@ -98,7 +108,57 @@ el detalle técnico si te interesa.
 - **Copiar**: al pasar el ratón por una respuesta aparece un botón para
   copiarla entera.
 
+## ⚠️ Notas de seguridad
+
+- La IA ejecuta código dentro de tus programas para poder trabajar. Trabaja
+  siempre sobre **copias de seguridad** de tus proyectos importantes.
+- El agente tiene instrucciones de no borrar nada sin confirmarlo, pero los
+  modelos de IA pueden equivocarse: revisa los cambios.
+- Todos los puentes escuchan solo en `127.0.0.1` (tu propio equipo).
+
+## 🛠️ Problemas frecuentes
+
+| Problema | Solución |
+|---|---|
+| "Falta la clave de API" | Ajustes ⚙️ → pega tu clave del proveedor elegido |
+| El punto de un programa no se pone verde | Pulsa ❓ junto al programa y sigue los pasos; espera ~10 s |
+| AutoCAD no conecta | Abre AutoCAD con un dibujo; ejecuta ambos programas con el mismo nivel de permisos |
+| El modelo gratuito responde raro o no usa herramientas | En Ajustes, cambia el modelo de OpenRouter por otro que soporte herramientas, o usa Claude/GPT/Gemini |
+| Error 429 (límite de peticiones) | BuildAI espera y reintenta solo; si persiste, es el cupo diario del modelo gratuito: elige otro modelo ':free' o usa Ollama local |
+| El asistente pausa en tareas muy largas | No es un error: escribe «continúa» y retoma donde quedó |
+
 ---
+
+# Parte 2 · Desarrollar BuildAI
+
+## 📁 Estructura del proyecto
+
+```
+BuildAI/
+├── buildai/            Paquete de la aplicación (todo el código y sus recursos)
+│   ├── main.py           Servidor FastAPI y arranque de la ventana
+│   ├── agent.py          Bucle del agente y conocimiento de arquitectura
+│   ├── connectors/       Puentes con Blender, AutoCAD, SketchUp y Revit
+│   ├── providers/        Adaptadores de OpenRouter, Claude, GPT, Gemini y Ollama
+│   ├── ui/               Interfaz web (HTML, CSS, JS y assets)
+│   ├── addons/           Add-ons que se copian dentro de cada programa CAD/BIM
+│   └── skills_data/      Tareas rápidas predefinidas (*.json)
+├── docs/               Documentación técnica (empieza por docs/README.md)
+├── empaquetado/        Instalador de escritorio: PyInstaller + Inno Setup
+├── tests/              Pruebas con pytest
+├── website/            Landing estática de descarga
+├── INSTALAR.bat        Instalación desde el código fuente (doble clic)
+└── INICIAR.bat         Arranque desde el código fuente (doble clic)
+```
+
+Dos reglas que conviene no romper:
+
+- **`buildai/` es la única copia de los recursos.** Los add-ons, las skills y
+  la interfaz se leen en ejecución desde el paquete y son los que empaqueta
+  PyInstaller. No hay copias en la raíz que sincronizar.
+- **Los datos del usuario nunca viven junto al código.** `config.json` y el
+  historial se guardan en `~/.buildai/`, para que el paquete instalado pueda
+  ser de solo lectura y varios usuarios compartan el equipo sin pisarse.
 
 ## 📦 Instalar desde terminal (pip / pipx / uv)
 
@@ -162,10 +222,8 @@ fuente, solo Python 3.11+):
 ```bat
 pip install build
 python -m build --wheel
-:: genera dist\buildai-0.1.0-py3-none-any.whl — se instala con "pip install <archivo>.whl"
+:: genera dist\buildai-0.3.0-py3-none-any.whl — se instala con "pip install <archivo>.whl"
 ```
-
----
 
 ## 🏗️ Generar el instalador (`BuildAI-Setup.exe`)
 
@@ -175,12 +233,12 @@ arriba) a partir del código fuente, en Windows con
 (`winget install JRSoftware.InnoSetup`):
 
 ```powershell
-powershell -File build_installer.ps1
+powershell -File empaquetado\build_installer.ps1
 ```
 
 El script crea (o reutiliza) un entorno virtual `.venv`, empaqueta la app con
-PyInstaller en `build_pkg\dist\BuildAI\` y compila el instalador con Inno
-Setup. El resultado queda en **`build_pkg\Output\BuildAI-Setup.exe`**, listo
+PyInstaller en `empaquetado\dist\BuildAI\` y compila el instalador con Inno
+Setup. El resultado queda en **`empaquetado\Output\BuildAI-Setup.exe`**, listo
 para repartir: instala sin pedir administrador, en `%LOCALAPPDATA%\Programs\BuildAI`,
 con accesos directos y desinstalador.
 
@@ -188,12 +246,21 @@ Piezas del empaquetado, por si necesitas tocarlas:
 
 | Archivo | Qué hace |
 |---|---|
-| `build_pkg/run_buildai.py` | Punto de entrada que llama a `buildai.main.arrancar()` |
-| `build_pkg/buildai.spec` | Spec de PyInstaller: qué código y datos (interfaz, skills, addons) se empaquetan |
-| `build_pkg/BuildAI.iss` | Script de Inno Setup: carpeta de instalación, accesos directos, desinstalador |
-| `build_installer.ps1` | Encadena PyInstaller + Inno Setup en un solo comando |
+| `empaquetado/build_installer.ps1` | Encadena PyInstaller + Inno Setup en un solo comando |
+| `empaquetado/run_buildai.py` | Punto de entrada que llama a `buildai.main.arrancar()` |
+| `empaquetado/buildai.spec` | Spec de PyInstaller: qué código y datos (interfaz, skills, addons) se empaquetan |
+| `empaquetado/BuildAI.iss` | Script de Inno Setup: carpeta de instalación, accesos directos, desinstalador |
+
+## 🧪 Pruebas
+
+```bat
+pip install pytest
+python -m pytest tests -q
+```
 
 ---
+
+# Parte 3 · Cómo funciona
 
 ## 🧠 Cómo funciona por dentro
 
@@ -236,21 +303,7 @@ Crea un archivo `buildai/skills_data/mi-skill.json`:
 }
 ```
 
-## ⚠️ Notas de seguridad
+## 📚 Documentación técnica
 
-- La IA ejecuta código dentro de tus programas para poder trabajar. Trabaja
-  siempre sobre **copias de seguridad** de tus proyectos importantes.
-- El agente tiene instrucciones de no borrar nada sin confirmarlo, pero los
-  modelos de IA pueden equivocarse: revisa los cambios.
-- Todos los puentes escuchan solo en `127.0.0.1` (tu propio equipo).
-
-## 🛠️ Problemas frecuentes
-
-| Problema | Solución |
-|---|---|
-| "Falta la clave de API" | Ajustes ⚙️ → pega tu clave del proveedor elegido |
-| El punto de un programa no se pone verde | Pulsa ❓ junto al programa y sigue los pasos; espera ~10 s |
-| AutoCAD no conecta | Abre AutoCAD con un dibujo; ejecuta ambos programas con el mismo nivel de permisos |
-| El modelo gratuito responde raro o no usa herramientas | En Ajustes, cambia el modelo de OpenRouter por otro que soporte herramientas, o usa Claude/GPT/Gemini |
-| Error 429 (límite de peticiones) | BuildAI espera y reintenta solo; si persiste, es el cupo diario del modelo gratuito: elige otro modelo ':free' o usa Ollama local |
-| El asistente pausa en tareas muy largas | No es un error: escribe «continúa» y retoma donde quedó |
+La referencia completa del proyecto — arquitectura, API HTTP, conectores,
+proveedores, empaquetado y convenciones — está en **[docs/README.md](docs/README.md)**.

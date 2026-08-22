@@ -13,10 +13,13 @@ dist/
 venv/
 env/
 
-# Empaquetado del instalador (generado por build_installer.ps1)
-build_pkg/dist/
-build_pkg/work/
-build_pkg/Output/
+# Empaquetado del instalador (generado por empaquetado/build_installer.ps1)
+empaquetado/dist/
+empaquetado/work/
+empaquetado/Output/
+
+# Cachés de herramientas
+.pytest_cache/
 
 # Editores / SO
 .vscode/

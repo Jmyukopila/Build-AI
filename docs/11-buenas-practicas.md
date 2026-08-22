@@ -89,15 +89,13 @@ manual en [`app.js`](../buildai/ui/app.js).
 * No guardar secretos en el repositorio ni devolverlos por la API.
 * No introducir formatos específicos de proveedor en las sesiones.
 * No aceptar rutas o ids sin validación.
-* No asumir que las copias raíz de `addons/` o `skills/` son las que usa el
-  paquete.
+* No volver a crear copias de `addons/` o `skills_data/` fuera del paquete: el
+  runtime y el empaquetado solo leen las de `buildai/`.
 * No crear una segunda transacción en Revit ni bloquear el hilo principal de
   Blender o SketchUp.
 
 ## Deuda técnica observada
 
-* Existen duplicados de `addons/` y `skills/` frente a los recursos bajo
-  `buildai/`; pueden divergir.
 * No hay CI, linter, formateador ni pre-commit configurados.
 * La cobertura automatizada se concentra en adjuntos e historial.
 * `main.py` mantiene estado global y solo soporta una conversación activa.

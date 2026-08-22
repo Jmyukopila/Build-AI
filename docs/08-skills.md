@@ -19,9 +19,8 @@ Los archivos se cargan exclusivamente desde
 
 [`cargar_skills()`](../buildai/skills.py) ignora JSON inválido, elementos que
 no son objetos y archivos con campos obligatorios ausentes. No normaliza
-duplicados ni valida un esquema más estricto. La carpeta raíz
-[`skills/`](../skills) es una copia distribuida/histórica y no es la ruta que
-lee esta función.
+duplicados ni valida un esquema más estricto. `buildai/skills_data/` es la
+única ubicación que lee: no existen copias fuera del paquete.
 
 ## Skills incluidas
 
@@ -61,8 +60,6 @@ tabla resume su intención visible.
 4. Validar que el JSON sea UTF-8 y no tenga comentarios.
 5. Reiniciar o volver a cargar la aplicación para que `GET /api/skills`
    devuelva la skill.
-6. Si el proceso de distribución exige mantener la copia raíz, sincronizar
-   `skills/` conscientemente; no asumir que esa copia cambia el runtime.
 
 Una skill no añade permisos: las operaciones posibles siguen limitadas por
 los conectores disponibles y por el proveedor que soporte tool calling.

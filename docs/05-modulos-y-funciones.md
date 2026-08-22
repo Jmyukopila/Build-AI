@@ -407,12 +407,12 @@ Funciones públicas agrupadas por familia. Estas son las que el prompt del conec
 
 El archivo Ruby implementa el bridge y sus métodos de cola/timer; los nombres se mantienen en [06](06-conectores.md).
 
-## `build_pkg/run_buildai.py`
+## `empaquetado/run_buildai.py`
 
 | Símbolo | Firma o tipo | Qué hace y devuelve | Notas |
 |---|---|---|---|
 
-## `build_pkg/buildai.spec`
+## `empaquetado/buildai.spec`
 
 Configuración declarativa de PyInstaller: entry point, datos incluidos, hidden imports y modo onedir sin consola.
 

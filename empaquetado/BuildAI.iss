@@ -1,6 +1,6 @@
 ; Instalador de BuildAI (Inno Setup). Compilar con:
-;   "C:\Users\Usuario\AppData\Local\Programs\Inno Setup 6\ISCC.exe" build_pkg\BuildAI.iss
-; Requiere que antes exista build_pkg\dist\BuildAI\BuildAI.exe (ver build_pkg\buildai.spec).
+;   "C:\Users\Usuario\AppData\Local\Programs\Inno Setup 6\ISCC.exe" empaquetado\BuildAI.iss
+; Requiere que antes exista empaquetado\dist\BuildAI\BuildAI.exe (ver empaquetado\buildai.spec).
 
 #define MyAppName "BuildAI"
 #define MyAppVersion "0.3.0"

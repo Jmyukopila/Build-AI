@@ -14,8 +14,8 @@
 | IronPython o CPython | Según pyRevit | Routes y BIM en Revit. | [`startup.py`](../buildai/addons/revit/BuildAI.extension/startup.py) | Motores soportados por pyRevit. |
 | COM | AutoCAD completo 2004+ | Instancia abierta y órdenes. | [`autocad.py`](../buildai/connectors/autocad.py) | Automatización incluida en AutoCAD. |
 | JSON | Sin versión | Configuración, sesiones, skills y puentes. | [`config.py`](../buildai/config.py), [`sesiones.py`](../buildai/sesiones.py) | Legible y portable. |
-| PyInstaller | Invocado por script | Directorio ejecutable. | [`buildai.spec`](../build_pkg/buildai.spec) | Distribución sin Python. |
-| Inno Setup | `ISCC.exe` | Instalador, accesos y desinstalador. | [`BuildAI.iss`](../build_pkg/BuildAI.iss) | Instalación por usuario sin UAC. |
+| PyInstaller | Invocado por script | Directorio ejecutable. | [`buildai.spec`](../empaquetado/buildai.spec) | Distribución sin Python. |
+| Inno Setup | `ISCC.exe` | Instalador, accesos y desinstalador. | [`BuildAI.iss`](../empaquetado/BuildAI.iss) | Instalación por usuario sin UAC. |
 
 Las versiones de ejecución están en [`pyproject.toml`](../pyproject.toml) y [`requirements.txt`](../requirements.txt). Los entry points son `buildai = buildai.main:arrancar` y `buildai-instalar = buildai.instalador:instalar_todos`.
 

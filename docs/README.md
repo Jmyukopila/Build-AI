@@ -20,6 +20,7 @@ Esta documentación describe el comportamiento implementado, no una arquitectura
 | [10 · Empaquetado y distribución](10-empaquetado-y-distribucion.md) | Instalación, PyInstaller e Inno Setup. |
 | [11 · Buenas prácticas](11-buenas-practicas.md) | Convenciones existentes y deuda técnica. |
 | [12 · Pruebas y desarrollo](12-pruebas-y-desarrollo.md) | Desarrollo en Windows y pruebas. |
+| [13 · MCP y entorno asistido](13-mcp-y-entorno-asistido.md) | Servidores MCP del entorno de desarrollo y su relación con los conectores. |
 
 ## Quiero… → lee…
 
@@ -33,8 +34,19 @@ Esta documentación describe el comportamiento implementado, no una arquitectura
 | Entender claves, sesiones o memoria | [09 · Datos](09-datos-sesiones-y-memoria.md) |
 | Empaquetar o instalar | [10 · Empaquetado](10-empaquetado-y-distribucion.md) |
 | Ejecutar pruebas | [12 · Pruebas](12-pruebas-y-desarrollo.md) |
+| Saber qué MCP se usan y por qué | [13 · MCP](13-mcp-y-entorno-asistido.md) |
 | Revisar decisiones y límites | [01 · Arquitectura](01-arquitectura.md) y [11 · Buenas prácticas](11-buenas-practicas.md) |
 
 ## Fuente de verdad
 
-El paquete ejecutable está en [`buildai/`](../buildai/__init__.py). Las copias visibles de [`addons/`](../addons/blender/buildai_blender.py) y [`skills/`](../skills/01-casa-basica.json) son recursos de raíz; en ejecución se leen los recursos incluidos bajo `buildai/`, como explica [10](10-empaquetado-y-distribucion.md). La duplicación queda documentada como deuda técnica y no se modifica aquí.
+El paquete ejecutable está en [`buildai/`](../buildai/__init__.py) y contiene también los recursos que se distribuyen con la aplicación: [`buildai/addons/`](../buildai/addons/blender/buildai_blender.py) (puentes), [`buildai/skills_data/`](../buildai/skills_data/01-casa-basica.json) (tareas rápidas) y `buildai/ui/` (interfaz). Son la única copia: en ejecución se leen desde ahí y son las que empaqueta PyInstaller, como explica [10](10-empaquetado-y-distribucion.md).
+
+## Estructura del repositorio
+
+| Carpeta | Contenido |
+|---|---|
+| `buildai/` | Paquete de la aplicación: servidor, agente, conectores, proveedores, interfaz y recursos. |
+| `docs/` | Esta documentación técnica. |
+| `empaquetado/` | Empaquetado de escritorio: spec de PyInstaller, script de Inno Setup y `build_installer.ps1`. |
+| `tests/` | Pruebas con pytest. |
+| `website/` | Landing estática de descarga, ajena al servidor de la app. |
