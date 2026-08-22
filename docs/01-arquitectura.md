@@ -73,4 +73,4 @@ El agente limita a `MAX_PASOS = 100`, `MAX_HISTORIAL = 120`, 8000 caracteres por
 * El agente ejecuta código del modelo dentro de programas CAD/BIM; el README recomienda copias y revisar cambios.
 * `main.py` tiene estado global y una conversación activa.
 * No existe una transacción común entre conectores: Revit abre una transacción en su puente, Blender y SketchUp ejecutan en el modelo propio.
-* La duplicación raíz `addons/` y `skills/` es una deuda técnica de mantenimiento.
+* Los recursos que se distribuyen con la aplicación (`addons/`, `skills_data/`, `ui/`) viven dentro del paquete `buildai/`: son la única copia y la que se empaqueta.

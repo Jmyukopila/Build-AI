@@ -22,7 +22,7 @@ La detección es best-effort y no arranca ni reinicia los programas.
 
 ```mermaid
 flowchart LR
-  A[build_installer.ps1] --> B[PyInstaller]
+  A[empaquetado build_installer.ps1] --> B[PyInstaller]
   B --> C[buildai.spec]
   C --> D[dist BuildAI]
   D --> E[Inno Setup]
@@ -30,9 +30,9 @@ flowchart LR
   F --> G[BuildAI Setup exe]
 ```
 
-[`build_installer.ps1`](../build_installer.ps1) limpia o prepara el proceso,
-invoca PyInstaller y después `ISCC.exe`. [`build_pkg/buildai.spec`](../build_pkg/buildai.spec)
-usa [`run_buildai.py`](../build_pkg/run_buildai.py) como entry point, salida
+[`empaquetado/build_installer.ps1`](../empaquetado/build_installer.ps1) limpia o prepara el proceso,
+invoca PyInstaller y después `ISCC.exe`. [`empaquetado/buildai.spec`](../empaquetado/buildai.spec)
+usa [`run_buildai.py`](../empaquetado/run_buildai.py) como entry point, salida
 `onedir` y ejecutable sin consola. Incluye los recursos que no son módulos
 Python:
 
@@ -47,7 +47,7 @@ copias empaquetadas dentro de `buildai/` son las relevantes.
 
 ## Inno Setup
 
-[`BuildAI.iss`](../build_pkg/BuildAI.iss) declara `AppVersion 0.3.0`, instala
+[`BuildAI.iss`](../empaquetado/BuildAI.iss) declara `AppVersion 0.3.0`, instala
 en `%LOCALAPPDATA%\Programs\BuildAI`, requiere privilegios `lowest`, añade
 menú Inicio y desinstalador, y ofrece acceso directo de escritorio. El
 resultado se llama `BuildAI-Setup.exe`. La versión del proyecto está también

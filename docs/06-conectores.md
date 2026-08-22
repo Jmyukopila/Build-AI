@@ -30,8 +30,8 @@ paralelo; una excepción se trata como desconectado.
   registra un servidor y un timer. Las peticiones de hilos se encolan y
   `_bombear_trabajos` las ejecuta en el hilo principal de Blender.
 * **Instalación:** [`instalador.py`](../buildai/instalador.py) copia el addon
-  en la carpeta de scripts/addons detectada. Hay una copia raíz histórica,
-  pero el empaquetado usa `buildai/addons`.
+  en la carpeta de scripts/addons detectada, tomándolo de `buildai/addons`,
+  que es también lo que empaqueta PyInstaller.
 
 El kit ofrece muros, forjados, cubiertas, mobiliario, materiales, iluminación,
 cámara y render en metros, evitando que el modelo repita detalles de `bpy`.
@@ -100,11 +100,11 @@ geométrico sea válido; los resultados siguen dependiendo del programa abierto.
 6. Añadir el puente dentro de `buildai/addons/` si el programa requiere
    ejecución en su hilo principal.
 7. Incorporar copia e instalación en `instalador.py` y en
-   [`buildai.spec`](../build_pkg/buildai.spec).
+   [`buildai.spec`](../empaquetado/buildai.spec).
 8. Añadir estado y ayuda a la UI solo si el contrato existente lo requiere.
 9. Documentar puerto, versiones, unidades, instalación y límites.
 10. Escribir pruebas de esquemas y fallos sin el programa abierto; no hacer
     depender las pruebas unitarias de una instalación CAD real.
 
-La copia raíz de addons no es la fuente usada por las rutas de ejecución;
-si se actualiza manualmente debe evitarse que diverja de `buildai/addons`.
+Los puentes viven únicamente en `buildai/addons`: es la ruta que lee el
+instalador en ejecución y la que se incluye en el ejecutable empaquetado.

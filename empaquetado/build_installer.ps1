@@ -1,10 +1,12 @@
-# Genera build_pkg\Output\BuildAI-Setup.exe desde cero: crea/actualiza el
+# Genera empaquetado\Output\BuildAI-Setup.exe desde cero: crea/actualiza el
 # entorno de compilación, empaqueta con PyInstaller y compila el instalador
 # con Inno Setup.
 #
-# Uso:  powershell -File build_installer.ps1
+# Uso:  powershell -File empaquetado\build_installer.ps1
 $ErrorActionPreference = "Stop"
-Set-Location $PSScriptRoot
+# El script vive en empaquetado\ pero opera desde la raíz del proyecto: ahí están
+# el paquete buildai, requirements.txt y el .venv de compilación.
+Set-Location (Split-Path $PSScriptRoot -Parent)
 
 $venvPython = ".\.venv\Scripts\python.exe"
 if (-not (Test-Path $venvPython)) {
@@ -17,7 +19,7 @@ Write-Host "Instalando dependencias de compilación..."
 & $venvPython -m pip install -r requirements.txt pyinstaller pywebview --quiet
 
 Write-Host "Empaquetando BuildAI.exe con PyInstaller..."
-& $venvPython -m PyInstaller build_pkg\buildai.spec --noconfirm --distpath build_pkg\dist --workpath build_pkg\work
+& $venvPython -m PyInstaller empaquetado\buildai.spec --noconfirm --distpath empaquetado\dist --workpath empaquetado\work
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller falló" }
 
 $iscc = Get-ChildItem -Path "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "C:\Program Files (x86)\Inno Setup 6\ISCC.exe", "C:\Program Files\Inno Setup 6\ISCC.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -26,8 +28,8 @@ if (-not $iscc) {
 }
 
 Write-Host "Compilando el instalador con Inno Setup..."
-& $iscc.FullName build_pkg\BuildAI.iss
+& $iscc.FullName empaquetado\BuildAI.iss
 if ($LASTEXITCODE -ne 0) { throw "ISCC falló" }
 
 Write-Host ""
-Write-Host "Listo: build_pkg\Output\BuildAI-Setup.exe"
+Write-Host "Listo: empaquetado\Output\BuildAI-Setup.exe"

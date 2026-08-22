@@ -1,13 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 # Genera dist/BuildAI/BuildAI.exe (modo onedir: arranque más rápido y menos
 # falsos positivos de antivirus que onefile). Se compila con:
-#   .venv\Scripts\pyinstaller build_pkg\buildai.spec --noconfirm
+#   .venv\Scripts\pyinstaller empaquetado\buildai.spec --noconfirm
 from pathlib import Path
 
+# SPECPATH es empaquetado/, la raiz del proyecto es su padre.
 RAIZ = Path(SPECPATH).resolve().parent
 
 a = Analysis(
-    [str(RAIZ / "build_pkg" / "run_buildai.py")],
+    [str(RAIZ / "empaquetado" / "run_buildai.py")],
     pathex=[str(RAIZ)],
     binaries=[],
     datas=[
