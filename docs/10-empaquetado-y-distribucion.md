@@ -47,7 +47,7 @@ copias empaquetadas dentro de `buildai/` son las relevantes.
 
 ## Inno Setup
 
-[`BuildAI.iss`](../empaquetado/BuildAI.iss) declara `AppVersion 0.3.0`, instala
+[`BuildAI.iss`](../empaquetado/BuildAI.iss) declara `AppVersion 0.3.1`, instala
 en `%LOCALAPPDATA%\Programs\BuildAI`, requiere privilegios `lowest`, añade
 menú Inicio y desinstalador, y ofrece acceso directo de escritorio. El
 resultado se llama `BuildAI-Setup.exe`. La versión del proyecto está también
@@ -66,5 +66,5 @@ la versión visible coincidan con el instalador.
 PyInstaller e Inno Setup se invocan durante la construcción pero no están
 fijados como dependencias Python. El empaquetado es Windows-first y requiere
 herramientas instaladas en la máquina de build. El historial de versiones
-visible en commits puede complementar `0.3.0`, pero no es un fichero de
+visible en commits puede complementar `0.3.1`, pero no es un fichero de
 metadatos formal y no se asume aquí una política semántica.

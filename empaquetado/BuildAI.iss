@@ -3,7 +3,7 @@
 ; Requiere que antes exista empaquetado\dist\BuildAI\BuildAI.exe (ver empaquetado\buildai.spec).
 
 #define MyAppName "BuildAI"
-#define MyAppVersion "0.3.0"
+#define MyAppVersion "0.3.1"
 #define MyAppPublisher "BuildAI"
 #define MyAppExeName "BuildAI.exe"
 #define MyDistDir "dist\BuildAI"

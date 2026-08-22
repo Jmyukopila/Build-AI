@@ -222,7 +222,7 @@ fuente, solo Python 3.11+):
 ```bat
 pip install build
 python -m build --wheel
-:: genera dist\buildai-0.3.0-py3-none-any.whl — se instala con "pip install <archivo>.whl"
+:: genera dist\buildai-0.3.1-py3-none-any.whl — se instala con "pip install <archivo>.whl"
 ```
 
 ## 🏗️ Generar el instalador (`BuildAI-Setup.exe`)
