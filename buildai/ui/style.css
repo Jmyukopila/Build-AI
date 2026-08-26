@@ -120,11 +120,10 @@ body::before {
   margin-bottom: 12px;
   border-bottom: 1px solid var(--borde);
 }
-/* El arte original es un mockup fotorrealista (chapa metálica sobre una
-   pared de textura). En vez de estirarlo a un cartel grande -que se lee
-   como una foto pegada y pierde nitidez al ampliarse-, se reduce a un
-   emblema pequeño y nítido, y el nombre se compone con texto real (vector,
-   siempre nítido) al lado, como una marca normal. */
+/* El emblema es ahora el símbolo vectorial de la marca (cubo isométrico
+   cian/lima, sin fondo propio): la placa oscura con glow la dibuja este
+   div, así que la imagen solo aporta el trazo y queda nítida a cualquier
+   tamaño. */
 .marca-emblema {
   position: relative;
   flex-shrink: 0;
@@ -142,14 +141,11 @@ body::before {
 }
 .logo-plate {
   position: absolute;
-  top: 48%;
+  top: 50%;
   left: 50%;
-  width: 150%;
+  width: 66%;
   height: auto;
   transform: translate(-50%, -50%);
-  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 44%, transparent 76%);
-  mask-image: radial-gradient(circle at 50% 42%, #000 44%, transparent 76%);
-  filter: contrast(1.05) saturate(1.1);
 }
 .marca-textos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .marca-titulo {
