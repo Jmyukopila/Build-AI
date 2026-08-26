@@ -32,6 +32,9 @@ document.getElementById("icono-rasgo-construye").innerHTML = svgIcono("muros");
 document.getElementById("icono-rasgo-interiores").innerHTML = svgIcono("luces");
 document.getElementById("icono-rasgo-render").innerHTML = svgIcono("chispa");
 document.getElementById("btn-adjuntar").innerHTML = svgIcono("clip");
+document.getElementById("btn-rail").innerHTML = svgIcono("panel");
+document.getElementById("btn-x-rail").innerHTML = svgIcono("cerrar");
+document.getElementById("icono-rail-actividad").innerHTML = svgIcono("actividad");
 
 // Encargos de ejemplo de la bienvenida: rellenan la caja para que el usuario
 // pueda ajustarlos antes de enviar
@@ -78,6 +81,14 @@ async function cargarEstado() {
     ? `${datos.proveedor} · ${datos.modelo}`
     : "Configura la IA en Ajustes";
   estadoAnterior = datos;
+
+  const conectados = datos.programas.filter((p) => p.conectado).length;
+  document.getElementById("lectura-estado").innerHTML =
+    `<span class="punto ${conectados > 0 ? "conectado" : ""}"></span>${conectados}/${datos.programas.length} programas`;
+  document.getElementById("rail-estado").innerHTML = `
+    <div class="rail-estado-fila"><span>Programas conectados</span><b>${conectados} / ${datos.programas.length}</b></div>
+    <div class="rail-estado-fila"><span>Proveedor de IA</span><b>${datos.clave_configurada ? datos.proveedor : "sin configurar"}</b></div>
+    <div class="rail-estado-fila"><span>Modelo</span><b>${datos.clave_configurada ? datos.modelo : "—"}</b></div>`;
 }
 
 /* ---------- Skills ---------- */
@@ -144,6 +155,18 @@ fondo.addEventListener("click", () => {
   lateral.classList.add("oculto");
   fondo.classList.add("oculto");
 });
+
+/* ---------- Rail de actividad (derecha) ---------- */
+
+const railDerecho = document.getElementById("rail-derecho");
+const fondoRail = document.getElementById("fondo-rail");
+function alternarRail() {
+  railDerecho.classList.toggle("oculto");
+  fondoRail.classList.toggle("oculto");
+}
+document.getElementById("btn-rail").addEventListener("click", alternarRail);
+document.getElementById("btn-x-rail").addEventListener("click", alternarRail);
+fondoRail.addEventListener("click", alternarRail);
 
 /* ---------- Pestañas del panel lateral (Programas / Tareas / Historial) ---------- */
 
@@ -281,6 +304,7 @@ function agregarRender(archivo) {
   const d = document.createElement("div");
   d.className = "mensaje asistente render";
   d.innerHTML = `<div class="burbuja burbuja-render">
+    <span class="tag-artefacto">Render</span>
     <img class="imagen-render" loading="lazy" alt="Render fotorrealista">
     <div class="pie-render"><span>${svgIcono("chispa")} Render fotorrealista</span></div>
   </div>`;
@@ -293,6 +317,41 @@ function agregarRender(archivo) {
   else chat.appendChild(d);
   chat.scrollTop = chat.scrollHeight;
   transcripcion.push({ rol: "render", archivo });
+  agregarEntregableRail(archivo, src);
+}
+
+/* ---------- Rail: entregables (galería de renders) y actividad ---------- */
+
+function marcarVacioRail(idLista) {
+  const lista = document.getElementById(idLista);
+  const vacio = document.querySelector(`.rail-vacio[data-vacio-de="${idLista}"]`);
+  if (vacio) vacio.classList.toggle("oculto", lista.children.length > 0);
+}
+
+function agregarEntregableRail(archivo, src) {
+  const cont = document.getElementById("rail-entregables");
+  const d = document.createElement("button");
+  d.type = "button";
+  d.className = "entregable-thumb";
+  d.title = archivo;
+  d.innerHTML = `<img src="${src}" loading="lazy" alt="">`;
+  d.onclick = () => abrirLightbox(src, archivo);
+  d.querySelector("img").onerror = () => { d.remove(); marcarVacioRail("rail-entregables"); };
+  cont.prepend(d);
+  marcarVacioRail("rail-entregables");
+}
+
+function agregarActividadRail(ev) {
+  const cont = document.getElementById("rail-actividad");
+  const d = document.createElement("div");
+  d.className = "actividad-item";
+  d.innerHTML = `<span class="icono">${svgIcono((ev.programa || "").toLowerCase())}</span>
+    <span class="actividad-item-texto"><b>${escapeHtml(ev.nombre)}</b><small>${escapeHtml(ev.programa || "")}</small></span>`;
+  cont.prepend(d);
+  // Se limita el historial visible del rail para que no crezca sin fin en
+  // sesiones largas; la conversación completa sigue íntegra en el chat.
+  while (cont.children.length > 30) cont.lastElementChild.remove();
+  marcarVacioRail("rail-actividad");
 }
 
 function abrirLightbox(src, archivo) {
@@ -315,8 +374,9 @@ document.getElementById("lightbox-descargar").addEventListener("click", (e) => e
 function agregarActividadHerramienta(ev) {
   const detalle = ev.detalle ? `<pre>${escapeHtml(ev.detalle)}</pre>` : "";
   agregarMensaje("actividad",
-    `<details><summary>${svgIcono((ev.programa || "").toLowerCase())} ${escapeHtml(ev.nombre)}</summary>${detalle}</details>`);
+    `<details><summary>${icono((ev.programa || "").toLowerCase())} ${escapeHtml(ev.nombre)}</summary>${detalle}</details>`);
   transcripcion.push({ rol: "herramienta", nombre: `${ev.programa} · ${ev.nombre}`, detalle: ev.detalle || "" });
+  agregarActividadRail(ev);
 }
 
 function lineaConIcono(icono, texto) {
@@ -716,6 +776,10 @@ function limpiarConversacion() {
   transcripcion = [];
   adjuntosPendientes = [];
   renderAdjuntosPrevia();
+  document.getElementById("rail-actividad").innerHTML = "";
+  document.getElementById("rail-entregables").innerHTML = "";
+  marcarVacioRail("rail-actividad");
+  marcarVacioRail("rail-entregables");
 }
 
 function pintarConversacion(mensajes) {

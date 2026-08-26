@@ -1,5 +1,5 @@
 /* BuildAI — estilos de la interfaz */
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=DM+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -32,13 +32,14 @@
   --radio: 12px;
   --transicion: 180ms ease;
   --fuente-marca: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
-  --fuente-tecnica: "DM Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  --fuente-ui: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --fuente-tecnica: "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
 }
 
 html, body { height: 100%; }
 body {
   display: flex;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: var(--fuente-ui);
   background:
     radial-gradient(1000px 620px at 14% -8%, rgba(87, 216, 255, 0.09) 0%, transparent 55%),
     radial-gradient(800px 500px at 100% 100%, rgba(184, 255, 77, 0.05) 0%, transparent 60%),
@@ -958,6 +959,7 @@ button.secundario:hover { background: var(--panel-suave); border-color: var(--bo
 
 /* ---------- Renders en el chat ---------- */
 .mensaje.render .burbuja-render {
+  position: relative;
   max-width: min(78%, 760px);
   padding: 8px;
   background: var(--panel);
@@ -965,6 +967,21 @@ button.secundario:hover { background: var(--panel-suave); border-color: var(--bo
   border-radius: 16px;
   border-bottom-left-radius: 4px;
   box-shadow: var(--sombra);
+}
+.tag-artefacto {
+  position: absolute;
+  top: 16px; left: 16px;
+  z-index: 1;
+  font-family: var(--fuente-tecnica);
+  font-size: 9.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #06222c;
+  background: var(--acento);
+  padding: 3px 8px;
+  border-radius: 5px;
+  opacity: 0.92;
 }
 .imagen-render {
   display: block;
@@ -1028,4 +1045,154 @@ button.secundario:hover { background: var(--panel-suave); border-color: var(--bo
 }
 @media (min-width: 861px) {
   #btn-menu { display: none; }
+}
+
+/* ---------- Lectura de estado en la cabecera ---------- */
+.lectura-estado {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--fuente-tecnica);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+.lectura-estado .punto {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: var(--rojo);
+}
+.lectura-estado .punto.conectado {
+  background: var(--verde);
+  animation: punto-en-vivo 2.2s ease-in-out infinite;
+}
+@media (max-width: 720px) { .lectura-estado { display: none; } }
+
+/* ---------- Rail de actividad (derecha) ---------- */
+#rail-derecho {
+  width: 280px;
+  min-width: 280px;
+  background: var(--vidrio), var(--panel);
+  border-left: 1px solid var(--borde);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1;
+}
+.rail-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--borde);
+  flex-shrink: 0;
+}
+.rail-titulo-app {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--fuente-marca);
+  font-size: 14px;
+  font-weight: 700;
+}
+.rail-titulo-app .icono { color: var(--acento); }
+#btn-x-rail { display: none; }
+.rail-cuerpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.rail-seccion-titulo {
+  font-family: var(--fuente-tecnica);
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--texto-suave);
+  margin-bottom: 8px;
+}
+.rail-estado {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--panel-suave);
+  padding: 10px 12px;
+}
+.rail-estado-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; }
+.rail-estado-fila span { color: var(--texto-suave); }
+.rail-estado-fila b { font-weight: 600; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 62%; }
+
+.lista-actividad-rail { display: flex; flex-direction: column; gap: 6px; }
+.actividad-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--panel-suave);
+  animation: rasgo-aparece 260ms ease both;
+}
+.actividad-item .icono { color: var(--acento); margin-top: 1px; flex-shrink: 0; }
+.actividad-item-texto { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 12px; }
+.actividad-item-texto b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.actividad-item-texto small { font-family: var(--fuente-tecnica); font-size: 10px; color: var(--texto-suave); }
+
+.lista-entregables {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.entregable-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel-suave);
+  box-shadow: none;
+  cursor: zoom-in;
+}
+.entregable-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: filter var(--transicion); }
+.entregable-thumb:hover img { filter: brightness(1.1); }
+.entregable-thumb:hover { border-color: var(--acento); background: var(--panel-suave); box-shadow: none; filter: none; transform: none; }
+
+.rail-vacio { margin-top: 0; }
+.rail-vacio.oculto { display: none; }
+
+@media (max-width: 1180px) {
+  #rail-derecho {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 50;
+    box-shadow: var(--sombra-modal);
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    transition: transform 220ms ease-out, opacity 220ms ease;
+  }
+  #rail-derecho.oculto { transform: translateX(16px) scale(0.98); opacity: 0; pointer-events: none; }
+  #fondo-rail:not(.oculto) { display: block; }
+  #btn-x-rail { display: inline-flex; }
+}
+@media (min-width: 1181px) {
+  #btn-rail { display: none; }
+}
+
+/* Respeta la preferencia del sistema de reducir animación: apaga glows,
+   pulsos y entradas escalonadas, deja solo los cambios de estado. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
