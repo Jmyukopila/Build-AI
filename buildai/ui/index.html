@@ -63,10 +63,12 @@
     <header id="barra-superior">
       <button id="btn-menu" class="icono-btn" title="Mostrar/ocultar panel lateral"></button>
       <h2 class="titulo-barra">Conversación</h2>
+      <div id="lectura-estado" class="lectura-estado"></div>
       <div class="acciones-barra">
         <button id="btn-exportar" class="icono-btn" title="Descargar la conversación (Markdown)"></button>
         <button id="btn-ajustes" class="icono-btn" title="Ajustes de IA"></button>
         <button id="btn-nueva" class="icono-btn" title="Nueva conversación"></button>
+        <button id="btn-rail" class="icono-btn" title="Mostrar/ocultar actividad"></button>
       </div>
     </header>
 
@@ -131,6 +133,34 @@
       </div>
     </form>
   </main>
+
+  <div id="fondo-rail" class="fondo-lateral oculto"></div>
+
+  <aside id="rail-derecho" class="oculto">
+    <div class="rail-cabecera">
+      <span class="rail-titulo-app"><span class="icono" id="icono-rail-actividad"></span>Actividad</span>
+      <button id="btn-x-rail" class="icono-btn icono-btn-chico" title="Cerrar"></button>
+    </div>
+
+    <div class="rail-cuerpo">
+      <section class="rail-seccion">
+        <h3 class="rail-seccion-titulo">Estado del sistema</h3>
+        <div id="rail-estado" class="rail-estado"></div>
+      </section>
+
+      <section class="rail-seccion">
+        <h3 class="rail-seccion-titulo">Actividad reciente</h3>
+        <div id="rail-actividad" class="lista-actividad-rail"></div>
+        <p class="pista rail-vacio" data-vacio-de="rail-actividad">Aquí verás cada acción sobre tus programas en cuanto empieces a pedir algo.</p>
+      </section>
+
+      <section class="rail-seccion">
+        <h3 class="rail-seccion-titulo">Entregables</h3>
+        <div id="rail-entregables" class="lista-entregables"></div>
+        <p class="pista rail-vacio" data-vacio-de="rail-entregables">Los renders que pidas aparecerán aquí como galería.</p>
+      </section>
+    </div>
+  </aside>
 
   <!-- Ventana de ajustes -->
   <div id="modal-ajustes" class="modal oculto">
