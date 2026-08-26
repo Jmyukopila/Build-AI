@@ -1,38 +1,38 @@
 /* BuildAI — estilos de la interfaz */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=DM+Mono:wght@400;500&display=swap");
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --fondo: #15171b;
-  --panel: #1d2024;
-  --panel-suave: #24272c;
-  --borde: #3a3e46;
-  --texto: #edf0f4;
-  --texto-suave: #9ba1aa;
-  --acento: #4a90c4;
-  --acento-suave: rgba(74, 144, 196, 0.14);
-  --acento-oscuro: #7fc0ee;
-  --glow: rgba(127, 192, 238, 0.5);
-  --verde: #34d399;
-  --rojo: #f87171;
-  --rojo-suave: rgba(248, 113, 113, 0.12);
-  --ambar: #fbbf24;
-  --ambar-suave: rgba(251, 191, 36, 0.12);
-  /* Paleta metálica: bandas frías tipo acero cepillado, usadas como veta
-     sobre los paneles y como base de los botones/bordes */
-  --metal-clara: #aeb8c4;
-  --metal-media: #5b6572;
-  --metal-oscura: #2a2e35;
-  --metal-veta: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.09) 0%,
-    rgba(255, 255, 255, 0) 28%,
-    rgba(255, 255, 255, 0.035) 52%,
-    rgba(255, 255, 255, 0) 78%,
-    rgba(255, 255, 255, 0.06) 100%);
-  --metal-borde: linear-gradient(155deg, #7c8896, #3a3e46 45%, #565f6b 100%);
-  --sombra: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.4);
-  --sombra-modal: 0 24px 60px rgba(0, 0, 0, 0.6);
+  --fondo: #060a10;
+  --panel: #0b131c;
+  --panel-suave: #101b26;
+  --borde: #1c2c3a;
+  --borde-fuerte: #2c4356;
+  --texto: #eaf3f7;
+  --texto-suave: #7d92a1;
+  --acento: #57d8ff;
+  --acento-suave: rgba(87, 216, 255, 0.13);
+  --acento-oscuro: #9be9ff;
+  --glow: rgba(87, 216, 255, 0.45);
+  --verde: #b8ff4d;
+  --verde-suave: rgba(184, 255, 77, 0.14);
+  --glow-verde: rgba(184, 255, 77, 0.45);
+  --rojo: #ff6b7a;
+  --rojo-suave: rgba(255, 107, 122, 0.12);
+  --ambar: #ffc857;
+  --ambar-suave: rgba(255, 200, 87, 0.12);
+  /* Vidrio técnico: un sheen muy sutil (no la chapa de acero anterior),
+     coherente con la landing — paneles casi planos con un realce superior
+     y un borde con levísimo tinte cian, como cristal de HUD. */
+  --vidrio: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.045) 0%,
+    rgba(255, 255, 255, 0) 18%);
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --sombra-modal: 0 24px 70px rgba(0, 0, 0, 0.7);
   --radio: 12px;
   --transicion: 180ms ease;
+  --fuente-marca: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --fuente-tecnica: "DM Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
 }
 
 html, body { height: 100%; }
@@ -40,10 +40,27 @@ body {
   display: flex;
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   background:
-    radial-gradient(1100px 700px at 12% -10%, #232a32 0%, transparent 55%),
-    linear-gradient(165deg, #191c21 0%, var(--fondo) 45%, #1a1d22 100%);
+    radial-gradient(1000px 620px at 14% -8%, rgba(87, 216, 255, 0.09) 0%, transparent 55%),
+    radial-gradient(800px 500px at 100% 100%, rgba(184, 255, 77, 0.05) 0%, transparent 60%),
+    linear-gradient(180deg, #081019 0%, var(--fondo) 45%, #05080d 100%);
+  background-attachment: fixed;
   color: var(--texto);
 }
+/* Trama técnica muy tenue sobre toda la app, como la retícula de la landing */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(87, 216, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(87, 216, 255, 0.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(1200px 800px at 20% 0%, #000 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(1200px 800px at 20% 0%, #000 0%, transparent 70%);
+}
+#lateral, #principal { position: relative; z-index: 1; }
 
 /* Barras de desplazamiento discretas, acordes al tema oscuro */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -86,7 +103,7 @@ body {
 #lateral {
   width: 300px;
   min-width: 300px;
-  background: var(--metal-veta), var(--panel);
+  background: var(--vidrio), var(--panel);
   border-right: 1px solid var(--borde);
   display: flex;
   flex-direction: column;
@@ -115,8 +132,13 @@ body {
   height: 44px;
   border-radius: 12px;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 38%, #333a44, #1a1d22 78%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 0 1px var(--borde);
+  background: radial-gradient(circle at 50% 38%, #0f2233, #060a10 78%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(87, 216, 255, 0.12), 0 0 16px -4px var(--glow);
+  animation: emblema-late 3.4s ease-in-out infinite;
+}
+@keyframes emblema-late {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(87, 216, 255, 0.12), 0 0 16px -4px var(--glow); }
+  50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(87, 216, 255, 0.22), 0 0 22px -3px var(--glow); }
 }
 .logo-plate {
   position: absolute;
@@ -131,19 +153,21 @@ body {
 }
 .marca-textos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .marca-titulo {
+  font-family: var(--fuente-marca);
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.4px;
-  background: linear-gradient(120deg, var(--metal-clara) 0%, #fff 28%, var(--metal-media) 52%, var(--acento-oscuro) 78%, var(--metal-clara) 100%);
+  background: linear-gradient(100deg, #fff 0%, var(--acento-oscuro) 45%, var(--acento) 70%, #fff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 .marca-sub {
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--fuente-tecnica);
+  font-size: 9.5px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   color: var(--texto-suave);
 }
 
@@ -156,7 +180,7 @@ body {
   margin-bottom: 12px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--metal-veta), var(--panel-suave);
+  background: var(--vidrio), var(--panel-suave);
   flex-shrink: 0;
 }
 .tab-realce {
@@ -184,15 +208,16 @@ body {
   border-radius: 8px;
   background: transparent;
   color: var(--texto-suave);
-  font-size: 10.5px;
-  font-weight: 700;
+  font-family: var(--fuente-tecnica);
+  font-size: 10px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
   cursor: pointer;
   transition: color 200ms ease;
 }
 .tab-lateral .icono svg { width: 16px; height: 16px; }
-.tab-lateral.activo { color: #fff; }
+.tab-lateral.activo { color: #06222c; }
 .tab-lateral:not(.activo):hover { color: var(--texto); }
 .panel-lateral-cuerpos { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 .panel-tab-cuerpo.oculto { display: none; }
@@ -243,7 +268,7 @@ body {
   transition: color 200ms ease;
 }
 .switch-opcion .icono svg { width: 14px; height: 14px; }
-.switch-opcion.activo { color: #fff; }
+.switch-opcion.activo { color: #06222c; }
 .switch-opcion:not(.activo):hover { color: var(--texto); }
 .btn-oauth {
   width: 100%; padding: 12px; margin-top: 4px;
@@ -263,7 +288,7 @@ body {
   padding: 9px 10px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--metal-veta), var(--panel);
+  background: var(--vidrio), var(--panel);
   transition: border-color var(--transicion), box-shadow var(--transicion);
 }
 .programa:hover { border-color: color-mix(in srgb, var(--acento) 40%, var(--borde)); box-shadow: var(--sombra); }
@@ -272,7 +297,11 @@ body {
   background: var(--rojo);
   flex-shrink: 0;
 }
-.programa.conectado .punto { background: var(--verde); box-shadow: 0 0 0 3px color-mix(in srgb, var(--verde) 20%, transparent); }
+.programa.conectado .punto { background: var(--verde); animation: punto-en-vivo 2.2s ease-in-out infinite; }
+@keyframes punto-en-vivo {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--verde) 20%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--verde) 10%, transparent), 0 0 8px 0 var(--glow-verde); }
+}
 .programa .icono { color: var(--texto-suave); }
 .programa .nombre { flex: 1; font-size: 13.5px; font-weight: 600; }
 .programa .estado-txt { font-size: 11px; color: var(--texto-suave); }
@@ -286,7 +315,7 @@ body {
   padding: 10px 11px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--metal-veta), var(--panel);
+  background: var(--vidrio), var(--panel);
   cursor: pointer;
   font-size: 13px;
   line-height: 1.35;
@@ -311,17 +340,18 @@ body {
   padding: 9px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--metal-veta);
+  background: var(--vidrio), var(--panel-suave);
   cursor: pointer;
   transition: background var(--transicion), color var(--transicion), border-color var(--transicion);
 }
 .info-modelo:hover { background: var(--acento-suave); color: var(--acento); border-color: var(--acento); }
 .info-modelo::before {
   content: ""; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-  background: var(--verde); box-shadow: 0 0 0 3px color-mix(in srgb, var(--verde) 20%, transparent);
+  background: var(--verde); animation: punto-en-vivo 2.2s ease-in-out infinite;
 }
 .info-modelo.sin-clave::before {
   background: var(--ambar); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ambar) 20%, transparent);
+  animation: none;
 }
 .enlace-manual {
   display: flex;
@@ -341,28 +371,34 @@ body {
 .enlace-manual .icono svg, .enlace-manual span svg { width: 16px; height: 16px; }
 
 /* ---------- Botones ---------- */
+/* Botón primario: verde lima sólido con texto oscuro, como el CTA de la
+   landing — mejor contraste que un cian claro con texto blanco, y deja el
+   cian libre para bordes/foco/enlaces en el resto de la interfaz. */
 button {
   font-family: inherit;
   font-size: 14px;
   padding: 9px 14px;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--acento) 45%, #2a2e35);
+  border: 1px solid color-mix(in srgb, var(--verde) 55%, #0a1d10);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 40%),
-    linear-gradient(180deg, color-mix(in srgb, var(--acento) 88%, white 12%), var(--acento) 55%, color-mix(in srgb, var(--acento) 82%, black 18%));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 1px rgba(0, 0, 0, 0.25), var(--sombra);
-  color: white;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--verde) 90%, white 10%), var(--verde) 55%, color-mix(in srgb, var(--verde) 80%, black 20%));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 1px rgba(0, 0, 0, 0.15), var(--sombra);
+  color: #06170a;
+  font-weight: 600;
   cursor: pointer;
-  transition: background var(--transicion), box-shadow var(--transicion), filter var(--transicion);
+  transition: background var(--transicion), box-shadow var(--transicion), filter var(--transicion), transform var(--transicion);
 }
-button:hover { filter: brightness(1.08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 0 3px var(--acento-suave); }
+button:hover { filter: brightness(1.06); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 0 3px var(--verde-suave), 0 0 18px -6px var(--glow-verde); transform: translateY(-1px); }
+button:active { transform: translateY(0); }
 button.secundario {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 40%), transparent;
   color: var(--texto);
+  font-weight: 500;
   border: 1px solid var(--borde);
   box-shadow: none;
 }
-button.secundario:hover { background: var(--panel-suave); box-shadow: none; filter: none; }
+button.secundario:hover { background: var(--panel-suave); border-color: var(--borde-fuerte); box-shadow: none; filter: none; transform: none; }
 
 /* ---------- Zona principal ---------- */
 #principal {
@@ -379,7 +415,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
   gap: 10px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--borde);
-  background: var(--metal-veta), var(--panel);
+  background: var(--vidrio), var(--panel);
   box-shadow: var(--sombra);
   z-index: 5;
 }
@@ -450,10 +486,12 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
 /* ---------- Bienvenida (héroe) ---------- */
 .hero-bienvenida { max-width: min(86%, 680px); padding: 20px 22px; white-space: normal; }
 .hero-titulo {
-  font-size: 22px;
+  font-family: var(--fuente-marca);
+  font-size: 23px;
+  font-weight: 700;
   line-height: 1.25;
   margin-bottom: 6px;
-  background: linear-gradient(92deg, #eaf4fc 10%, var(--acento-oscuro) 55%, #9ad1f5 95%);
+  background: linear-gradient(92deg, #eaf4fc 8%, var(--acento-oscuro) 50%, var(--verde) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -474,18 +512,27 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
   border-radius: 12px;
   background: var(--panel-suave);
   font-size: 13px;
-  transition: border-color var(--transicion), transform var(--transicion);
+  transition: border-color var(--transicion), transform var(--transicion), box-shadow var(--transicion);
+  animation: rasgo-aparece 420ms ease both;
 }
-.rasgo:hover { border-color: color-mix(in srgb, var(--acento) 45%, var(--borde)); transform: translateY(-1px); }
+.rasgo:nth-child(1) { animation-delay: 60ms; }
+.rasgo:nth-child(2) { animation-delay: 140ms; }
+.rasgo:nth-child(3) { animation-delay: 220ms; }
+@keyframes rasgo-aparece {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.rasgo:hover { border-color: color-mix(in srgb, var(--acento) 45%, var(--borde)); transform: translateY(-2px); box-shadow: 0 8px 20px -12px var(--glow); }
 .rasgo .icono { color: var(--acento); margin-bottom: 3px; }
 .rasgo .icono svg { width: 17px; height: 17px; }
 .rasgo small { color: var(--texto-suave); font-size: 11.5px; line-height: 1.4; }
 .hero-prueba {
   margin-top: 12px;
-  font-size: 11.5px;
-  font-weight: 700;
+  font-family: var(--fuente-tecnica);
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   color: var(--texto-suave);
 }
 .chips-ejemplo { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
@@ -499,7 +546,12 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
   font-weight: 500;
   cursor: pointer;
   transition: border-color var(--transicion), background var(--transicion), transform var(--transicion);
+  animation: rasgo-aparece 380ms ease both;
 }
+.chip:nth-child(1) { animation-delay: 280ms; }
+.chip:nth-child(2) { animation-delay: 330ms; }
+.chip:nth-child(3) { animation-delay: 380ms; }
+.chip:nth-child(4) { animation-delay: 430ms; }
 .chip:hover {
   border-color: var(--acento);
   background: var(--acento-suave);
@@ -515,11 +567,11 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
     linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 45%),
     linear-gradient(165deg, color-mix(in srgb, var(--acento) 85%, white 15%), var(--acento) 60%, color-mix(in srgb, var(--acento) 78%, black 22%));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), var(--sombra);
-  color: white;
+  color: #052430;
   border-bottom-right-radius: 4px;
 }
 .mensaje.asistente .burbuja {
-  background: var(--metal-veta), var(--panel);
+  background: var(--vidrio), var(--panel);
   border: 1px solid var(--borde);
   border-bottom-left-radius: 4px;
   box-shadow: var(--sombra);
@@ -640,7 +692,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
    que la tarea ha terminado. */
 .burbuja.md.arcoiris {
   background-image: linear-gradient(90deg,
-    #ff6b6b, #ffb347, #ffe66d, #6bff8e, #4dd8ff, #a06bff, #ff6b6b);
+    var(--texto), var(--acento-oscuro), var(--verde), var(--acento), var(--texto));
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -705,6 +757,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
   border: none;
   border-radius: 50%;
   background: rgba(15, 23, 42, 0.72);
+  box-shadow: none;
   color: white;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -749,8 +802,8 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
 #btn-enviar { height: 46px; padding: 0 20px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
 #btn-enviar svg { width: 18px; height: 18px; }
 #btn-enviar:disabled { opacity: 0.5; cursor: not-allowed; }
-#btn-enviar.detener { background: var(--rojo); }
-#btn-enviar.detener:hover { background: color-mix(in srgb, var(--rojo) 85%, black); }
+#btn-enviar.detener { background: var(--rojo); color: #2b0507; border-color: color-mix(in srgb, var(--rojo) 55%, #2b0507); }
+#btn-enviar.detener:hover { background: color-mix(in srgb, var(--rojo) 85%, black); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), var(--sombra); }
 
 /* ---------- Modales ---------- */
 .modal {
@@ -761,7 +814,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
 }
 .modal.oculto { display: none; }
 .modal-caja {
-  background: var(--metal-veta), var(--panel);
+  background: var(--vidrio), var(--panel);
   border: 1px solid var(--borde);
   border-radius: 16px;
   padding: 24px;
@@ -780,7 +833,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
 .seccion-ajustes {
   border: 1px solid var(--borde);
   border-radius: var(--radio);
-  background: var(--metal-veta), var(--panel-suave);
+  background: var(--vidrio), var(--panel-suave);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -790,10 +843,11 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11.5px;
-  font-weight: 700;
+  font-family: var(--fuente-tecnica);
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
   color: var(--texto-suave);
 }
 .seccion-titulo span svg { width: 14px; height: 14px; color: var(--acento); }
@@ -848,7 +902,7 @@ button.secundario:hover { background: var(--panel-suave); box-shadow: none; filt
   padding-right: 4px;
   border: 1px solid var(--borde);
   border-radius: 10px;
-  background: var(--metal-veta), var(--panel);
+  background: var(--vidrio), var(--panel);
   transition: border-color var(--transicion), background var(--transicion);
 }
 .sesion:hover { border-color: var(--acento); }
