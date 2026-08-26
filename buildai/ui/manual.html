@@ -6,41 +6,43 @@
   <title>Manual de conexión — BuildAI</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
   <style>
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=DM+Mono:wght@400;500&display=swap");
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --fondo: #f3f5f9; --panel: #ffffff; --borde: #e3e8f0;
-      --texto: #1b2333; --texto-suave: #667085;
-      --acento: #2563eb; --acento-suave: #eef3ff;
-      --verde: #16a34a; --verde-suave: #f0fdf4;
-      --ambar: #b45309; --ambar-suave: #fffbeb;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --fondo: #111318; --panel: #1a1d24; --borde: #2c313c;
-        --texto: #e7eaf0; --texto-suave: #9aa2b1;
-        --acento: #3b82f6; --acento-suave: #1b2740;
-        --verde: #22c55e; --verde-suave: #12241a;
-        --ambar: #fbbf24; --ambar-suave: #2a2110;
-      }
+      /* Misma paleta que la app (buildai/ui/style.css): negro-azulado +
+         cian de marca/interacción + verde lima para pasos a seguir. */
+      --fondo: #060a10; --panel: #0b131c; --borde: #1c2c3a;
+      --texto: #eaf3f7; --texto-suave: #7d92a1;
+      --acento: #57d8ff; --acento-suave: rgba(87, 216, 255, 0.13);
+      --verde: #b8ff4d; --verde-suave: rgba(184, 255, 77, 0.12);
+      --ambar: #ffc857; --ambar-suave: rgba(255, 200, 87, 0.12);
+      --fuente-marca: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+      --fuente-tecnica: "DM Mono", ui-monospace, Consolas, monospace;
     }
     body {
       font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-      background: var(--fondo); color: var(--texto);
+      background:
+        radial-gradient(900px 500px at 12% -10%, rgba(87, 216, 255, 0.08) 0%, transparent 55%),
+        var(--fondo);
+      color: var(--texto);
       line-height: 1.65; font-size: 15.5px;
     }
     .contenido { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
     header.cabecera {
       display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
     }
+    header.cabecera h1 { font-family: var(--fuente-marca); }
     header.cabecera .volver {
       margin-left: auto; font-size: 14px; text-decoration: none;
       color: var(--acento); border: 1px solid var(--borde);
       padding: 8px 14px; border-radius: 10px; background: var(--panel);
+      transition: background 180ms ease, border-color 180ms ease;
     }
-    header.cabecera .volver:hover { background: var(--acento-suave); }
+    header.cabecera .volver:hover { background: var(--acento-suave); border-color: var(--acento); }
     h1 { font-size: 26px; letter-spacing: -0.4px; }
     .subtitulo { color: var(--texto-suave); margin-bottom: 28px; }
     h2 {
+      font-family: var(--fuente-marca);
       font-size: 20px; margin: 40px 0 10px; padding-top: 18px;
       border-top: 1px solid var(--borde); letter-spacing: -0.2px;
       display: flex; align-items: center; gap: 8px;
@@ -51,16 +53,20 @@
     li { margin: 4px 0; }
     a { color: var(--acento); }
     code, kbd {
-      font-family: Consolas, monospace; font-size: 13px;
+      font-family: var(--fuente-tecnica); font-size: 13px;
       background: var(--acento-suave); padding: 2px 6px; border-radius: 6px;
     }
     table {
       width: 100%; border-collapse: collapse; margin: 14px 0;
-      background: var(--panel); border-radius: 12px; overflow: hidden;
+      background: var(--panel); border: 1px solid var(--borde);
+      border-radius: 12px; overflow: hidden;
       font-size: 14px;
     }
     th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--borde); }
-    th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto-suave); }
+    th {
+      font-family: var(--fuente-tecnica);
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--texto-suave);
+    }
     tr:last-child td { border-bottom: none; }
     .tarjeta {
       background: var(--panel); border: 1px solid var(--borde);
@@ -69,7 +75,7 @@
     .tarjeta.pasos { border-left: 4px solid var(--verde); background: var(--verde-suave); }
     .tarjeta.aviso { border-left: 4px solid var(--ambar); background: var(--ambar-suave); }
     .etiqueta {
-      display: inline-block; font-size: 12px; font-weight: 600;
+      display: inline-block; font-family: var(--fuente-tecnica); font-size: 11px; font-weight: 500;
       background: var(--acento-suave); color: var(--acento);
       border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: middle;
     }
