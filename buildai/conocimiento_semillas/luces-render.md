@@ -1,0 +1,13 @@
+---
+id: luces-render
+nombre: Iluminar la escena
+tipo: tarea
+icono: luces
+descripcion: Enciende luces, cielo y cámara en Blender sin lanzar el render
+programas: []
+tags: []
+mostrar_boton: true
+fuente: seed
+---
+
+Prepara la escena de Blender para renderizar, sin lanzar todavía el render: pon un cielo físico de tarde con su sol, enciende las luces interiores que falten (focos empotrados en retícula en cada estancia con techo y lámparas donde tenga sentido), añade focos de jardín si hay vegetación, asigna materiales con textura a los objetos que no tengan, y deja una cámara a la altura de los ojos (1,65 m) encuadrando bien el edificio. Al final dime qué has preparado y que puedo pedirte el render cuando quiera.

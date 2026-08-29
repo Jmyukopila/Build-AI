@@ -39,3 +39,9 @@ def ruta_config() -> Path:
 def carpeta_sesiones() -> Path:
     _migrar_si_hace_falta("sesiones")
     return CARPETA_DATOS / "sesiones"
+
+
+def carpeta_conocimiento() -> Path:
+    carpeta = CARPETA_DATOS / "conocimiento"
+    carpeta.mkdir(parents=True, exist_ok=True)
+    return carpeta

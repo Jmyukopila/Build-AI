@@ -31,7 +31,7 @@ buildai = [
     "ui/*.css",
     "ui/assets/*.png",
     "ui/assets/*.ico",
-    "skills_data/*.json",
+    "conocimiento_semillas/*.md",
     "addons/blender/*.py",
     "addons/sketchup/*.rb",
     "addons/revit/*.txt",

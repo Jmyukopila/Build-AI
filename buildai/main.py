@@ -34,7 +34,7 @@ from . import modelos as catalogo_modelos
 from . import sesiones
 from .agent import CARPETA_RENDERS, ejecutar_turno
 from .connectors import CONECTORES
-from .skills import cargar_skills
+from . import conocimiento
 
 PUERTO = 8600
 CARPETA_UI = Path(__file__).resolve().parent / "ui"
@@ -209,7 +209,14 @@ def modelos_de(proveedor: str):
 
 @app.get("/api/skills")
 def skills():
-    return cargar_skills()
+    return conocimiento.recetas_boton()
+
+
+@app.post("/api/conocimiento")
+async def guardar_conocimiento(peticion: Request):
+    datos = await peticion.json()
+    resultado = conocimiento.guardar_receta(datos)
+    return resultado
 
 
 @app.post("/api/reiniciar")

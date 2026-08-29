@@ -10,6 +10,7 @@ from pathlib import Path
 
 from . import config as cfg
 from . import memoria
+from . import conocimiento
 from .connectors import CONECTORES, buscar_herramienta
 from .providers import crear_proveedor, ErrorProveedor
 
@@ -293,7 +294,7 @@ Normas de trabajo:
 - Nunca borres trabajo del usuario sin confirmárselo antes."""
 
 
-def _sistema(conectados: list) -> str:
+def _sistema(conectados: list, consulta: str = "") -> str:
     if conectados:
         nombres = ", ".join(c.nombre for c in conectados)
     else:
@@ -302,6 +303,11 @@ def _sistema(conectados: list) -> str:
     aprendizajes = memoria.perfil_texto()
     if aprendizajes:
         base += "\n\n" + aprendizajes
+    # Recuperación de contexto de conocimiento (normas, técnicas) por consulta.
+    programas_ids = [c.id for c in conectados]
+    bloque_conocimiento = conocimiento.bloque_para_sistema(consulta, programas_ids)
+    if bloque_conocimiento:
+        base += "\n\n" + bloque_conocimiento
     return base
 
 
@@ -391,7 +397,7 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
     proveedor.notificar = lambda texto: emitir({"tipo": "estado", "texto": texto})
 
     conectados = [c for c in CONECTORES if c.disponible()]
-    sistema = _sistema(conectados)
+    sistema = _sistema(conectados, mensaje_usuario)
     herramientas = _herramientas(conectados)
 
     entrada = {"tipo": "usuario", "texto": mensaje_usuario}
