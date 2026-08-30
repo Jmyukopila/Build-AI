@@ -15,51 +15,74 @@ import httpx
 
 from . import config as cfg
 
-# Respaldo si no hay internet: modelos gratuitos con tools verificados 2026-07
+# Respaldo si no hay internet: modelos gratuitos con tools, verificados contra
+# la API de OpenRouter el 2026-08-24. Un modelo retirado aquí deja la configuración
+# del usuario rota, así que al tocar esta lista hay que comprobarla en vivo.
 _RESPALDO_OPENROUTER = [
-    "qwen/qwen3-coder:free",
-    "openai/gpt-oss-120b:free",
-    "nvidia/nemotron-3-super-120b-a12b:free",
     "google/gemma-4-31b-it:free",
-    "qwen/qwen3-next-80b-a3b-instruct:free",
+    "dots-studio/dots-3-note-preview:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
+    "z-ai/glm-5.2:free",
 ]
 
 _ESTATICOS = {
-    "gemini": ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"],
-    "anthropic": ["claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5-20251001"],
-    "openai": ["gpt-4o", "gpt-4o-mini"],
-    "opencode": ["big-pickle", "deepseek-v4-flash-free", "nemotron-3-ultra-free",
-                  "north-mini-code-free", "mimo-v2.5-free", "hy3-free",
-                  "claude-fable-5", "claude-sonnet-5", "claude-haiku-4-5",
-                  "gpt-5.4", "gpt-5.4-mini", "deepseek-v4-flash"],
+    "gemini": ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash",
+               "gemini-3.5-flash-lite", "gemini-3.1-pro"],
+    "anthropic": ["claude-opus-5", "claude-sonnet-5", "claude-fable-5",
+                  "claude-haiku-4-5-20251001"],
+    "openai": ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.2"],
 }
 
+# Respaldo de OpenCode Zen, verificado contra su API el 2026-08-24.
 _RESPALDO_OPENCODE = [
     # Gratuitos
     "big-pickle",
     "deepseek-v4-flash-free",
     "nemotron-3-ultra-free",
-    "north-mini-code-free",
+    "nemotron-3.5-lightning-free",
+    "laguna-s-2.1-free",
     "mimo-v2.5-free",
     "hy3-free",
+    "x-preview-f-free",
+    "muse-spark-1.2-contributor-free",
     # Top-tier (pago)
+    "claude-opus-5",
     "claude-fable-5",
-    "claude-opus-4-8",
-    "gpt-5.5",
+    "gpt-5.6-sol",
     "gpt-5.5-pro",
     "deepseek-v4-pro",
     # Mid-tier (pago)
     "claude-sonnet-5",
-    "gpt-5.4",
-    "gpt-5.4-pro",
+    "gpt-5.6-terra",
+    "gemini-3.7-flash",
     "gemini-3.1-pro",
     "qwen3.6-plus",
     # Rápidos / código (pago)
     "claude-haiku-4-5",
-    "gpt-5.4-mini",
+    "gpt-5.6-luna",
     "gpt-5.3-codex",
     "deepseek-v4-flash",
 ]
+
+# En OpenCode Zen los modelos sin coste llevan el sufijo "-free"; big-pickle es
+# la excepción histórica. Su API no publica precios, así que no hay otra forma
+# de distinguirlos.
+_ZEN_GRATIS_SIN_SUFIJO = {"big-pickle"}
+
+
+def _es_gratis_zen(id_modelo: str) -> bool:
+    return id_modelo.endswith("-free") or id_modelo in _ZEN_GRATIS_SIN_SUFIJO
+
+
+def _contexto_legible(tokens: int) -> str:
+    """1000000 → «1M», 262144 → «262k». Vacío si no se conoce."""
+    if not tokens:
+        return ""
+    if tokens >= 1_000_000:
+        valor = tokens / 1_000_000
+        return f"{valor:.1f}M".replace(".0M", "M")
+    return f"{round(tokens / 1000)}k"
 
 _cache: dict = {}  # proveedor -> (marca_de_tiempo, resultado)
 _CACHE_SEGUNDOS = 3600
@@ -82,10 +105,26 @@ def _openrouter_gratuitos() -> dict:
         and "tools" in (m.get("supported_parameters") or [])
     ]
     libres.sort(key=lambda m: -(m.get("context_length") or 0))
+    modelos, con_vista = [], 0
+    for m in libres:
+        entradas = (m.get("architecture") or {}).get("input_modalities") or []
+        ve_imagenes = "image" in entradas
+        con_vista += ve_imagenes
+        detalles = [d for d in (_contexto_legible(m.get("context_length") or 0),
+                                "👁 ve imágenes" if ve_imagenes else "") if d]
+        nombre = m.get("name") or m["id"]
+        modelos.append({
+            "id": m["id"],
+            "nombre": f"{nombre} · {' · '.join(detalles)}" if detalles else nombre,
+        })
     return {
         "disponible": True,
-        "modelos": [{"id": m["id"], "nombre": m.get("name") or m["id"]} for m in libres],
-        "nota": f"{len(libres)} modelos gratuitos que saben usar herramientas, de mayor a menor contexto.",
+        "modelos": modelos,
+        "nota": (
+            f"{len(modelos)} modelos gratuitos que saben usar herramientas, de mayor a menor "
+            f"contexto. {con_vista} pueden ver las fotos y planos que adjuntes (👁). "
+            "Los gratuitos tienen un límite de mensajes al día por cuenta."
+        ),
     }
 
 
@@ -132,14 +171,25 @@ def _opencode_zen_models() -> dict:
     except Exception:
         return {
             "disponible": True,
-            "modelos": [{"id": m, "nombre": m} for m in _RESPALDO_OPENCODE],
+            "modelos": [
+                {"id": m, "nombre": f"{m} · gratis" if _es_gratis_zen(m) else m}
+                for m in _RESPALDO_OPENCODE
+            ],
             "nota": "Sin conexión con OpenCode Zen: se muestra una lista guardada.",
         }
-    modelos = [{"id": m["id"], "nombre": m.get("id") or m["id"]} for m in datos]
+    ids = [m["id"] for m in datos if m.get("id")]
+    # Los gratuitos primero: son los que la mayoría de usuarios va a querer.
+    gratis = [i for i in ids if _es_gratis_zen(i)]
+    pago = [i for i in ids if not _es_gratis_zen(i)]
+    modelos = ([{"id": i, "nombre": f"{i} · gratis"} for i in gratis]
+               + [{"id": i, "nombre": i} for i in pago])
     return {
         "disponible": True,
         "modelos": modelos,
-        "nota": f"{len(modelos)} modelos disponibles en OpenCode Zen (precios según API Key).",
+        "nota": (
+            f"{len(gratis)} modelos gratuitos (marcados «gratis», los primeros de la lista) "
+            f"y {len(pago)} de pago según tu clave."
+        ),
     }
 
 

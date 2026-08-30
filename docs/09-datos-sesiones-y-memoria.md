@@ -32,15 +32,16 @@ raíz prevista por versiones anteriores; no sustituye un destino ya existente.
     "anthropic": ""
   },
   "modelos": {
-    "openrouter": "qwen/qwen3-coder:free"
+    "openrouter": "google/gemma-4-31b-it:free"
   }
 }
 ```
 
 Los campos exactos se normalizan en [`config.cargar`](../buildai/config.py).
-`guardar` usa un lock de proceso. Se migran modelos retirados, por ejemplo
-`deepseek/deepseek-chat-v3.1:free` a `qwen/qwen3-coder:free`. La API nunca
-devuelve las claves completas.
+`guardar` usa un lock de proceso. Se migran los modelos retirados por el proveedor (por ejemplo
+`qwen/qwen3-coder:free` a `google/gemma-4-31b-it:free`), comprobados contra la API
+de cada proveedor antes de añadirlos a `_MODELOS_MIGRADOS`. La API nunca devuelve
+las claves completas.
 
 ## Sesiones
 

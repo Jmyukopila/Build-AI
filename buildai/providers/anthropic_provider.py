@@ -6,7 +6,7 @@ from .base import Proveedor, RespuestaLLM, LlamadaHerramienta, ErrorProveedor
 class ProveedorAnthropic(Proveedor):
     def __init__(self, clave: str, modelo: str):
         self.clave = clave
-        self.modelo = modelo or "claude-opus-4-8"
+        self.modelo = modelo or "claude-opus-5"
 
     def _convertir_historial(self, historial: list) -> list:
         mensajes = []

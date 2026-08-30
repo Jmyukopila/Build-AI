@@ -264,8 +264,8 @@ Anthropic recibe imágenes como bloques base64 y conserva los bloques originales
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
-| `ProveedorAnthropic` | clase, hereda de `Proveedor` | Guarda `clave` y `modelo` (por defecto `claude-opus-4-8` si no se especifica). | Sin caché ni reintentos propios; cada `conversar` es una llamada directa al SDK de Anthropic. |
-| `__init__` | `__init__(self, clave: str, modelo: str)` | Guarda clave y modelo. | Aplica `claude-opus-4-8` cuando el modelo llega vacío; no valida la clave. |
+| `ProveedorAnthropic` | clase, hereda de `Proveedor` | Guarda `clave` y `modelo` (por defecto `claude-opus-5` si no se especifica). | Sin caché ni reintentos propios; cada `conversar` es una llamada directa al SDK de Anthropic. |
+| `__init__` | `__init__(self, clave: str, modelo: str)` | Guarda clave y modelo. | Aplica `claude-opus-5` cuando el modelo llega vacío; no valida la clave. |
 | `_convertir_historial` | `_convertir_historial(self, historial: list) -> list` | Traduce el historial al formato Anthropic. | Coloca las imágenes antes del texto y reenvía `_raw` cuando existe, para conservar los bloques `thinking` y `tool_use`. |
 | `conversar` | `conversar(self, sistema: str, historial: list, herramientas: list) -> RespuestaLLM` | Envía Messages con thinking adaptativo y transforma texto y tool use a `RespuestaLLM`. | Convierte autenticación, rate limit, estados HTTP, conexión y refusal en `ErrorProveedor`; conserva bloques `raw`. |
 

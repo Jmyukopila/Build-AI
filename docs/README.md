@@ -21,6 +21,7 @@ Esta documentación describe el comportamiento implementado, no una arquitectura
 | [11 · Buenas prácticas](11-buenas-practicas.md) | Convenciones existentes y deuda técnica. |
 | [12 · Pruebas y desarrollo](12-pruebas-y-desarrollo.md) | Desarrollo en Windows y pruebas. |
 | [13 · MCP y entorno asistido](13-mcp-y-entorno-asistido.md) | Servidores MCP del entorno de desarrollo y su relación con los conectores. |
+| [14 · Plan de entrenamiento](14-plan-de-entrenamiento.md) | Plan por fases (trabajo futuro) para el dominio de las cuatro apps y el criterio de diseño. |
 
 ## Quiero… → lee…
 
@@ -35,6 +36,7 @@ Esta documentación describe el comportamiento implementado, no una arquitectura
 | Empaquetar o instalar | [10 · Empaquetado](10-empaquetado-y-distribucion.md) |
 | Ejecutar pruebas | [12 · Pruebas](12-pruebas-y-desarrollo.md) |
 | Saber qué MCP se usan y por qué | [13 · MCP](13-mcp-y-entorno-asistido.md) |
+| Mejorar lo que BuildAI sabe hacer | [14 · Plan de entrenamiento](14-plan-de-entrenamiento.md) |
 | Revisar decisiones y límites | [01 · Arquitectura](01-arquitectura.md) y [11 · Buenas prácticas](11-buenas-practicas.md) |
 
 ## Fuente de verdad

@@ -35,11 +35,11 @@ id. [`config.py`](../buildai/config.py) define:
 
 | Id | Modelo predeterminado |
 |---|---|
-| `openrouter` | `qwen/qwen3-coder:free` |
+| `openrouter` | `google/gemma-4-31b-it:free` |
 | `ollama` | `qwen3` |
-| `anthropic` | `claude-opus-4-8` |
-| `openai` | `gpt-4o` |
-| `gemini` | `gemini-2.0-flash` |
+| `anthropic` | `claude-opus-5` |
+| `openai` | `gpt-5.6-terra` |
+| `gemini` | `gemini-3.7-flash` |
 | `opencode` | `big-pickle` |
 
 Las claves viven en `~/.buildai/config.json`; la API solo devuelve

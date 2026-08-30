@@ -10,17 +10,24 @@ OLLAMA_URL = "http://127.0.0.1:11434"
 
 # Modelos por defecto de cada proveedor. El usuario puede cambiarlos en Ajustes.
 MODELOS_POR_DEFECTO = {
-    "openrouter": "qwen/qwen3-coder:free",
+    # Gratuito, sabe usar herramientas y ve las fotos que adjunte el usuario.
+    "openrouter": "google/gemma-4-31b-it:free",
     "ollama": "qwen3",
-    "anthropic": "claude-opus-4-8",
-    "openai": "gpt-4o",
-    "gemini": "gemini-2.0-flash",
+    "anthropic": "claude-opus-5",
+    "openai": "gpt-5.6-terra",
+    "gemini": "gemini-3.7-flash",
     "opencode": "big-pickle",
 }
 
-# Modelos retirados por el proveedor → sustituto, para no dejar configs rotas
+# Modelos retirados por el proveedor → sustituto, para no dejar configs rotas.
+# Solo se migra lo comprobado como retirado en la API del proveedor (revisado
+# 2026-08-24); migrar un modelo que sigue vivo le cambiaría la elección al usuario.
 _MODELOS_MIGRADOS = {
-    "deepseek/deepseek-chat-v3.1:free": "qwen/qwen3-coder:free",
+    "deepseek/deepseek-chat-v3.1:free": "google/gemma-4-31b-it:free",
+    "qwen/qwen3-coder:free": "google/gemma-4-31b-it:free",
+    "qwen/qwen3-next-80b-a3b-instruct:free": "nvidia/nemotron-3-super-120b-a12b:free",
+    "openai/gpt-oss-120b:free": "nvidia/nemotron-3-super-120b-a12b:free",
+    "north-mini-code-free": "deepseek-v4-flash-free",
 }
 
 PROVEEDORES = {
