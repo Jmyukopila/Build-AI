@@ -26,3 +26,4 @@ empaquetado/Output/
 .idea/
 Thumbs.db
 .DS_Store
+.venv/

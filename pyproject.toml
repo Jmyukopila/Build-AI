@@ -17,6 +17,14 @@ dependencies = [
     "pywin32>=306; sys_platform == 'win32'",
 ]
 
+[project.optional-dependencies]
+# Pruebas: pytest ejecuta el suite y playwright conduce el navegador para las
+# pruebas de interfaz (que se omiten solas si no está instalado).
+dev = [
+    "pytest>=8.0",
+    "playwright>=1.44",
+]
+
 [project.scripts]
 buildai = "buildai.main:arrancar"
 buildai-instalar = "buildai.instalador:instalar_todos"

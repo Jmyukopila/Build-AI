@@ -1,0 +1,36 @@
+name: Pruebas
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      # BuildAI es una aplicación de Windows, pero el suite corre en Linux: los
+      # programas CAD/BIM se sustituyen por dobles y pywin32 solo se instala en
+      # Windows (marcador de entorno en pyproject.toml).
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Instalar Chromium para las pruebas de interfaz
+        run: python -m playwright install --with-deps chromium
+
+      - name: Ejecutar pruebas
+        run: python -m pytest tests -q

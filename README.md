@@ -248,15 +248,20 @@ Piezas del empaquetado, por si necesitas tocarlas:
 |---|---|
 | `empaquetado/build_installer.ps1` | Encadena PyInstaller + Inno Setup en un solo comando |
 | `empaquetado/run_buildai.py` | Punto de entrada que llama a `buildai.main.arrancar()` |
-| `empaquetado/buildai.spec` | Spec de PyInstaller: qué código y datos (interfaz, skills, addons) se empaquetan |
+| `empaquetado/buildai.spec` | Spec de PyInstaller: qué código y datos (interfaz, base de conocimiento, addons) se empaquetan |
 | `empaquetado/BuildAI.iss` | Script de Inno Setup: carpeta de instalación, accesos directos, desinstalador |
 
 ## 🧪 Pruebas
 
 ```bat
-pip install pytest
+pip install -e ".[dev]"
+python -m playwright install chromium
 python -m pytest tests -q
 ```
+
+Las pruebas de interfaz se omiten solas si Playwright no está instalado. Los
+programas CAD/BIM se sustituyen por dobles, así que el suite entero corre sin
+Revit, AutoCAD, SketchUp ni Blender abiertos.
 
 ---
 
