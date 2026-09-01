@@ -4,9 +4,13 @@ import json
 import socket
 from pathlib import Path
 
+from .. import entregables
 from .base import Conector, recortar
 
 PUERTO_BLENDER = 8601
+
+# Formatos que sabe escribir blender_kit.exportar (ni IFC ni DWG: eso es BIM/CAD).
+_EXPORTABLES = ("glb", "gltf", "obj", "fbx", "usd", "stl", "dae")
 
 # Kit de construcción paramétrico: se antepone a cada ejecución para que el
 # modelo disponga de funciones de arquitectura fiables en vez de escribir
@@ -189,9 +193,49 @@ class ConectorBlender(Conector):
                     "required": ["codigo"],
                 },
             },
+            {
+                "nombre": "blender_exportar",
+                "descripcion": (
+                    "Exporta la escena a un formato 3D estándar y se lo entrega al "
+                    "usuario como descarga. Sirve para llevar el modelo a otro programa, "
+                    "a un visor web o a un cliente.\n"
+                    "Formatos: 'glb' (un solo archivo, el mejor para enseñar el modelo o "
+                    "verlo en el navegador), 'gltf', 'obj', 'fbx', 'usd', 'stl' "
+                    "(impresión 3D) y 'dae'.\n"
+                    "Blender NO exporta IFC ni DWG: si el usuario los necesita, dile que "
+                    "hay que modelar en Revit o AutoCAD, no en Blender."
+                ),
+                "parametros": {
+                    "type": "object",
+                    "properties": {
+                        "formato": {
+                            "type": "string",
+                            "enum": list(_EXPORTABLES),
+                            "description": "Formato del archivo a generar.",
+                        },
+                        "nombre": {
+                            "type": "string",
+                            "description": "Nombre descriptivo, p. ej. 'casa-moderna'.",
+                        },
+                    },
+                    "required": ["formato"],
+                },
+            },
         ]
 
     def ejecutar(self, nombre: str, argumentos: dict) -> str:
+        if nombre == "blender_exportar":
+            formato = str(argumentos.get("formato", "")).lower().strip()
+            if formato not in _EXPORTABLES:
+                return (
+                    f"ERROR: Blender no exporta a {formato.upper()}. Puede exportar a "
+                    f"{', '.join(_EXPORTABLES)}. Para IFC o DWG hay que trabajar en "
+                    "Revit, AutoCAD o SketchUp Pro."
+                )
+            ruta = entregables.ruta_para(argumentos.get("nombre") or "escena", formato)
+            fuente = f"exportar({formato!r}, {str(ruta)!r})"
+        else:
+            fuente = argumentos.get("codigo", "")
         try:
             if nombre == "blender_informacion":
                 r = _enviar({"comando": "info"})
@@ -200,7 +244,7 @@ class ConectorBlender(Conector):
                 # que los números de línea de un error apunten a SU código, no al kit.
                 codigo = (
                     KIT_FUENTE
-                    + "\n_buildai_codigo = " + repr(argumentos.get("codigo", ""))
+                    + "\n_buildai_codigo = " + repr(fuente)
                     + "\nexec(compile(_buildai_codigo, '<codigo>', 'exec'), globals())\n"
                 )
                 # Timeout amplio: un render de calidad "alta" puede tardar minutos.

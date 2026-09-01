@@ -320,7 +320,41 @@ function agregarRender(archivo) {
   agregarEntregableRail(archivo, src);
 }
 
-/* ---------- Rail: entregables (galería de renders) y actividad ---------- */
+/* ---------- Entregables: archivos reales exportados de cada programa ---------- */
+
+function tamanoLegible(bytes, sufijo = "") {
+  if (!bytes) return "";
+  const u = ["B", "KB", "MB", "GB"];
+  let i = 0, n = bytes;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return `${n < 10 && i > 0 ? n.toFixed(1) : Math.round(n)} ${u[i]}${sufijo}`;
+}
+
+function agregarEntregable(ev) {
+  const src = "/api/entregables/" + encodeURIComponent(ev.archivo);
+  const d = document.createElement("div");
+  d.className = "mensaje asistente entregable";
+  d.innerHTML = `<div class="burbuja burbuja-entregable">
+    <span class="entregable-formato">${escapeHtml(ev.formato)}</span>
+    <span class="entregable-datos">
+      <b></b>
+      <small>${escapeHtml(tamanoLegible(ev.bytes, " · "))}listo para abrir en tu programa</small>
+    </span>
+    <a class="btn-entregable">${svgIcono("descargar")}<span>Descargar</span></a>
+  </div>`;
+  d.querySelector(".entregable-datos b").textContent = ev.archivo;
+  const enlace = d.querySelector(".btn-entregable");
+  enlace.href = src;
+  enlace.setAttribute("download", ev.archivo);
+  const escribiendo = chat.querySelector(".escribiendo");
+  if (escribiendo) escribiendo.before(d);
+  else chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  transcripcion.push({ rol: "entregable", archivo: ev.archivo, formato: ev.formato });
+  agregarEntregableArchivoRail(ev, src);
+}
+
+/* ---------- Rail: entregables (renders y archivos) y actividad ---------- */
 
 function marcarVacioRail(idLista) {
   const lista = document.getElementById(idLista);
@@ -338,6 +372,18 @@ function agregarEntregableRail(archivo, src) {
   d.onclick = () => abrirLightbox(src, archivo);
   d.querySelector("img").onerror = () => { d.remove(); marcarVacioRail("rail-entregables"); };
   cont.prepend(d);
+  marcarVacioRail("rail-entregables");
+}
+
+function agregarEntregableArchivoRail(ev, src) {
+  const cont = document.getElementById("rail-entregables");
+  const a = document.createElement("a");
+  a.className = "entregable-archivo";
+  a.title = `${ev.archivo} (${tamanoLegible(ev.bytes)})`;
+  a.href = src;
+  a.setAttribute("download", ev.archivo);
+  a.innerHTML = `${svgIcono("archivo")}<span>${escapeHtml(ev.formato)}</span>`;
+  cont.prepend(a);
   marcarVacioRail("rail-entregables");
 }
 
@@ -673,6 +719,8 @@ async function enviar(texto) {
           agregarActividadHerramienta(ev);
         } else if (ev.tipo === "render") {
           agregarRender(ev.archivo);
+        } else if (ev.tipo === "entregable") {
+          agregarEntregable(ev);
         } else if (ev.tipo === "estado") {
           mostrarEscribiendo(ev.texto);
         }
@@ -793,6 +841,7 @@ function pintarConversacion(mensajes) {
     else if (ev.tipo === "respuesta") agregarMensaje("asistente", ev.texto);
     else if (ev.tipo === "herramienta") agregarActividadHerramienta(ev);
     else if (ev.tipo === "render") agregarRender(ev.archivo);
+    else if (ev.tipo === "entregable") agregarEntregable(ev);
   }
   chat.scrollTop = chat.scrollHeight;
 }
@@ -813,6 +862,8 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
       if (t.detalle) texto += `\n\`\`\`\n${t.detalle}\n\`\`\`\n`;
     } else if (t.rol === "render") {
       texto += `\n🖼️ Render generado: ${t.archivo} (carpeta ~/.buildai/renders)\n`;
+    } else if (t.rol === "entregable") {
+      texto += `\n📐 ${t.formato} exportado: ${t.archivo} (carpeta ~/.buildai/entregables)\n`;
     } else {
       texto += `\n**${t.rol}:**\n\n${t.texto}\n`;
     }

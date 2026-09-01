@@ -2,7 +2,9 @@
 
 import contextlib
 import io
+import time
 
+from .. import entregables
 from .base import Conector, recortar
 
 
@@ -26,6 +28,38 @@ def _obtener_acad():
         except Exception as exc:
             ultimo_error = exc
     raise ultimo_error
+
+
+_ESPERA_MAXIMA = 45   # segundos que se le dan a AutoCAD para escribir el archivo
+_INTERVALO_SONDEO = 0.5  # cada cuánto se mira si el archivo ya está completo
+
+
+def _esperar_archivo(ruta, segundos=None):
+    """SendCommand vuelve antes de que AutoCAD haya terminado de escribir: hay que
+    esperar a que el archivo exista y deje de crecer."""
+    limite = time.time() + (_ESPERA_MAXIMA if segundos is None else segundos)
+    tamano_previo = -1
+    estable = 0
+    while time.time() < limite:
+        time.sleep(_INTERVALO_SONDEO)
+        if not ruta.exists():
+            continue
+        tamano = ruta.stat().st_size
+        estable = estable + 1 if tamano == tamano_previo and tamano > 0 else 0
+        tamano_previo = tamano
+        if estable >= 2:
+            return True
+    return False
+
+
+def _conjunto_vacio(doc):
+    """SelectionSet vacío: doc.Export lo exige aunque para DXF no lo use."""
+    nombre = "BUILDAI_EXPORT"
+    for i in range(doc.SelectionSets.Count):
+        if doc.SelectionSets.Item(i).Name == nombre:
+            doc.SelectionSets.Item(i).Delete()
+            break
+    return doc.SelectionSets.Add(nombre)
 
 
 class ConectorAutoCAD(Conector):
@@ -119,6 +153,38 @@ class ConectorAutoCAD(Conector):
                     "required": ["orden"],
                 },
             },
+            {
+                "nombre": "autocad_exportar",
+                "descripcion": (
+                    "Exporta el dibujo activo a un archivo profesional que el usuario "
+                    "puede descargar y abrir en cualquier programa de CAD. El dibujo "
+                    "abierto no se toca ni cambia de nombre: siempre se escribe una copia.\n"
+                    "Formatos: 'dwg' (formato nativo de AutoCAD, el que piden estudios y "
+                    "constructoras), 'dxf' (intercambio abierto, lo lee cualquier CAD) y "
+                    "'pdf' (para imprimir o enviar a cliente; usa la configuración de "
+                    "trazado del dibujo).\n"
+                    "Termina el dibujo ANTES de exportar: la copia refleja el estado "
+                    "actual del modelo, no se actualiza sola después."
+                ),
+                "parametros": {
+                    "type": "object",
+                    "properties": {
+                        "formato": {
+                            "type": "string",
+                            "enum": ["dwg", "dxf", "pdf"],
+                            "description": "Formato del archivo a generar.",
+                        },
+                        "nombre": {
+                            "type": "string",
+                            "description": (
+                                "Nombre descriptivo para el archivo, p. ej. "
+                                "'planta-baja'. Si se omite se usa el del dibujo."
+                            ),
+                        },
+                    },
+                    "required": ["formato"],
+                },
+            },
         ]
 
     def ejecutar(self, nombre: str, argumentos: dict) -> str:
@@ -152,6 +218,9 @@ class ConectorAutoCAD(Conector):
             except Exception as exc:
                 return f"ERROR enviando la orden: {exc}"
 
+        if nombre == "autocad_exportar":
+            return _exportar(doc, argumentos)
+
         # autocad_ejecutar_python
         import pythoncom
         import win32com.client
@@ -176,3 +245,43 @@ class ConectorAutoCAD(Conector):
         except Exception as exc:
             return f"ERROR ejecutando el código: {type(exc).__name__}: {exc}\nSalida previa:\n{recortar(salida.getvalue())}"
         return recortar(salida.getvalue() or "Código ejecutado correctamente (sin salida).")
+
+
+def _exportar(doc, argumentos: dict) -> str:
+    formato = str(argumentos.get("formato", "")).lower().strip()
+    if formato not in ("dwg", "dxf", "pdf"):
+        return "ERROR: formato no soportado. Usa 'dwg', 'dxf' o 'pdf'."
+    base = argumentos.get("nombre") or str(doc.Name).rsplit(".", 1)[0]
+    ruta = entregables.ruta_para(base, formato)
+
+    try:
+        if formato == "dwg":
+            # -WBLOCK escribe una copia completa del dibujo. Se descarta SaveAs a
+            # propósito: renombraría el dibujo que el usuario tiene abierto.
+            # El prefijo '_' fuerza los nombres de orden en inglés en AutoCAD
+            # localizado, y '.' evita órdenes redefinidas por el usuario.
+            doc.SendCommand(f'_.-WBLOCK\n{ruta}\n*\n')
+            if not _esperar_archivo(ruta):
+                return (
+                    "ERROR: AutoCAD no llegó a escribir el DWG. Suele pasar si quedó "
+                    "una orden a medias en su línea de comandos: pulsa Esc en AutoCAD "
+                    "y vuelve a intentarlo."
+                )
+        elif formato == "dxf":
+            doc.Export(str(ruta), "DXF", _conjunto_vacio(doc))
+        else:
+            doc.Plot.PlotToFile(str(ruta), "DWG To PDF.pc3")
+            if not _esperar_archivo(ruta):
+                return (
+                    "ERROR: no se generó el PDF. Comprueba que el dibujo tiene una "
+                    "presentación con área de trazado definida."
+                )
+    except Exception as exc:
+        return f"ERROR exportando a {formato.upper()}: {exc}"
+
+    if not ruta.is_file():
+        return f"ERROR: AutoCAD no generó el archivo {formato.upper()}."
+    return (
+        f"Exportado a {formato.upper()} ({ruta.stat().st_size} bytes).\n"
+        f"{entregables.MARCA} {ruta}"
+    )

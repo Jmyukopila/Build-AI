@@ -33,6 +33,7 @@ El modelo no accede directamente a los programas: recibe esquemas de herramienta
 | Orquestación | Prompt arquitectónico, conectores, contexto, cancelación y pasos. | [`agent.py`](../buildai/agent.py) |
 | Frontera IA | Contratos neutros y traducción a Anthropic o Chat Completions. | [`providers/base.py`](../buildai/providers/base.py), [`providers/`](../buildai/providers/__init__.py) |
 | CAD/BIM | Detección, esquemas y ejecución de herramientas. | [`connectors/`](../buildai/connectors/__init__.py) |
+| Entregables | Carpeta, marca y validación de los archivos que exportan los programas. | [`entregables.py`](../buildai/entregables.py) |
 | Puentes | Código dentro del hilo principal de Blender, SketchUp o Revit; COM para AutoCAD. | [`addons/`](../buildai/addons/blender/buildai_blender.py) |
 | Persistencia | Configuración, sesiones, rutas, catálogo y memoria. | [`config.py`](../buildai/config.py), [`sesiones.py`](../buildai/sesiones.py), [`rutas.py`](../buildai/rutas.py), [`memoria.py`](../buildai/memoria.py) |
 

@@ -4,7 +4,7 @@ Las tablas se generaron contrastando nombres y firmas con el AST del árbol actu
 
 ## `buildai/agent.py`
 
-El turno crea el proveedor con la configuración activa, obtiene conectores disponibles y añade la entrada de usuario al historial. `ejecutar_turno` emite `estado`, `respuesta`, `herramienta`, `render` o `error`; al terminar sin llamadas devuelve la respuesta textual. Cada resultado recién obtenido se limita a `MAX_RESULTADO`; al alcanzar `MAX_PASOS` se añade una pausa de seguridad sin borrar lo avanzado.
+El turno crea el proveedor con la configuración activa, obtiene conectores disponibles y añade la entrada de usuario al historial. `ejecutar_turno` emite `estado`, `respuesta`, `herramienta`, `render`, `entregable` o `error`; al terminar sin llamadas devuelve la respuesta textual. Cada resultado recién obtenido se limita a `MAX_RESULTADO`; al alcanzar `MAX_PASOS` se añade una pausa de seguridad sin borrar lo avanzado.
 
 | Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
 |---|---|---|---|
@@ -158,6 +158,18 @@ Las funciones de ruta son los handlers de FastAPI y devuelven `FileResponse`, di
 | `trabajo` | `trabajo()` | Ejecuta el turno en un hilo aparte y persiste la sesión al terminar. | Guarda la sesión en el `finally` ignorando fallos de disco, encola el centinela de fin y libera `_ocupado`. |
 
 **Constantes de módulo:** `PUERTO`, `CARPETA_UI`, `_OAUTH_CLIENT_ID`, `_MAX_ADJUNTOS`, `_MAX_BYTES_ADJUNTO`.
+
+## `buildai/entregables.py`
+
+Canal de los archivos de trabajo reales que exportan los programas del usuario (IFC, DWG, DXF, PDF, GLB…). Espejo del circuito de renders, con carpeta y marca propias: los conectores escriben en `~/.buildai/entregables` e imprimen `ARCHIVO_GUARDADO:`, y la interfaz descarga por `/api/entregables/{nombre}`.
+
+| Símbolo | Firma o tipo | Qué hace y qué devuelve | Casos borde y estado |
+|---|---|---|---|
+| `extension_valida` | `extension_valida(nombre: str) -> bool` | Comprueba que el sufijo del nombre está en `FORMATOS`. | Insensible a mayúsculas; un nombre sin extensión devuelve `False`. |
+| `ruta_para` | `ruta_para(nombre_base: str, extension: str) -> Path` | Reserva la ruta de destino de una exportación y crea la carpeta. | Reduce el nombre que propone el modelo a `[A-Za-z0-9_-]`, añade marca de tiempo y usa `entregable` si no queda nada; lanza `ValueError` con un formato fuera de `FORMATOS`. |
+| `entregables_en_resultado` | `entregables_en_resultado(resultado: str) -> list` | Valida cada marca `ARCHIVO_GUARDADO:` y devuelve `{archivo, formato, bytes}`. | Descarta rutas fuera de la carpeta de entregables, extensiones no listadas y archivos inexistentes; captura `OSError` y sigue. |
+
+**Constantes de módulo:** `CARPETA_ENTREGABLES`, `MARCA`, `FORMATOS`.
 
 ## `buildai/connectors/base.py`
 
