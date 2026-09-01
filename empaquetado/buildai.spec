@@ -13,7 +13,7 @@ a = Analysis(
     binaries=[],
     datas=[
         (str(RAIZ / "buildai" / "ui"), "buildai/ui"),
-        (str(RAIZ / "buildai" / "skills_data"), "buildai/skills_data"),
+        (str(RAIZ / "buildai" / "conocimiento_semillas"), "buildai/conocimiento_semillas"),
         (str(RAIZ / "buildai" / "addons"), "buildai/addons"),
         # No se importan como módulos: se leen como texto y se inyectan como
         # fuente en Blender/Revit, así que PyInstaller no los detecta solo.

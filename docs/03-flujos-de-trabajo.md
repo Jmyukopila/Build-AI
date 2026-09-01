@@ -84,7 +84,7 @@ flowchart LR
   A --> G[UI y sesión conservan adjuntos]
 ```
 
-`_recortar_historial` elimina entradas antiguas hasta un mensaje `usuario`, evitando romper parejas tool-call y resultado. `_comprimir_resultados` deja los últimos 24 elementos intactos, recorta antiguos a 600 caracteres y conserva `RENDER_GUARDADO:`. `_historial_para_modelo` omite adjuntos de turnos cerrados, pero no muta la lista original.
+`_recortar_historial` elimina entradas antiguas hasta un mensaje `usuario`, evitando romper parejas tool-call y resultado. `_comprimir_resultados` deja los últimos 24 elementos intactos, recorta antiguos a 600 caracteres y conserva las marcas `RENDER_GUARDADO:` y `ARCHIVO_GUARDADO:`. `_historial_para_modelo` omite adjuntos de turnos cerrados, pero no muta la lista original.
 
 ## Render
 
@@ -108,6 +108,34 @@ sequenceDiagram
 ```
 
 [`renders_en_resultado`](../buildai/agent.py) acepta solo archivos reales dentro de `~/.buildai/renders`; [`ver_render`](../buildai/main.py) rechaza separadores, nombres ocultos, extensiones no PNG o archivos inexistentes.
+
+## Entregables
+
+Los renders son imágenes; los entregables son los archivos de trabajo reales (IFC, DWG, DXF, PDF, GLB…) que exporta el propio programa del usuario. BuildAI no los construye: cada conector expone una herramienta `..._exportar` que le pide la exportación a Revit, AutoCAD, SketchUp o Blender y recoge el archivo.
+
+```mermaid
+sequenceDiagram
+  participant G as Agente
+  participant C as Conector
+  participant P as Programa
+  participant D as Disco
+  participant M as API
+  participant U as UI
+  G->>C: llamar X_exportar formato
+  C->>C: entregables.ruta_para
+  C->>P: exportar con su propia API
+  P->>D: escribir IFC DWG DXF PDF
+  C-->>G: marca ARCHIVO_GUARDADO
+  G->>M: emitir entregable
+  M-->>U: SSE entregable
+  U->>M: GET entregables nombre
+  M->>D: validar ruta y extensión
+  D-->>U: archivo como adjunto
+```
+
+El conector reserva el nombre con [`ruta_para`](../buildai/entregables.py), que sanea lo que propone el modelo. [`entregables_en_resultado`](../buildai/entregables.py) acepta solo archivos reales dentro de `~/.buildai/entregables` con extensión de `FORMATOS`, y [`descargar_entregable`](../buildai/main.py) repite esas comprobaciones sobre el nombre que llega por HTTP.
+
+Revit es el único caso con ruta propia en el puente: su API prohíbe `Document.Export` dentro de una transacción y `/ejecutar` abre una siempre, así que la extensión expone `POST /exportar` aparte. Si esa ruta responde 404, la extensión instalada es anterior a esta función y el conector lo dice en vez de fallar en seco.
 
 ## Adjuntos
 

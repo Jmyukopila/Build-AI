@@ -12,6 +12,7 @@ from pathlib import Path
 
 from . import rutas
 from .agent import renders_en_resultado
+from .entregables import entregables_en_resultado
 from .connectors import buscar_herramienta
 from .providers.base import LlamadaHerramienta
 
@@ -153,6 +154,8 @@ def para_ui(historial: list) -> list:
         elif m["tipo"] == "resultado":
             for archivo in renders_en_resultado(m.get("contenido", "")):
                 eventos.append({"tipo": "render", "archivo": archivo})
+            for entregable in entregables_en_resultado(m.get("contenido", "")):
+                eventos.append(dict(entregable, tipo="entregable"))
         elif m["tipo"] == "asistente":
             if m.get("texto"):
                 eventos.append({"tipo": "respuesta", "texto": m["texto"]})

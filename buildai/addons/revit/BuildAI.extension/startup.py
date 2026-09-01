@@ -14,6 +14,7 @@ Requisitos (el instalador de BuildAI hace los pasos 2 y 3 automáticamente):
   3. Servidor Routes activado ([routes] enabled = true en pyRevit_config.ini).
 """
 
+import os
 import traceback
 
 try:
@@ -99,6 +100,85 @@ if routes:
             except Exception:
                 pass
             return {"ok": True, "resultado": "\n".join(lineas)}
+        except Exception:
+            return {"ok": False, "error": traceback.format_exc()}
+
+    def _vistas_para_exportar(doc):
+        """Vistas que se pueden imprimir/exportar: la activa si sirve, y si no
+        todas las hojas del proyecto (que es lo que se entrega en un plano)."""
+        from System.Collections.Generic import List
+        ids = List[DB.ElementId]()
+        activa = doc.ActiveView
+        if activa is not None and not activa.IsTemplate and activa.CanBePrinted:
+            ids.Add(activa.Id)
+            return ids
+        hojas = DB.FilteredElementCollector(doc)\
+            .OfClass(DB.ViewSheet).WhereElementIsNotElementType().ToElements()
+        for hoja in hojas:
+            ids.Add(hoja.Id)
+        return ids
+
+    @api.route("/exportar", methods=["POST"])
+    def exportar(request):
+        """Exporta el modelo a IFC, DWG, DXF o PDF.
+
+        Va en su propia ruta porque Revit PROHIBE Document.Export dentro de una
+        transacción, y /ejecutar abre una siempre.
+        """
+        try:
+            datos = request.data or {}
+            formato = str(datos.get("formato", "")).lower()
+            carpeta = datos.get("carpeta")
+            nombre = datos.get("nombre")
+            doc = revit.doc
+            if doc is None:
+                return {"ok": False, "error": "No hay ningún documento abierto en Revit."}
+            if not carpeta or not nombre:
+                return {"ok": False, "error": "Faltan la carpeta o el nombre de destino."}
+
+            # Revit decide el nombre final (a veces le añade el de la vista), así
+            # que en vez de suponerlo se mira qué archivos aparecen en la carpeta.
+            antes = set(os.listdir(carpeta))
+
+            if formato == "ifc":
+                opciones = DB.IFCExportOptions()
+                if str(datos.get("version", "2x3")) == "4":
+                    opciones.FileVersion = DB.IFCVersion.IFC4
+                else:
+                    opciones.FileVersion = DB.IFCVersion.IFC2x3CV2
+                doc.Export(carpeta, nombre, opciones)
+            elif formato in ("dwg", "dxf"):
+                vistas = _vistas_para_exportar(doc)
+                if vistas.Count == 0:
+                    return {"ok": False, "error": (
+                        "No hay ninguna vista ni hoja que se pueda exportar. Abre la "
+                        "planta o la vista 3D que quieras entregar y vuelve a pedirlo.")}
+                opciones = DB.DWGExportOptions() if formato == "dwg" else DB.DXFExportOptions()
+                doc.Export(carpeta, nombre, vistas, opciones)
+            elif formato == "pdf":
+                vistas = _vistas_para_exportar(doc)
+                if vistas.Count == 0:
+                    return {"ok": False, "error": (
+                        "No hay ninguna vista ni hoja imprimible. Abre la vista que "
+                        "quieras imprimir y vuelve a pedirlo.")}
+                try:
+                    opciones = DB.PDFExportOptions()
+                except AttributeError:
+                    return {"ok": False, "error": (
+                        "Esta versión de Revit no exporta PDF por sí sola (hace falta "
+                        "Revit 2022 o posterior). Exporta a DWG e imprime desde AutoCAD.")}
+                opciones.FileName = nombre
+                doc.Export(carpeta, vistas, opciones)
+            else:
+                return {"ok": False, "error": "Formato no soportado: " + formato}
+
+            nuevos = [f for f in os.listdir(carpeta)
+                      if f not in antes and f.lower().endswith("." + formato)]
+            if not nuevos:
+                return {"ok": False, "error": (
+                    "Revit no dio error pero no escribió ningún archivo " +
+                    formato.upper() + ".")}
+            return {"ok": True, "resultado": sorted(nuevos)[0]}
         except Exception:
             return {"ok": False, "error": traceback.format_exc()}
 

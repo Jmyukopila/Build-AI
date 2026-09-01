@@ -13,6 +13,7 @@ usa 404 explícito.
 | `GET /manual` | Ninguna | `FileResponse` de `ui/manual.html`. |
 | `GET /ui/{ruta}` | Ruta estática | Archivo bajo `buildai/ui` mediante `StaticFiles`. |
 | `GET /api/renders/{nombre}` | `nombre` | PNG de `~/.buildai/renders`; 404 si contiene separadores, empieza por `.`, no es `.png`, no existe o no es archivo. |
+| `GET /api/entregables/{nombre}` | `nombre` | Archivo exportado de `~/.buildai/entregables` como adjunto; 404 si contiene separadores, empieza por `.`, su extensión no está en `entregables.FORMATOS`, no existe o no es archivo. |
 | `GET /api/estado` | Ninguna | `{programas:[{id,nombre,icono,conectado,ayuda}], proveedor, modelo, clave_configurada}`. |
 | `GET /api/config` | Ninguna | `{proveedor, modelos, claves_configuradas, proveedores, modelos_por_defecto}`. Las claves son booleanos. |
 | `POST /api/config` | `{proveedor?, claves?:{}, modelos?:{}}` | `{ok:true}`. Solo actualiza nombres conocidos y valores no vacíos. |
@@ -44,6 +45,7 @@ Cada mensaje tiene la forma `data: <JSON>\n\n`, generada por `_sse` con
 | `herramienta` | `programa`, `nombre`, `detalle` | Antes de ejecutar una llamada; `detalle` es código u orden truncado a 400 caracteres. |
 | `respuesta` | `texto` | Texto intermedio, final o cancelación. |
 | `render` | `archivo` | Render validado por `renders_en_resultado`. |
+| `entregable` | `archivo`, `formato`, `bytes` | Archivo exportado validado por `entregables_en_resultado`. |
 | `error` | `texto` | Petición vacía, lock ocupado, proveedor o herramienta fallida. |
 | `fin` | Ninguno | El hilo guardó la sesión y terminó. |
 

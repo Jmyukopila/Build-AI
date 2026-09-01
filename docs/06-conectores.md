@@ -22,8 +22,10 @@ paralelo; una excepción se trata como desconectado.
 
 * **Detección y canal:** socket TCP en `127.0.0.1:8601`; `_enviar` manda una
   línea JSON y espera otra línea JSON. `ping` determina disponibilidad.
-* **Herramientas:** `blender_informacion()` sin parámetros y
-  `blender_ejecutar_python(codigo: str)`. El segundo antepone el contenido de
+* **Herramientas:** `blender_informacion()` sin parámetros,
+  `blender_ejecutar_python(codigo: str)` y
+  `blender_exportar(formato, nombre?)` a glb, gltf, obj, fbx, usd, stl o dae.
+  Blender no escribe IFC ni DWG. El segundo antepone el contenido de
   [`blender_kit.py`](../buildai/connectors/blender_kit.py) y compila el código
   con nombre `<codigo>`.
 * **Puente:** [`buildai_blender.py`](../buildai/addons/blender/buildai_blender.py)
@@ -41,9 +43,13 @@ cámara y render en metros, evitando que el modelo repita detalles de `bpy`.
 * **Detección y canal:** COM mediante `pythoncom.CoInitialize()`. Se prueban
   `AutoCAD.Application` y los ProgID versionados `.25` hasta `.18`.
 * **Herramientas:** `autocad_informacion()` sin parámetros,
-  `autocad_ejecutar_python(codigo: str)` y
-  `autocad_comando(orden: str)`. El nombre del campo es `orden`, no
-  `comando`.
+  `autocad_ejecutar_python(codigo: str)`,
+  `autocad_comando(orden: str)` y `autocad_exportar(formato, nombre?)` a dwg,
+  dxf o pdf. El nombre del campo de la orden es `orden`, no `comando`.
+* **Exportación:** DWG con `-WBLOCK` y PDF con `Plot.PlotToFile`, ambos
+  asíncronos (`_esperar_archivo` aguarda a que el archivo deje de crecer); DXF
+  con `doc.Export`, que sí es síncrono. Nunca `SaveAs`: renombraría el dibujo
+  abierto del usuario.
 * **Contexto Python:** el código recibe `acad`, `doc`, `ms`, `punto` y
   `puntos`; se ejecuta con `exec` y la salida se recorta con `recortar`.
 * **Puente:** no hay addon: el canal COM es parte de AutoCAD y pywin32.
@@ -53,8 +59,12 @@ cámara y render en metros, evitando que el modelo repita detalles de `bpy`.
 
 * **Detección y canal:** HTTP local en `127.0.0.1:8602`, con `GET /ping`,
   `GET /info` y `POST /ejecutar`.
-* **Herramientas:** `sketchup_informacion()` sin parámetros y
-  `sketchup_ejecutar_ruby(codigo: str)`.
+* **Herramientas:** `sketchup_informacion()` sin parámetros,
+  `sketchup_ejecutar_ruby(codigo: str)` y
+  `sketchup_exportar(formato, nombre?)` a dwg, dxf, ifc, obj, fbx, stl o dae.
+  Todos menos dae exigen SketchUp Pro y el Ruby generado lo comprueba con
+  `Sketchup.is_pro?`. El puente devuelve el valor de la última expresión, no lo
+  impreso, así que el código de exportación termina evaluando a la marca.
 * **Puente:** [`buildai_sketchup.rb`](../buildai/addons/sketchup/buildai_sketchup.rb)
   ofrece un servidor HTTP sobre TCP, cola protegida por `Mutex` y
   `UI.start_timer` para ejecutar en el hilo de SketchUp. Incluye fallback JSON
@@ -69,9 +79,16 @@ debe respetar la API de Ruby de la versión instalada.
 ## Revit
 
 * **Detección y canal:** pyRevit Routes en
-  `http://127.0.0.1:48884/buildai`, con `/ping`, `/info` y `/ejecutar`.
-* **Herramientas:** `revit_informacion()` sin parámetros y
-  `revit_ejecutar_python(codigo: str)`.
+  `http://127.0.0.1:48884/buildai`, con `/ping`, `/info`, `/ejecutar` y
+  `/exportar`.
+* **Herramientas:** `revit_informacion()` sin parámetros,
+  `revit_ejecutar_python(codigo: str)` y
+  `revit_exportar(formato, nombre?, version_ifc?)` a ifc, dwg, dxf o pdf.
+* **Exportación:** va en su propia ruta porque Revit prohíbe `Document.Export`
+  dentro de una transacción y `/ejecutar` abre una siempre. La extensión
+  devuelve el nombre que Revit acabó escribiendo (puede añadirle el de la
+  vista), no el propuesto. Un 404 en `/exportar` significa extensión antigua y
+  el conector pide reinstalarla.
 * **Puente:** [`startup.py`](../buildai/addons/revit/BuildAI.extension/startup.py)
   registra las rutas, abre `revit.Transaction("BuildAI")` y ejecuta con
   `doc`, `uidoc`, `DB`, `revit` y `salida`.

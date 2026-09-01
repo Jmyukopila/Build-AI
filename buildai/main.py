@@ -31,6 +31,7 @@ if sys.stderr is None:
 from . import config as cfg
 from . import instalador
 from . import modelos as catalogo_modelos
+from . import entregables
 from . import sesiones
 from .agent import CARPETA_RENDERS, ejecutar_turno
 from .connectors import CONECTORES
@@ -71,6 +72,24 @@ def ver_render(nombre: str):
     ):
         return Response(status_code=404)
     return FileResponse(ruta, media_type="image/png")
+
+
+@app.get("/api/entregables/{nombre}")
+def descargar_entregable(nombre: str):
+    """Sirve un archivo exportado (IFC, DWG, DXF, PDF…). Mismas cautelas que los
+    renders: solo nombres simples dentro de la carpeta de entregables y solo
+    extensiones de la lista blanca."""
+    ruta = entregables.CARPETA_ENTREGABLES / nombre
+    if (
+        "/" in nombre or "\\" in nombre or nombre.startswith(".")
+        or not entregables.extension_valida(nombre) or not ruta.is_file()
+    ):
+        return Response(status_code=404)
+    return FileResponse(
+        ruta,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{ruta.name}"'},
+    )
 
 
 def _disponible_seguro(conector) -> bool:

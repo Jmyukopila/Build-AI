@@ -2,10 +2,15 @@
 
 import httpx
 
+from .. import entregables
 from .base import Conector, recortar
 
 PUERTO_SKETCHUP = 8602
 BASE = f"http://127.0.0.1:{PUERTO_SKETCHUP}"
+
+# Formatos de model.export. Todos menos COLLADA exigen SketchUp Pro.
+_EXPORTABLES = ("dwg", "dxf", "ifc", "obj", "fbx", "stl", "dae")
+_SOLO_PRO = tuple(f for f in _EXPORTABLES if f != "dae")
 
 
 class ConectorSketchUp(Conector):
@@ -86,17 +91,57 @@ class ConectorSketchUp(Conector):
                     "required": ["codigo"],
                 },
             },
+            {
+                "nombre": "sketchup_exportar",
+                "descripcion": (
+                    "Exporta el modelo a un archivo profesional y se lo entrega al "
+                    "usuario como descarga.\n"
+                    "Formatos: 'dwg' y 'dxf' (CAD, para llevar el trabajo a AutoCAD), "
+                    "'ifc' (BIM, para coordinar con Revit o ArchiCAD), 'obj', 'fbx' y "
+                    "'stl' (3D), 'dae' (COLLADA, el único que también funciona en la "
+                    "versión gratuita).\n"
+                    "SketchUp gratuito solo exporta 'dae'; los demás formatos exigen "
+                    "SketchUp Pro y la herramienta lo avisa si no lo hay."
+                ),
+                "parametros": {
+                    "type": "object",
+                    "properties": {
+                        "formato": {
+                            "type": "string",
+                            "enum": list(_EXPORTABLES),
+                            "description": "Formato del archivo a generar.",
+                        },
+                        "nombre": {
+                            "type": "string",
+                            "description": "Nombre descriptivo, p. ej. 'vivienda-unifamiliar'.",
+                        },
+                    },
+                    "required": ["formato"],
+                },
+            },
         ]
 
     def ejecutar(self, nombre: str, argumentos: dict) -> str:
+        exportando = nombre == "sketchup_exportar"
+        if exportando:
+            formato = str(argumentos.get("formato", "")).lower().strip()
+            if formato not in _EXPORTABLES:
+                return (
+                    f"ERROR: SketchUp no exporta a {formato.upper()}. Puede exportar a "
+                    f"{', '.join(_EXPORTABLES)}."
+                )
+            codigo = _ruby_exportar(formato, argumentos.get("nombre"))
+        else:
+            codigo = argumentos.get("codigo", "")
         try:
             if nombre == "sketchup_informacion":
                 r = httpx.get(f"{BASE}/info", timeout=30.0)
             else:
                 r = httpx.post(
                     f"{BASE}/ejecutar",
-                    json={"codigo": argumentos.get("codigo", "")},
-                    timeout=120.0,
+                    json={"codigo": codigo},
+                    # Exportar un modelo grande tarda más que ejecutar un script.
+                    timeout=180.0 if exportando else 120.0,
                 )
         except httpx.HTTPError as exc:
             return (
@@ -107,3 +152,41 @@ class ConectorSketchUp(Conector):
         if not datos.get("ok"):
             return f"ERROR en SketchUp: {recortar(datos.get('error', 'desconocido'))}"
         return recortar(datos.get("resultado", "(sin salida)"))
+
+
+def _cadena_ruby(texto: str) -> str:
+    """Literal Ruby entre comillas simples. Las rutas de Windows van llenas de
+    barras invertidas, que Ruby interpretaría como escapes."""
+    return "'" + str(texto).replace("\\", "\\\\").replace("'", "\\'") + "'"
+
+
+def _ruby_exportar(formato: str, nombre: str) -> str:
+    """Código Ruby que exporta y DEVUELVE el resultado como texto: el puente de
+    SketchUp entrega el valor de la última expresión, no lo que se imprime."""
+    ruta = entregables.ruta_para(nombre or "modelo", formato)
+    aviso_pro = (
+        f"ERROR: exportar a {formato.upper()} necesita SketchUp Pro. Con la versión "
+        "gratuita solo se puede exportar a DAE (COLLADA)."
+    )
+    lineas = [
+        "begin",
+        f"  ruta = {_cadena_ruby(str(ruta))}",
+    ]
+    if formato in _SOLO_PRO:
+        lineas += [
+            "  if !Sketchup.is_pro?",
+            f"    {_cadena_ruby(aviso_pro)}",
+            "  elsif Sketchup.active_model.export(ruta)",
+        ]
+    else:
+        lineas.append("  if Sketchup.active_model.export(ruta)")
+    lineas += [
+        "    'ARCHIVO_GUARDADO: ' + ruta",
+        "  else",
+        "    'ERROR: SketchUp rechazó la exportación. Comprueba que el modelo tiene geometría.'",
+        "  end",
+        "rescue => e",
+        "  'ERROR exportando desde SketchUp: ' + e.message",
+        "end",
+    ]
+    return "\n".join(lineas)

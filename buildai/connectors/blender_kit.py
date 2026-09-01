@@ -1978,3 +1978,45 @@ def render(ruta=None, calidad="media", ancho=None, alto=None):
           f"{perfil['muestras']} muestras)")
     print(f"RENDER_GUARDADO: {ruta}")
     return str(ruta)
+
+
+# Operadores de exportación por formato. El de OBJ cambió de sitio en Blender 4.0
+# (wm.obj_export sustituyó a export_scene.obj), así que se prueban ambos.
+_EXPORTADORES = {
+    "gltf": [("export_scene", "gltf", {"export_format": "GLTF_SEPARATE"})],
+    "glb": [("export_scene", "gltf", {"export_format": "GLB"})],
+    "obj": [("wm", "obj_export", {}), ("export_scene", "obj", {})],
+    "fbx": [("export_scene", "fbx", {})],
+    "usd": [("wm", "usd_export", {})],
+    "stl": [("wm", "stl_export", {}), ("export_mesh", "stl", {})],
+    "dae": [("wm", "collada_export", {})],
+}
+
+
+def exportar(formato, ruta):
+    """Guarda la escena en un formato 3D estándar para llevarla a otro programa.
+    El archivo va a la carpeta de entregables que indica BuildAI, que lo ofrece
+    al usuario como descarga."""
+    formato = str(formato).lower()
+    candidatos = _EXPORTADORES.get(formato)
+    if not candidatos:
+        print("ERROR: Blender no exporta a %s. Formatos disponibles: %s."
+              % (formato.upper(), ", ".join(sorted(_EXPORTADORES))))
+        return None
+    ultimo_error = None
+    for modulo, operador, opciones in candidatos:
+        familia = getattr(bpy.ops, modulo, None)
+        funcion = getattr(familia, operador, None) if familia else None
+        if funcion is None:
+            continue
+        try:
+            funcion(filepath=str(ruta), **opciones)
+        except Exception as exc:
+            ultimo_error = exc
+            continue
+        print("✔ Escena exportada a %s" % formato.upper())
+        print("ARCHIVO_GUARDADO: %s" % ruta)
+        return str(ruta)
+    print("ERROR: esta versión de Blender no pudo exportar a %s (%s)."
+          % (formato.upper(), ultimo_error or "operador no disponible"))
+    return None

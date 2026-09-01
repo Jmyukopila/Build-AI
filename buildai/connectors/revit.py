@@ -4,6 +4,7 @@ from pathlib import Path
 
 import httpx
 
+from .. import entregables
 from .base import Conector, recortar
 
 PUERTO_REVIT = 48884  # puerto por defecto del servidor Routes de pyRevit
@@ -94,9 +95,49 @@ class ConectorRevit(Conector):
                     "required": ["codigo"],
                 },
             },
+            {
+                "nombre": "revit_exportar",
+                "descripcion": (
+                    "Exporta el proyecto a un archivo profesional y se lo entrega al "
+                    "usuario como descarga. Lo escribe el propio Revit, así que sale "
+                    "con la calidad y la semántica de un entregable real.\n"
+                    "Formatos: 'ifc' (BIM abierto: muros, forjados y espacios llegan "
+                    "como elementos, no como mallas — es lo que piden en coordinación), "
+                    "'dwg' y 'dxf' (CAD, exportan la vista abierta o, si no vale, todas "
+                    "las hojas del proyecto) y 'pdf' (planos para imprimir o enviar; "
+                    "necesita Revit 2022 o posterior).\n"
+                    "Para DWG, DXF y PDF conviene abrir antes en Revit la vista o la "
+                    "hoja que se quiere entregar."
+                ),
+                "parametros": {
+                    "type": "object",
+                    "properties": {
+                        "formato": {
+                            "type": "string",
+                            "enum": ["ifc", "dwg", "dxf", "pdf"],
+                            "description": "Formato del archivo a generar.",
+                        },
+                        "nombre": {
+                            "type": "string",
+                            "description": "Nombre descriptivo, p. ej. 'edificio-viviendas'.",
+                        },
+                        "version_ifc": {
+                            "type": "string",
+                            "enum": ["2x3", "4"],
+                            "description": (
+                                "Versión de IFC. '2x3' (por defecto) es la que aceptan "
+                                "casi todos los programas; '4' solo si lo piden."
+                            ),
+                        },
+                    },
+                    "required": ["formato"],
+                },
+            },
         ]
 
     def ejecutar(self, nombre: str, argumentos: dict) -> str:
+        if nombre == "revit_exportar":
+            return _exportar(argumentos)
         try:
             if nombre == "revit_informacion":
                 r = httpx.get(f"{BASE}/info", timeout=60.0)
@@ -125,3 +166,49 @@ class ConectorRevit(Conector):
         if not datos.get("ok"):
             return f"ERROR en Revit: {recortar(datos.get('error', 'desconocido'))}"
         return recortar(datos.get("resultado", "(sin salida)"))
+
+
+
+def _exportar(argumentos: dict) -> str:
+    formato = str(argumentos.get("formato", "")).lower().strip()
+    if formato not in ("ifc", "dwg", "dxf", "pdf"):
+        return "ERROR: formato no soportado. Usa 'ifc', 'dwg', 'dxf' o 'pdf'."
+    # ruta_para reserva un nombre libre; Revit escribe en la carpeta y puede
+    # cambiarle el sufijo, así que el nombre real lo devuelve la extensión.
+    reservada = entregables.ruta_para(argumentos.get("nombre") or "proyecto", formato)
+    try:
+        r = httpx.post(
+            f"{BASE}/exportar",
+            json={
+                "formato": formato,
+                "carpeta": str(reservada.parent),
+                "nombre": reservada.stem,
+                "version": argumentos.get("version_ifc", "2x3"),
+            },
+            timeout=600.0,  # un IFC de un edificio entero tarda varios minutos
+        )
+    except httpx.HTTPError as exc:
+        return (
+            f"ERROR: no se pudo hablar con Revit ({exc}). "
+            "¿Está abierto con pyRevit y el servidor Routes activado?"
+        )
+    if r.status_code == 404:
+        return (
+            "ERROR: la extensión de BuildAI para Revit está desactualizada y no sabe "
+            "exportar. Pulsa «Conectar automáticamente» en el panel de Revit y "
+            "reinicia Revit; después vuelve a pedir la exportación."
+        )
+    try:
+        datos = r.json()
+    except ValueError:
+        return f"ERROR: respuesta inesperada de Revit: {recortar(r.text)}"
+    if not datos.get("ok"):
+        return f"ERROR exportando desde Revit: {recortar(datos.get('error', 'desconocido'))}"
+
+    archivo = entregables.CARPETA_ENTREGABLES / str(datos.get("resultado", ""))
+    if not archivo.is_file():
+        return f"ERROR: Revit dijo haber creado {archivo.name} pero no está en disco."
+    return (
+        f"Exportado a {formato.upper()} ({archivo.stat().st_size} bytes).\n"
+        f"{entregables.MARCA} {archivo}"
+    )

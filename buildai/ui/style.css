@@ -1004,6 +1004,65 @@ button.secundario:hover { background: var(--panel-suave); border-color: var(--bo
 .pie-render span { display: inline-flex; align-items: center; gap: 6px; }
 .pie-render svg { width: 13px; height: 13px; color: var(--acento); }
 
+/* ---------- Entregables en el chat ---------- */
+.mensaje.entregable .burbuja-entregable {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: min(78%, 520px);
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--sombra);
+}
+.entregable-formato {
+  flex-shrink: 0;
+  font-family: var(--fuente-tecnica);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: #06222c;
+  background: var(--acento);
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.entregable-datos {
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 0; flex: 1; font-size: 12.5px;
+}
+.entregable-datos b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.entregable-datos small { font-family: var(--fuente-tecnica); font-size: 10.5px; color: var(--texto-suave); }
+.btn-entregable {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  padding: 7px 12px;
+  font-size: 12px; font-weight: 600; text-decoration: none;
+  color: var(--texto);
+  background: var(--panel-suave);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  transition: border-color var(--transicion), color var(--transicion);
+}
+.btn-entregable:hover { border-color: var(--acento); color: var(--acento); }
+.btn-entregable svg { width: 14px; height: 14px; }
+
+.entregable-archivo {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  aspect-ratio: 1;
+  text-decoration: none;
+  color: var(--texto-suave);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--panel-suave);
+  transition: border-color var(--transicion), color var(--transicion);
+}
+.entregable-archivo svg { width: 20px; height: 20px; color: var(--acento); }
+.entregable-archivo span { font-family: var(--fuente-tecnica); font-size: 9.5px; letter-spacing: 0.4px; }
+.entregable-archivo:hover { border-color: var(--acento); color: var(--acento); }
+
 .lightbox {
   flex-direction: column;
   gap: 14px;

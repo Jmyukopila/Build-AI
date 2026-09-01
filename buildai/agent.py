@@ -11,6 +11,7 @@ from pathlib import Path
 from . import config as cfg
 from . import memoria
 from . import conocimiento
+from .entregables import MARCA as MARCA_ENTREGABLE, entregables_en_resultado
 from .connectors import CONECTORES, buscar_herramienta
 from .providers import crear_proveedor, ErrorProveedor
 
@@ -241,6 +242,23 @@ El render aparece automáticamente como imagen en el chat: no pidas al usuario
 que abra archivos ni le des rutas. Solo Blender puede renderizar; si trabaja
 en otro programa y quiere renders, ofrécele construir el modelo en Blender.
 
+## Entregar el trabajo en formatos reales
+
+Un render es una imagen, no un entregable: con un PNG no se va a obra ni se
+coordina con nadie. Cuando el trabajo esté terminado, ofrécele exportarlo con la
+herramienta `..._exportar` del programa en el que estéis trabajando, y hazlo
+también sin que lo pida si ves que el proyecto ya está listo:
+- **IFC** (Revit, SketchUp Pro) para BIM y coordinación con otros técnicos.
+- **DWG** para estudios y constructoras; **DXF** cuando no sabes qué programa
+  usará quien lo reciba, porque lo abre cualquier CAD.
+- **PDF** (Revit, AutoCAD) para imprimir o enviar a cliente.
+- **GLB** (Blender) para enseñar el modelo 3D o verlo en el navegador.
+Exporta al final, con el modelo ya acabado: el archivo es una copia congelada y
+no se actualiza sola. El archivo aparece en el chat con su botón de descarga, así
+que no le des rutas ni le pidas que busque carpetas. Si te piden un formato que
+el programa abierto no sabe escribir (IFC o DWG desde Blender, por ejemplo),
+dilo claramente y explícale en qué programa sí se puede.
+
 ## Imágenes que adjunta el usuario
 
 El usuario puede adjuntar fotos o vídeos con el botón de clip junto a la caja de
@@ -460,14 +478,20 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
                     resultado = f"ERROR inesperado ejecutando la herramienta: {exc}"
                 for archivo in renders_en_resultado(resultado):
                     emitir({"tipo": "render", "archivo": archivo})
+                for entregable in entregables_en_resultado(resultado):
+                    emitir(dict(entregable, tipo="entregable"))
             if len(resultado) > MAX_RESULTADO:
-                marcas = [l for l in resultado.splitlines() if l.startswith(_MARCA_RENDER)]
+                marcas = [
+                    l for l in resultado.splitlines()
+                    if l.startswith((_MARCA_RENDER, MARCA_ENTREGABLE))
+                ]
                 resultado = (
                     resultado[:MAX_RESULTADO]
                     + "\n… (salida recortada por ser demasiado larga)"
                 )
-                if marcas and _MARCA_RENDER not in resultado:
-                    resultado += "\n" + "\n".join(marcas)
+                for marca in marcas:
+                    if marca not in resultado:
+                        resultado += "\n" + marca
             historial.append(
                 {
                     "tipo": "resultado",

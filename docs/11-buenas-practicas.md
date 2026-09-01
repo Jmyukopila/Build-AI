@@ -78,7 +78,8 @@ manual en [`app.js`](../buildai/ui/app.js).
    no en el contrato neutro.
 4. Validar entradas externas y conservar límites y timeouts.
 5. Añadir o actualizar pruebas cuando el comportamiento sea aislable.
-6. Ejecutar `python -m pytest tests` desde un entorno virtual de Windows.
+6. Ejecutar `python -m pytest tests -q` desde un entorno virtual (el suite
+   no necesita Windows ni programas CAD abiertos: usa dobles).
 7. Para cambios de UI, revisar el navegador local; para bridges, probar con
    el programa abierto y también comprobar el fallo desconectado.
 
