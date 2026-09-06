@@ -31,8 +31,8 @@ _MATERIALES = {
 
 # Funciones del kit agrupadas por el tipo de trabajo que delatan.
 _CATEGORIAS = {
-    "interiorismo": {"dormitorio", "salon", "bano", "cocina", "comedor",
-                     "sofa", "cama", "armario", "mesa", "alfombra"},
+    "interiorismo": {"dormitorio", "salon", "bano", "cocina", "cocina_estancia",
+                     "comedor", "sofa", "cama", "armario", "mesa", "alfombra"},
     "renders fotorrealistas": {"render", "cielo", "camara", "foco_empotrado",
                                "lampara_colgante", "sol"},
     "exteriores y jardín": {"terreno", "arbol", "arbusto", "seto", "piscina",

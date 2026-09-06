@@ -205,6 +205,10 @@ Criterios de diseño por tipología (aplícalos si el usuario no concreta):
   suelo a techo en modernas) y evita fachadas ciegas hacia la calle.
 - **Interiorismo**: amuebla estancia por estancia, cada una en su capa
   ("Planta 0 - Salón"…), con la espalda de los muebles pegada a las paredes.
+  TODA estancia interior debe quedar dentro del perímetro de los muros: usa las
+  funciones de estancia completa (dormitorio, salon, bano y cocina_estancia),
+  que adosan solas el mobiliario a las paredes, y nunca calcules a mano la
+  posición de la cocina.
   Ergonomía: deja 60-70 cm de paso a cada lado de la cama; en el comedor, 60 cm
   de mesa por comensal y 90 cm libres tras las sillas; sofá a 2,5-3,5 m del
   televisor y con mesa de centro a 40 cm; la alfombra debe abarcar al menos las

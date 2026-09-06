@@ -1357,6 +1357,63 @@ def bano(origen, ancho, fondo, pared_aparatos="S", nivel=0.0, capa=None,
     print(f"✔ Baño amueblado ({ancho:.1f} × {fondo:.1f} m)")
 
 
+def _posiciones_cocina(origen, ancho, fondo, pared, largo_encimera, con_isla=False):
+    """Plan de colocación de la cocina dentro de su estancia rectangular, sin
+    tocar bpy: calcula dónde queda la bancada (espalda exacta sobre la línea
+    interior de `pared`), la isla y el foco central. Devuelve un dict con
+    {bancada_origen, bancada_largo, rotacion, isla, foco, omitida, ajustada}:
+    `bancada_origen` es None y `omitida` True cuando la pared es tan corta que
+    no cabe ni una bancada mínima de 1 m."""
+    x0, y0 = origen
+    cx, cy = x0 + ancho / 2, y0 + fondo / 2
+    punto, rot, largo = _sobre_pared(origen, ancho, fondo, pared)
+    holgura = 0.5        # paso libre mínimo a cada lado de la bancada
+    disponible = max(0.0, largo - 2 * holgura)
+    omitida = disponible < 1.0
+    if omitida:
+        bancada_largo, u0 = 0.0, 0.0
+    else:
+        bancada_largo = max(1.0, min(largo_encimera, disponible))
+        u0 = (largo - bancada_largo) / 2
+    return {
+        "bancada_origen": punto(u0) if not omitida else None,
+        "bancada_largo": bancada_largo,
+        "rotacion": rot,
+        "isla": (cx, cy) if con_isla else None,
+        "foco": (cx, cy),
+        "omitida": omitida,
+        "ajustada": not omitida and bancada_largo < largo_encimera - 0.01,
+    }
+
+
+def cocina_estancia(origen, ancho, fondo, pared_encimera="N", largo_encimera=2.4,
+                    con_isla=False, nivel=0.0, capa=None, mueble="madera_clara",
+                    encimera="marmol", con_altos=True, altura_techo=2.7):
+    """Cocina completa dentro de su estancia rectangular. `origen` es la esquina
+    INTERIOR suroeste, `ancho` en X y `fondo` en Y. Coloca sola la bancada
+    contra `pared_encimera` (espalda sobre su línea interior, igual que hace
+    `bano` con los aparatos), la isla centrada si `con_isla` y los focos de
+    techo: así la cocina siempre acaba DENTRO del edificio sin que el modelo
+    tenga que calcular posiciones a mano. Mínimo razonable: 2,4 × 2,2 m."""
+    plan = _posiciones_cocina(origen, ancho, fondo, pared_encimera, largo_encimera, con_isla)
+    if plan["omitida"]:
+        print(f"✘ cocina omitida: la estancia ({ancho:.1f} × {fondo:.1f} m) no admite "
+              "ni una bancada mínima de 1 m")
+    else:
+        cocina(plan["bancada_origen"], largo=plan["bancada_largo"],
+               rotacion=plan["rotacion"], nivel=nivel, capa=capa, con_altos=con_altos,
+               mueble=mueble, encimera=encimera)
+        if plan["ajustada"]:
+            print(f"· bancada reducida a {plan['bancada_largo']:.2f} m: la pared al "
+                  f"{pared_encimera} solo mide {_sobre_pared(origen, ancho, fondo, pared_encimera)[2]:.2f} m")
+        if plan["isla"] is not None:
+            ix, iy = plan["isla"]
+            mesa((ix - 0.8, iy - 0.45), ancho=1.6, fondo=0.9, nivel=nivel,
+                 capa=capa, material=mueble)
+        print(f"✔ Cocina amueblada ({ancho:.1f} × {fondo:.1f} m, encimera al {pared_encimera})")
+    foco_empotrado(plan["foco"], altura_techo=altura_techo, nivel=nivel, capa=capa)
+
+
 # ------------------------------------------------- exterior, paisaje y piscina
 
 def piscina(origen, ancho=8.0, fondo=4.0, profundidad=1.5, borde=0.6, nivel=0.0,
@@ -1690,9 +1747,61 @@ def coche(origen, rotacion=0, nivel=0.0, color=(0.15, 0.16, 0.18), capa=None):
     return cuerpo
 
 
+# ------------------------------------------ comprobación de la envolvente
+
+# Muebles que solo tienen sentido dentro de un edificio; un "Mesa"/"Comedor" o
+# una "Silla" pueden estar legalmente en una terraza o jardín, así que esos no
+# se marcan aunque quedaran fuera de la huella.
+_MUEBLES_SOLO_INTERIOR = ("Cama", "Cocina", "Sofa", "Sillon", "Armario",
+                          "Estanteria", "Lavabo", "Inodoro", "Ducha", "Banera",
+                          "Mueble_TV")
+
+
+def _bbox_xy(obj):
+    """Rectángulo (x_min, y_min, x_max, y_max) del objeto en XY de mundo, a
+    partir de su caja local y su matriz. Si la caja no es consultable, vuelve a
+    un punto en su `location`."""
+    ubicacion = getattr(obj, "location", (0.0, 0.0, 0.0))
+    esquinas = getattr(obj, "bound_box", ())
+    try:
+        mundo = [obj.matrix_world @ Vector(v) for v in esquinas]
+    except Exception:
+        mundo = []
+    if not mundo:
+        return (ubicacion[0], ubicacion[1], ubicacion[0], ubicacion[1])
+    xs = [v[0] for v in mundo]
+    ys = [v[1] for v in mundo]
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+def _huella_forjados(objetos):
+    """Huella XY del edificio: unión de los rectángulos de las losas y cubiertas
+    (los crean forjado() y cubierta_*()). Devuelve (x_min, y_min, x_max, y_max)
+    o None si no hay ninguna superficie firme sobre la que comprobar."""
+    cajas = []
+    for obj in objetos:
+        nombre = getattr(obj, "name", "")
+        if nombre.startswith(("Forjado", "Solera", "Cubierta")):
+            cajas.append(_bbox_xy(obj))
+    if not cajas:
+        return None
+    return (min(c[0] for c in cajas), min(c[1] for c in cajas),
+            max(c[2] for c in cajas), max(c[3] for c in cajas))
+
+
+def _fuera_de_huella(centro, huella, tolerancia=0.15):
+    """True si `centro` (x, y) queda fuera de la huella salvo una pequeña
+    tolerancia, pensada para muebles pegados a la cara interior de los muros."""
+    x, y = centro
+    x_min, y_min, x_max, y_max = huella
+    return not (x_min - tolerancia <= x <= x_max + tolerancia
+                and y_min - tolerancia <= y <= y_max + tolerancia)
+
+
 def revisar_escena():
     """Control de calidad: revisa la escena y avisa de los fallos típicos de un
-    render (sin cámara, sin luz cuando hay mobiliario, objetos sin material).
+    render (sin cámara, sin luz cuando hay mobiliario, objetos sin material) y
+    de muebles que han quedado FUERA de la huella del edificio.
     Llámala antes de render() o de dar por terminado un proyecto y corrige lo
     que señale. Recuerda además poner cielo(...) para la luz ambiente."""
     objetos = list(bpy.data.objects)
@@ -1705,6 +1814,15 @@ def revisar_escena():
     hay_interior = any(o.name.startswith(muebles) for o in mallas)
     sin_material = [o.name for o in mallas
                     if not o.data.materials or all(m is None for m in o.data.materials)]
+    huella = _huella_forjados(objetos)
+    fuera = []
+    if huella is not None:
+        for o in mallas:
+            if o.name.startswith(_MUEBLES_SOLO_INTERIOR):
+                x_min, y_min, x_max, y_max = _bbox_xy(o)
+                centro = ((x_min + x_max) / 2, (y_min + y_max) / 2)
+                if _fuera_de_huella(centro, huella):
+                    fuera.append(o.name)
     avisos = []
     if not camaras:
         avisos.append("No hay cámara: añade camara(...) antes de render().")
@@ -1715,6 +1833,11 @@ def revisar_escena():
     if sin_material:
         muestra = ", ".join(sin_material[:8]) + (" …" if len(sin_material) > 8 else "")
         avisos.append(f"{len(sin_material)} objeto(s) sin material (saldrán grises): {muestra}")
+    if fuera:
+        muestra = ", ".join(fuera[:5]) + (" …" if len(fuera) > 5 else "")
+        avisos.append(f"mueble(s) interior(es) FUERA de la huella del edificio: {muestra}. "
+                      "Muévelos dentro de los muros con las funciones de estancia "
+                      "(dormitorio, salon, bano, cocina_estancia).")
     print(f"🔎 Escena: {len(mallas)} objetos visibles, {len(luces)} luces, "
           f"{len(camaras)} cámara(s), {len(bpy.data.materials)} materiales.")
     if avisos:

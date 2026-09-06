@@ -87,7 +87,8 @@ FACHADA, PARCELA Y PAISAJISMO — elementos que separan una maqueta de un proyec
   ancho=1.2, material="pavimento") traza accesos y senderos de jardín.
 - farola(posicion, alto=4) — farola con luz cálida para accesos y calles (enciende de noche).
 - coche(origen, rotacion=0) — coche aparcado para dar escala y realismo al exterior.
-- revisar_escena() — CONTROL DE CALIDAD: avisa de cámara/luz/materiales que falten. Llámala antes
+- revisar_escena() — CONTROL DE CALIDAD: avisa de cámara/luz/materiales que falten y de muebles
+  interiores que hayan quedado FUERA de la huella del edificio. Llámala antes
   de render() y antes de dar por terminado un proyecto, y corrige lo que señale.
 
 ESTANCIAS COMPLETAS — la forma RECOMENDADA de amueblar: distribuyen una estancia rectangular
@@ -101,7 +102,12 @@ mínima), "N", "E", "O". Elige para la pieza principal una pared sin puertas ni 
   televisor enfrente + sillón + lámparas + planta + cuadro.
 - bano(origen, ancho, fondo, pared_aparatos="S", con_ducha=True) — ducha en esquina + inodoro +
   lavabo con espejo + foco de techo.
-Tras llamarlas puedes añadir o mover piezas sueltas. Para cocinas usa cocina(...) y comedor(...).
+- cocina_estancia(origen, ancho, fondo, pared_encimera="N", con_isla=False) — cocina completa
+  DENTRO de la estancia: bancada pegada a la línea interior de `pared_encimera`, isla centrada
+  si con_isla y focos de techo.
+Tras llamarlas puedes añadir o mover piezas sueltas. Para cocinas en viviendas usa SIEMPRE
+cocina_estancia(...); cocina(...) queda solo para encimeras en espacios abiertos y comedor(...)
+para mesas sueltas.
 
 MOBILIARIO SUELTO — en todos los muebles `origen`/`posicion` es la esquina izquierda de su parte
 TRASERA (la que se apoya en la pared) y `rotacion` gira en grados sobre ese punto. Guía para
@@ -119,7 +125,8 @@ alfombra bajo la zona de estar. Todos aceptan nivel=0.0 y capa=None:
 - sofa(origen, plazas=3, tela="tela_gris"), sillon(origen), alfombra(origen, ancho=2.5, fondo=1.8)
 - mesa(origen, ancho=1.6, fondo=0.9, alto=0.75; con alto=0.4 es mesa de centro), silla(origen)
 - comedor(origen, comensales=6) — mesa CON las sillas ya colocadas alrededor.
-- cocina(origen, largo=3.0, con_altos=True) — bancada completa con encimera, placa y fregadero.
+- cocina(origen, largo=3.0, con_altos=True) — bancada completa suelta (espalda contra la línea
+  del origen); en viviendas usa cocina_estancia(...) para que quede dentro de la estancia.
 - lavabo(origen, ancho=0.8), inodoro(origen), ducha(origen, 0.9, 0.9), banera(origen)
 - television(posicion, pulgadas=55, altura=1.0), cuadro(posicion, ancho, alto, color=(r,g,b)),
   espejo_pared(posicion), planta_decorativa(centro, alto=1.3)
