@@ -97,6 +97,19 @@ class TestBuscar(BaseConocimiento):
 
     def test_consulta_vacia_no_devuelve_nada(self):
         self.assertEqual(conocimiento.buscar("   "), [])
+        self.assertEqual(conocimiento.buscar("a, ?"), [])
+
+    def test_la_puntuacion_de_un_mensaje_normal_no_rompe_la_busqueda(self):
+        """El mensaje del usuario iba tal cual a FTS5, donde "," "?" "." ":" y "-"
+        son sintaxis: casi cualquier frase natural tumbaba el turno entero."""
+        for consulta in ("Hola, hazme una casa", "¿Qué altura tiene una escalera?",
+                         "planta 1:100", "muro de 20 cm.", "casa-patio", 'comillas "sueltas'):
+            with self.subTest(consulta=consulta):
+                conocimiento.buscar(consulta)
+
+    def test_una_frase_larga_encuentra_aunque_no_esten_todas_las_palabras(self):
+        resultados = conocimiento.buscar("¿Cómo hago una escalera de caracol para mi casa de campo?")
+        self.assertTrue(any(r["tipo"] == "tecnica" for r in resultados))
 
     def test_filtro_por_programas_descarta_las_de_otro_programa(self):
         (self.carpeta / "solo-blender.md").write_text(

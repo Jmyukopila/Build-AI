@@ -6,6 +6,7 @@ que el modelo da una respuesta final. Emite eventos para que la interfaz
 muestre el progreso en tiempo real.
 """
 
+import re
 from pathlib import Path
 
 from . import config as cfg
@@ -13,11 +14,24 @@ from . import memoria
 from . import conocimiento
 from .entregables import MARCA as MARCA_ENTREGABLE, entregables_en_resultado
 from .connectors import CONECTORES, buscar_herramienta
-from .providers import crear_proveedor, ErrorProveedor
+from .planos import herramientas as planos
+from .recursos import herramientas as recursos
+from .providers import crear_proveedor, ErrorProveedor, ErrorContextoExcedido
 
 # Carpeta donde el kit de Blender guarda los renders (ver blender_kit.render).
 CARPETA_RENDERS = Path.home() / ".buildai" / "renders"
 _MARCA_RENDER = "RENDER_GUARDADO:"
+
+
+# Herramientas internas (no son de ningún programa): nombre → módulo que la ejecuta.
+_INTERNAS = {nombre: modulo for modulo in (planos, recursos) for nombre in modulo.NOMBRES}
+_PROGRAMA_INTERNA = {planos: "Planos", recursos: recursos.PROGRAMA}
+
+# Imágenes de herramientas que ve el modelo (renders, referencias, controles de
+# plano). Solo las del turno en curso y como mucho estas: cada imagen cuesta
+# ~1 000 tokens y se reenvía en cada paso del bucle.
+MAX_IMAGENES_HERRAMIENTA = 4
+LADO_IMAGEN_HERRAMIENTA = 1024
 
 
 def renders_en_resultado(resultado: str) -> list:
@@ -227,13 +241,20 @@ Criterios de diseño por tipología (aplícalos si el usuario no concreta):
 
 Cuando el usuario pida un render, una imagen «realista» o enseñar el proyecto,
 sigue esta receta en Blender (es la diferencia entre una maqueta y una foto):
+0. **Si hay referencia, búscala**: con referencias_buscar (consulta en inglés)
+   tú y el usuario veis fotos reales del estilo pedido; elige una con él y úsala
+   como objetivo de materiales, luz y encuadre.
 1. **Viste la escena**: materiales variados con textura (nunca todo blanco),
    suelos interiores con parquet/mármol, mobiliario visible tras los vidrios,
    y entorno: terreno, árboles, arbustos, setos y, si encaja, piscina.
 2. **Enciende la casa**: focos empotrados en retícula (cada 1,2-1,5 m) en cada
    estancia con techo, lámparas de pie y colgantes, focos de jardín ante los
    arbustos. Una casa apagada arruina cualquier render de tarde o noche.
-3. **Elige la luz**: cielo("atardecer") es la más espectacular (interiores
+   Con recursos_buscar/recursos_descargar usa texturas PBR reales de Poly Haven
+   (material="ph:<id>") en fachadas, suelos y cubierta, y modelos reales para
+   el mobiliario visible: es lo que más acerca el render a una fotografía.
+3. **Elige la luz**: un hdri("<id>") real de Poly Haven da la luz más creíble;
+   sin él, cielo("atardecer") es la más espectacular (interiores
    cálidos brillando tras el vidrio, piscina iluminada); cielo("dia") para
    mostrar volúmenes; cielo("noche") para dramatismo.
 4. **Encuadra**: camara() a 1,6-2 m de altura desde una esquina para fachadas
@@ -242,6 +263,8 @@ sigue esta receta en Blender (es la diferencia entre una maqueta y una foto):
    señale (cámara, luces o materiales que falten) antes de gastar un render.
 6. **Renderiza en dos pasos**: render(calidad="borrador") para comprobar el
    encuadre, corrige lo que se vea mal y termina con render(calidad="alta").
+   Si tu modelo admite imágenes, VES cada render que generas (y las fotos de
+   referencia): compáralos de verdad y di qué has corregido entre uno y otro.
 El render aparece automáticamente como imagen en el chat: no pidas al usuario
 que abra archivos ni le des rutas. Solo Blender puede renderizar; si trabaja
 en otro programa y quiere renders, ofrécele construir el modelo en Blender.
@@ -316,12 +339,106 @@ Normas de trabajo:
 - Nunca borres trabajo del usuario sin confirmárselo antes."""
 
 
-def _sistema(conectados: list, consulta: str = "") -> str:
+# Solo se añade cuando la conversación trae un plano (ver _con_planos): son
+# ~2 000 caracteres de receta más ~6 000 de herramientas, un 20 % de cada
+# petición que en el resto de conversaciones solo encarecería y saturaría el
+# contexto de los modelos gratuitos y locales.
+SECCION_PLANOS = """## Reconstruir un plano adjunto (imagen, PDF o DXF)
+
+Cuando el usuario adjunte un plano y pida modelarlo, dibujarlo o «pasarlo» a un
+programa (una casa 3D en Blender o SketchUp, la planta en AutoCAD, el modelo BIM
+en Revit), el objetivo es la máxima fidelidad: mismas medidas, mismos huecos,
+mismas estancias. No lo redibujes a mano con las herramientas del programa:
+1. **Lee el plano como arquitecto**: escala gráfica o numérica, cotas generales
+   y parciales, espesores de muro, puertas y ventanas (y hacia dónde abren),
+   nombre y superficie (m²) de cada estancia, número de plantas y alturas.
+2. **Mide la geometría**: plano_detectar_muros en imágenes y PDF (te da los muros
+   al píxel), plano_leer_dxf en DXF (geometría exacta en metros). Contrasta lo
+   detectado con lo que ves: descarta lo que no sea muro y añade lo que falte.
+3. **Escribe el plano neutro** de plano_reconstruir con esos muros, calibrando
+   con 2-3 cotas largas que leas en el plano (en px es obligatorio), cada hueco en
+   su sitio y cada estancia con el punto de su rótulo y su superficie.
+4. **Valida primero** (solo_validar=true) y corrige lo que marque el informe:
+   cotas que no cuadran, estancias que no cierran, superficies con ✘ o huecos sin
+   declarar. Repite hasta que esté limpio o hasta que solo queden dudas reales.
+5. **Construye** en el programa conectado (solo_validar=false) y comprueba el
+   resultado con su herramienta de información.
+6. **Resume**: qué has reconstruido, la desviación de superficies frente al
+   plano, y todo lo que asumiste porque el plano no lo dice (alturas, antepechos,
+   alto de puertas, espesores ilegibles). Pregunta solo lo que cambie el
+   resultado, como cuántas plantas hay si el plano es ambiguo.
+Después puedes completar el modelo con el kit habitual (cubierta, mobiliario,
+materiales, render): la reconstrucción deja cada planta en su capa
+«Plano - <planta>» y su contorno en el informe para la cubierta."""
+
+# Modo ligero: para modelos pequeños que corren en el ordenador del usuario
+# (la IA incluida). Las instrucciones completas ocupan ~6 000 tokens: en un
+# modelo de 4B con 16k de contexto se comen la conversación y además lo
+# confunden. Esto es lo imprescindible, dicho de forma directa.
+SISTEMA_LIGERO = """Eres BuildAI, asistente de arquitectura. Responde SIEMPRE en español, claro y
+breve, para arquitectos que no programan (no les pidas que escriban código).
+
+Programas conectados ahora: {programas}.
+
+Cómo trabajar:
+1. Antes de cambiar un modelo, consulta su estado con la herramienta de información.
+2. Haz cambios en pasos pequeños con la herramienta de ejecución del programa y
+   comprueba el resultado. Usa SIEMPRE las funciones del kit que describe la
+   herramienta (muro, forjado, cubierta_plana…), no geometría escrita a mano.
+3. Si una herramienta devuelve ERROR, lee el mensaje, corrige y reintenta (máximo 3 veces).
+   NUNCA digas que has hecho algo que no hayas ejecutado con una herramienta y cuyo
+   resultado (✔) no hayas visto: primero ejecutas, luego lo cuentas.
+4. Al terminar, resume en 2-3 frases lo hecho y las medidas que supusiste.
+5. Nunca borres trabajo del usuario sin preguntar.
+
+Medidas por defecto (dilo si las usas): muro exterior 0,20 m de espesor y 2,70 m de
+alto; tabique 0,10 m; puerta 0,80 × 2,05 m; ventana 1,20 × 1,20 m con antepecho
+0,90 m; altura entre plantas 3,0 m. Unidades: metros en Blender y Revit; en
+AutoCAD las del dibujo (normalmente milímetros); en SketchUp con sufijo .m.
+
+Una casa: primero muros con sus huecos, luego forjado y cubierta; amuebla con
+dormitorio(), salon(), bano() y cocina_estancia(). Para un render en Blender:
+cielo("atardecer"), camara(...) y render(calidad="borrador").
+Si el usuario pide algo de un programa que no está conectado, díselo y explícale
+que lo abra (hay un botón de ayuda junto a cada programa)."""
+
+SECCION_PLANOS_LIGERA = """Si el usuario adjunta un plano y pide modelarlo: 1) plano_detectar_muros (imagen o
+PDF) o plano_leer_dxf (DXF); 2) plano_reconstruir con solo_validar=true usando esos muros,
+calibrando con una cota del plano; 3) corrige los avisos; 4) plano_reconstruir con
+solo_validar=false en el programa conectado."""
+
+# Presupuesto de la conversación en modo ligero (caracteres ≈ 3,5 por token):
+# el contexto del motor menos instrucciones, herramientas y la respuesta.
+PRESUPUESTO_LIGERO = 26000
+
+_MENCIONA_PLANO = re.compile(r"\bplan[oa]s?\b|\bdxf\b|\bpdf\b|\bcroquis\b|\bdwg\b", re.IGNORECASE)
+
+
+def _con_planos(historial: list, mensaje: str, adjuntos=None) -> bool:
+    """¿Hacen falta las herramientas de planos en este turno?
+
+    Sí si hay adjuntos ahora o en cualquier turno anterior (el usuario puede
+    pedir «ahora pásalo a AutoCAD» un turno después de adjuntarlo), o si el
+    mensaje habla de planos.
+    """
+    if adjuntos or any(m.get("tipo") == "usuario" and m.get("adjuntos") for m in historial):
+        return True
+    return bool(_MENCIONA_PLANO.search(mensaje or ""))
+
+
+def _sistema(conectados: list, consulta: str = "", con_planos: bool = False, ligero: bool = False) -> str:
     if conectados:
         nombres = ", ".join(c.nombre for c in conectados)
     else:
         nombres = "ninguno (puedes conversar y aconsejar, pero no tocar modelos)"
+    if ligero:
+        base = SISTEMA_LIGERO.format(programas=nombres)
+        if con_planos:
+            base += "\n\n" + SECCION_PLANOS_LIGERA
+        return base
     base = SISTEMA_BASE.format(programas=nombres)
+    if con_planos:
+        base += "\n\n" + SECCION_PLANOS
     aprendizajes = memoria.perfil_texto()
     if aprendizajes:
         base += "\n\n" + aprendizajes
@@ -333,11 +450,58 @@ def _sistema(conectados: list, consulta: str = "") -> str:
     return base
 
 
-def _herramientas(conectados: list) -> list:
-    lista = []
+def _herramientas(conectados: list, con_planos: bool = False, ligero: bool = False) -> list:
+    # Las de planos no dependen de ningún programa abierto: leer y validar un
+    # plano no lo necesita (construirlo sí, y la herramienta lo comprueba).
+    lista = planos.herramientas() if con_planos else []
+    # Las de recursos de render solo sirven si Blender puede usarlos. En modo
+    # ligero se omiten: son flujos de varios pasos que un modelo pequeño
+    # aprovecha mal, y ocupan ~650 tokens de un contexto que no sobra.
+    if not ligero:
+        lista += recursos.herramientas(con_blender=any(c.id == "blender" for c in conectados))
     for conector in conectados:
-        lista.extend(conector.herramientas())
+        # En modo ligero, la versión compacta de las herramientas si el conector
+        # la tiene (la del kit de Blender ocupa ~10 000 caracteres completa).
+        if ligero and hasattr(conector, "herramientas_ligeras"):
+            lista.extend(conector.herramientas_ligeras())
+        else:
+            lista.extend(conector.herramientas())
     return lista
+
+
+# Verbos con los que el usuario pide cambiar un modelo (no solo preguntar).
+_PIDE_ACCION = re.compile(
+    r"\b(crea|cre[aá]me|haz|hazme|construye|dibuja|a[ñn]ade|agrega|pon|coloca|borra|elimina|"
+    r"modela|amuebla|levanta|dise[ñn]a|cambia|mueve|exporta|renderiza|reconstruye|genera)\b",
+    re.IGNORECASE,
+)
+
+
+def _ejecuto_algo(historial: list) -> bool:
+    """¿Se ha usado en el turno actual alguna herramienta que cambie un modelo?"""
+    ultimo = max((i for i, m in enumerate(historial) if m["tipo"] == "usuario" and not m.get("interno")),
+                 default=-1)
+    for m in historial[ultimo + 1:]:
+        for llamada in (m.get("llamadas") or []) if m["tipo"] == "asistente" else []:
+            nombre = llamada.nombre
+            if "ejecutar" in nombre or nombre.endswith(("_comando", "_exportar")) or nombre == "plano_reconstruir":
+                return True
+    return False
+
+
+def _ajustar_a_contexto(vista: list, presupuesto: int) -> list:
+    """Quita los turnos más antiguos de la vista hasta que quepa en `presupuesto`
+    caracteres. Corta siempre al empezar un turno de usuario, como
+    _recortar_historial, para no separar una llamada de su resultado."""
+    def tamano(m):
+        return len(m.get("texto") or "") + len(m.get("contenido") or "") + 200 * len(m.get("llamadas") or [])
+
+    while sum(tamano(m) for m in vista) > presupuesto:
+        corte = next((i for i in range(1, len(vista)) if vista[i]["tipo"] == "usuario"), None)
+        if corte is None:
+            break
+        vista = vista[corte:]
+    return vista
 
 
 def _recortar_historial(historial: list) -> None:
@@ -356,13 +520,13 @@ def _recortar_historial(historial: list) -> None:
         del historial[:corte]
 
 
-def _comprimir_resultados(historial: list) -> None:
+def _comprimir_resultados(historial: list, recientes: int = ENTRADAS_SIN_COMPRIMIR) -> None:
     """Recorta resultados de herramienta antiguos para no agotar el contexto.
 
     Se conservan íntegras las últimas entradas (las que el modelo necesita para
     el paso actual); lo demás ya fue procesado y basta con un extracto.
     """
-    for m in historial[:-ENTRADAS_SIN_COMPRIMIR]:
+    for m in historial[:-recientes]:
         if m["tipo"] == "resultado" and len(m["contenido"]) > RESULTADO_ANTIGUO_MAX:
             # Las líneas RENDER_GUARDADO se conservan siempre: la interfaz las
             # necesita para volver a mostrar las imágenes al reabrir la sesión.
@@ -376,7 +540,38 @@ def _comprimir_resultados(historial: list) -> None:
             )
 
 
-def _historial_para_modelo(historial: list) -> list:
+_cache_imagenes: dict = {}
+
+
+def _imagen_para_modelo(nombre: str):
+    """{media_type, datos} de una imagen de la carpeta de renders, reducida a
+    LADO_IMAGEN_HERRAMIENTA px en JPEG (un render de 1920 px en PNG pesaría
+    varios MB por petición). Se cachea por nombre y fecha del archivo."""
+    import base64
+    import io
+
+    ruta = CARPETA_RENDERS / nombre
+    try:
+        clave = (nombre, ruta.stat().st_mtime)
+    except OSError:
+        return None
+    if clave not in _cache_imagenes:
+        try:
+            from PIL import Image
+
+            imagen = Image.open(ruta).convert("RGB")
+            imagen.thumbnail((LADO_IMAGEN_HERRAMIENTA, LADO_IMAGEN_HERRAMIENTA))
+            salida = io.BytesIO()
+            imagen.save(salida, "JPEG", quality=82)
+        except Exception:
+            return None
+        if len(_cache_imagenes) > 32:
+            _cache_imagenes.clear()
+        _cache_imagenes[clave] = {"media_type": "image/jpeg", "datos": base64.b64encode(salida.getvalue()).decode("ascii")}
+    return _cache_imagenes[clave]
+
+
+def _historial_para_modelo(historial: list, con_imagenes: bool = True) -> list:
     """Vista del historial para enviar al modelo: omite las imágenes de turnos
     ya cerrados.
 
@@ -385,15 +580,51 @@ def _historial_para_modelo(historial: list) -> list:
     siguientes solo dispara coste y latencia. Las imágenes siguen intactas en el
     `historial` original, que es lo que consumen la interfaz y la sesión guardada.
     """
+    # Los recordatorios internos de BuildAI no cuentan como mensaje del usuario:
+    # si contaran, las imágenes adjuntas del turno dejarían de enviarse.
     ultimo_usuario = max(
-        (i for i, m in enumerate(historial) if m["tipo"] == "usuario"),
+        (i for i, m in enumerate(historial) if m["tipo"] == "usuario" and not m.get("interno")),
         default=-1,
     )
     vista = []
     for i, m in enumerate(historial):
-        if m["tipo"] == "usuario" and m.get("adjuntos") and i != ultimo_usuario:
-            m = {k: v for k, v in m.items() if k != "adjuntos"}
+        if m["tipo"] == "usuario" and m.get("adjuntos"):
+            if i != ultimo_usuario:
+                m = {k: v for k, v in m.items() if k != "adjuntos"}
+            else:
+                # Numerar los adjuntos (y decir cuáles son páginas de PDF o DXF)
+                # deja al modelo citarlos en las herramientas de planos. Solo en
+                # la vista: el texto guardado del usuario no se toca.
+                nota = planos.nota_adjuntos(m["adjuntos"])
+                m = dict(m, texto=f"{m.get('texto') or ''}\n\n{nota}".strip())
+                if not con_imagenes:
+                    # Un modelo sin visión rechaza la petición ENTERA si lleva
+                    # una imagen (Ollama: 500 "image input is not supported"),
+                    # y eso se reintentaba como "saturado". Se quitan las
+                    # imágenes y se le dice qué hay: las herramientas de planos
+                    # siguen leyendo los adjuntos desde el historial.
+                    m = {k: v for k, v in m.items() if k != "adjuntos"}
+                    m["texto"] += (
+                        "\n[Tu modelo no puede ver imágenes: no describas lo que no ves. Si es un "
+                        "plano, usa las herramientas de planos (miden la imagen por ti); si no, "
+                        "pide al usuario que lo explique con palabras o que use un modelo con visión.]"
+                    )
         vista.append(m)
+
+    # Que el modelo VEA lo que producen sus herramientas (su render, una foto de
+    # referencia, el control de un plano) es lo que le permite comparar y
+    # corregir. Solo las del turno en curso, las más recientes primero.
+    if con_imagenes:
+        restantes = MAX_IMAGENES_HERRAMIENTA
+        for i in range(len(vista) - 1, ultimo_usuario, -1):
+            m = vista[i]
+            if restantes <= 0 or m["tipo"] != "resultado" or not m.get("imagenes"):
+                continue
+            nombres = m["imagenes"][-restantes:]
+            datos = [d for d in (_imagen_para_modelo(n) for n in nombres) if d]
+            if datos:
+                vista[i] = dict(m, imagenes_datos=datos)
+                restantes -= len(datos)
     return vista
 
 
@@ -419,8 +650,10 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
     proveedor.notificar = lambda texto: emitir({"tipo": "estado", "texto": texto})
 
     conectados = [c for c in CONECTORES if c.disponible()]
-    sistema = _sistema(conectados, mensaje_usuario)
-    herramientas = _herramientas(conectados)
+    con_planos = _con_planos(historial, mensaje_usuario, adjuntos)
+    ligero = getattr(proveedor, "ligero", False)
+    sistema = _sistema(conectados, mensaje_usuario, con_planos=con_planos, ligero=ligero)
+    herramientas = _herramientas(conectados, con_planos=con_planos, ligero=ligero)
 
     entrada = {"tipo": "usuario", "texto": mensaje_usuario}
     if adjuntos:
@@ -428,14 +661,32 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
     historial.append(entrada)
     _recortar_historial(historial)
 
+    recordatorios = 0
     for _ in range(MAX_PASOS):
         if cancelado and cancelado():
             emitir({"tipo": "respuesta", "texto": "He detenido la tarea donde me lo pediste. Los pasos ya completados se mantienen."})
             return
-        _comprimir_resultados(historial)
+        # En modo ligero se comprime antes: 16k de contexto no dan para 24 entradas enteras.
+        _comprimir_resultados(historial, 8 if ligero else ENTRADAS_SIN_COMPRIMIR)
         emitir({"tipo": "estado", "texto": "Pensando…"})
         try:
-            respuesta = proveedor.conversar(sistema, _historial_para_modelo(historial), herramientas)
+            vista = _historial_para_modelo(historial, getattr(proveedor, "ve_imagenes", True))
+            presupuesto = getattr(proveedor, "presupuesto", PRESUPUESTO_LIGERO)
+            for _intento in range(3):
+                if ligero:
+                    vista = _ajustar_a_contexto(vista, presupuesto)
+                try:
+                    respuesta = proveedor.conversar(sistema, vista, herramientas)
+                    break
+                except ErrorContextoExcedido:
+                    # Un modelo local con poco contexto: se reintenta con la
+                    # mitad de conversación antes de rendirse.
+                    if not ligero or presupuesto < 1500:
+                        raise
+                    presupuesto //= 2
+                    emitir({"tipo": "estado", "texto": "Resumiendo la conversación para que quepa en la IA local…"})
+            else:
+                raise ErrorContextoExcedido("La petición no cabe en la memoria del modelo local ni recortada.")
         except ErrorProveedor as exc:
             emitir({"tipo": "error", "texto": str(exc)})
             return
@@ -453,6 +704,22 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
         )
 
         if not respuesta.llamadas:
+            # Salvaguarda para modelos pequeños: a veces "cuentan" que han
+            # construido algo sin haber llamado a ninguna herramienta. Si el
+            # usuario pidió un cambio y no se ejecutó nada, no se da por buena:
+            # se le recuerda que lo haga de verdad (como mucho dos veces).
+            if (ligero and conectados and recordatorios < 2 and _PIDE_ACCION.search(mensaje_usuario)
+                    and not _ejecuto_algo(historial)):
+                recordatorios += 1
+                historial.append({
+                    "tipo": "usuario",
+                    "interno": True,  # no es del usuario: la interfaz no lo pinta
+                    "texto": ("[BuildAI] Todavía no has ejecutado nada: no lo des por hecho. Usa ahora "
+                              "la herramienta de ejecución del programa para hacerlo de verdad, paso a "
+                              "paso, y después resume lo que salió bien."),
+                })
+                emitir({"tipo": "estado", "texto": "Comprobando que la IA local lo haga de verdad…"})
+                continue
             emitir({"tipo": "respuesta", "texto": respuesta.texto or "(sin respuesta)"})
             return
 
@@ -461,8 +728,25 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
             emitir({"tipo": "respuesta", "texto": respuesta.texto})
 
         for llamada in respuesta.llamadas:
-            encontrada = buscar_herramienta(llamada.nombre)
-            if encontrada is None:
+            interna = _INTERNAS.get(llamada.nombre)
+            encontrada = None if interna else buscar_herramienta(llamada.nombre)
+            if interna:
+                programa = _PROGRAMA_INTERNA[interna]
+                argumentos = llamada.argumentos
+                emitir({
+                    "tipo": "herramienta",
+                    "programa": programa,
+                    "nombre": llamada.nombre,
+                    "detalle": str(argumentos.get("programa") or argumentos.get("consulta")
+                                   or argumentos.get("id") or "")[:400],
+                })
+                try:
+                    resultado = interna.ejecutar(llamada.nombre, argumentos, historial, CONECTORES)
+                except Exception as exc:
+                    resultado = f"ERROR inesperado en {llamada.nombre}: {exc}"
+                for archivo in renders_en_resultado(resultado):
+                    emitir({"tipo": "render", "archivo": archivo})
+            elif encontrada is None:
                 resultado = f"ERROR: la herramienta '{llamada.nombre}' no existe."
                 programa = "?"
             else:
@@ -484,26 +768,31 @@ def ejecutar_turno(historial: list, mensaje_usuario: str, emitir, cancelado=None
                     emitir({"tipo": "render", "archivo": archivo})
                 for entregable in entregables_en_resultado(resultado):
                     emitir(dict(entregable, tipo="entregable"))
-            if len(resultado) > MAX_RESULTADO:
+            limite = 3000 if ligero else MAX_RESULTADO
+            if len(resultado) > limite:
                 marcas = [
                     l for l in resultado.splitlines()
                     if l.startswith((_MARCA_RENDER, MARCA_ENTREGABLE))
                 ]
                 resultado = (
-                    resultado[:MAX_RESULTADO]
+                    resultado[:limite]
                     + "\n… (salida recortada por ser demasiado larga)"
                 )
                 for marca in marcas:
                     if marca not in resultado:
                         resultado += "\n" + marca
-            historial.append(
-                {
-                    "tipo": "resultado",
-                    "id": llamada.id,
-                    "nombre": llamada.nombre,
-                    "contenido": resultado,
-                }
-            )
+            entrada_resultado = {
+                "tipo": "resultado",
+                "id": llamada.id,
+                "nombre": llamada.nombre,
+                "contenido": resultado,
+            }
+            # Solo el nombre del archivo: la sesión guardada no engorda con
+            # base64 y la imagen se carga (reducida) al preparar la petición.
+            imagenes = renders_en_resultado(resultado)
+            if imagenes:
+                entrada_resultado["imagenes"] = imagenes
+            historial.append(entrada_resultado)
 
     # Límite de pasos alcanzado: no es un fallo, es una pausa de seguridad.
     # El historial queda completo (cada herramienta con su resultado), así que

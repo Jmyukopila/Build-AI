@@ -1,0 +1,390 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-22T01:15:53.565663+00:00",
+  "title": "Design System: BuildAI",
+  "extensions": {
+    "colorMeta": {
+      "accion": {
+        "role": "primary",
+        "displayName": "Índigo de acción",
+        "canonical": "light-dark(#4B3FB0, #6E5FE6)",
+        "tonalRamp": [
+          "#1E1850",
+          "#2D2578",
+          "#3D3396",
+          "#4B3FB0",
+          "#6E5FE6",
+          "#8F83EE",
+          "#B5ACFF",
+          "#E4E0FF"
+        ],
+        "hover": "light-dark(#3D3396, #5A4BD4)"
+      },
+      "pino": {
+        "role": "secondary",
+        "displayName": "Verde pino",
+        "canonical": "light-dark(#27683A, #72CD8D)",
+        "tonalRamp": [
+          "#0F2E1A",
+          "#18452A",
+          "#1F5632",
+          "#27683A",
+          "#3E8F55",
+          "#5AAE72",
+          "#72CD8D",
+          "#D5F0DD"
+        ]
+      },
+      "ambar": {
+        "role": "secondary",
+        "displayName": "Ámbar",
+        "canonical": "light-dark(#80500A, #EBBB52)",
+        "tonalRamp": [
+          "#2E1C03",
+          "#4A2D05",
+          "#664007",
+          "#80500A",
+          "#B07A1A",
+          "#D49F34",
+          "#EBBB52",
+          "#F8E4B3"
+        ]
+      },
+      "rojo": {
+        "role": "secondary",
+        "displayName": "Rojo",
+        "canonical": "light-dark(#A42838, #F28D99)",
+        "tonalRamp": [
+          "#3A0D14",
+          "#5E1520",
+          "#80202C",
+          "#A42838",
+          "#C95462",
+          "#E06F7C",
+          "#F28D99",
+          "#FAD3D8"
+        ]
+      },
+      "papel": {
+        "role": "neutral",
+        "displayName": "Papel",
+        "canonical": "light-dark(#F3F4F0, #151716)",
+        "tonalRamp": [
+          "#0F1110",
+          "#151716",
+          "#1C1F1D",
+          "#2A2F2C",
+          "#D4D8CF",
+          "#E6E9E2",
+          "#F3F4F0",
+          "#FBFBF9"
+        ]
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "light-dark(#1A1F1B, #E9ECE5)",
+        "tonalRamp": [
+          "#1A1F1B",
+          "#454D46",
+          "#5D655D",
+          "#7C847A",
+          "#98A197",
+          "#B3BBB2",
+          "#D4D8CF",
+          "#E9ECE5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Saludo de bienvenida, una vez por pantalla."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título de modales y ajustes."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Marca del panel y subtítulos."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Conversación en columna de 46 rem."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Botones, estados, pasos de la tira, texto de apoyo (0,9375 rem) y tiempos tabulares."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Código y ayuda técnica."
+      },
+      "markdown-h1": {
+        "displayName": "Markdown h1",
+        "purpose": "Encabezado de primer nivel en respuestas del agente (1,375 rem); fuera de rampa por diseño."
+      },
+      "markdown-h2": {
+        "displayName": "Markdown h2",
+        "purpose": "Encabezado de segundo nivel (1,1875 rem); h3 usa 1,0625 rem."
+      }
+    },
+    "shadows": [
+      {
+        "name": "flotante",
+        "value": "0 8px 28px rgba(8, 10, 8, 0.16)",
+        "purpose": "Cajones, modales, avisos y botón de ir abajo; nunca módulos en reposo."
+      },
+      {
+        "name": "foco-campo",
+        "value": "0 0 0 1px var(--accion)",
+        "purpose": "Refuerzo del borde en campo enfocado."
+      }
+    ],
+    "motion": [
+      {
+        "name": "d-micro",
+        "value": "140ms",
+        "purpose": "Hover y color."
+      },
+      {
+        "name": "d-estado",
+        "value": "240ms",
+        "purpose": "Entradas y cambios de estado."
+      },
+      {
+        "name": "d-vista",
+        "value": "420ms",
+        "purpose": "Cajones y modales."
+      },
+      {
+        "name": "ease-entra",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Entradas."
+      },
+      {
+        "name": "ease-sale",
+        "value": "cubic-bezier(0.4, 0, 1, 1)",
+        "purpose": "Salidas."
+      },
+      {
+        "name": "ease-mov",
+        "value": "cubic-bezier(0.45, 0, 0.55, 1)",
+        "purpose": "Transiciones de estado."
+      },
+      {
+        "name": "carga-pulso",
+        "value": "1.6s ease-mov, opacidad 0,55 a 1",
+        "purpose": "Esqueleto de carga; sin barrido."
+      },
+      {
+        "name": "despliega",
+        "value": "760ms ease-entra, clip-path",
+        "purpose": "Remate de respuestas, renders y entregables recién llegados."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "cajon",
+        "value": "860px"
+      },
+      {
+        "name": "estrecho",
+        "value": "720px"
+      }
+    ],
+    "overlays": [
+      {
+        "name": "overlay-cajon",
+        "value": "rgba(8, 10, 8, 0.45)",
+        "purpose": "Velo bajo el cajón móvil."
+      },
+      {
+        "name": "overlay-modal",
+        "value": "rgba(8, 10, 8, 0.5)",
+        "purpose": "Velo bajo los modales."
+      },
+      {
+        "name": "overlay-visor",
+        "value": "rgba(6, 8, 6, 0.9)",
+        "purpose": "Fondo del visor de imagen."
+      }
+    ],
+    "radii": [
+      {
+        "name": "fino",
+        "value": "4px",
+        "purpose": "Anillo de foco, código en línea, marca de adjunto."
+      },
+      {
+        "name": "interno",
+        "value": "6px",
+        "purpose": "Realce del interruptor segmentado, concéntrico con su contenedor."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "boton-primario",
+      "description": "Acción principal: guardar, conectar, descargar entregable.",
+      "html": "<button class=\"ds-btn-primario\">Guardar</button>",
+      "css": ".ds-btn-primario{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:2.5rem;padding:0 1rem;border-radius:0.5rem;font:600 0.9375rem 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;cursor:pointer;transition:background 140ms cubic-bezier(0.45,0,0.55,1);border:0;background:var(--accion);color:var(--sobre-accion);}.ds-btn-primario:hover{background:var(--accion-hover);}.ds-btn-primario:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "boton-secundario",
+      "description": "Acción secundaria con borde de control.",
+      "html": "<button class=\"ds-btn-secundario\">Nueva conversación</button>",
+      "css": ".ds-btn-secundario{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:2.5rem;padding:0 1rem;border-radius:0.5rem;font:600 0.9375rem 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;cursor:pointer;transition:background 140ms cubic-bezier(0.45,0,0.55,1);border:1px solid var(--borde-control);background:var(--hoja);color:var(--tinta);}.ds-btn-secundario:hover{background:var(--hoja-hover);}.ds-btn-secundario:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}"
+    },
+    {
+      "name": "Botón de icono",
+      "kind": "button",
+      "refersTo": "boton-icono",
+      "description": "Acciones de la barra superior; 2,5 rem, también en la variante chica.",
+      "html": "<button class=\"ds-btn-icono\" aria-label=\"Ajustes\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2v3M12 19v3M2 12h3M19 12h3\"/></svg></button>",
+      "css": ".ds-btn-icono{display:inline-flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;border:0;border-radius:0.5rem;background:none;color:var(--tinta-2);cursor:pointer;transition:background 140ms,color 140ms;}.ds-btn-icono:hover{background:var(--hoja-hover);color:var(--tinta);}.ds-btn-icono:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}"
+    },
+    {
+      "name": "Compositor",
+      "kind": "input",
+      "refersTo": "compositor",
+      "description": "Campo de pedido anclado abajo con acción principal índigo.",
+      "html": "<div class=\"ds-compositor\"><span class=\"ds-compositor-texto\">Describe lo que quieres construir</span><span class=\"ds-compositor-enviar\"></span></div>",
+      "css": ".ds-compositor{display:flex;align-items:flex-end;gap:4px;padding:0.5rem;border:1px solid var(--borde-control);border-radius:0.75rem;background:var(--hoja);}.ds-compositor:focus-within{border-color:var(--accion);box-shadow:0 0 0 1px var(--accion);}.ds-compositor-texto{flex:1;padding:0.55rem 0.5rem;color:var(--tinta-3);}.ds-compositor-enviar{width:2.5rem;height:2.5rem;border-radius:0.5rem;background:var(--accion);}"
+    },
+    {
+      "name": "Mensaje del usuario",
+      "kind": "card",
+      "refersTo": "mensaje-usuario",
+      "description": "Módulo de ancho completo con hairline y cabecera «Tú».",
+      "html": "<div class=\"ds-usuario\"><small>Tú</small>Amuebla este salón de 5 por 4 m</div>",
+      "css": ".ds-usuario{padding:0.75rem 1rem;border:1px solid var(--linea);border-radius:0.5rem;background:var(--hoja);color:var(--tinta);}.ds-usuario small{display:block;margin-bottom:0.25rem;font-size:0.9375rem;font-weight:650;color:var(--tinta-3);}"
+    },
+    {
+      "name": "Enviar vacío",
+      "kind": "button",
+      "refersTo": "boton-primario",
+      "description": "Estado sin texto: reposo neutro legible, sin opacidad.",
+      "html": "<button class=\"ds-enviar-vacio\" aria-label=\"Enviar\">↑</button>",
+      "css": ".ds-enviar-vacio{display:grid;place-items:center;width:2.5rem;height:2.5rem;border:1px solid var(--borde-control);border-radius:0.5rem;background:var(--hoja-hover);color:var(--tinta-3);}.ds-enviar-vacio:focus-visible{outline:2px solid var(--acento);outline-offset:2px;}"
+    },
+    {
+      "name": "Encargo de ejemplo",
+      "kind": "chip",
+      "refersTo": "modulo-encargo",
+      "description": "Cuadrícula de tres columnas (filas 2:1 y 1:2) con hairline compartida, como un shoji.",
+      "html": "<div class=\"ds-encargos\"><button class=\"ds-encargo ds-ancho\">Amuebla este salón</button><button class=\"ds-encargo\">Genera una planta</button><button class=\"ds-encargo\">Exporta a IFC</button><button class=\"ds-encargo ds-ancho\">Revisa las cotas</button></div>",
+      "css": ".ds-encargos{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;overflow:hidden;border:1px solid var(--linea);border-radius:0.75rem;background:var(--linea);}.ds-encargo{min-height:4rem;padding:0.75rem 1rem;border:0;background:var(--hoja);color:var(--tinta);text-align:left;font:inherit;cursor:pointer;transition:background 140ms;}.ds-encargo:hover{background:var(--hoja-hover);}.ds-encargo:focus-visible{outline:2px solid var(--acento);outline-offset:-2px;}.ds-ancho{grid-column:span 2;}"
+    },
+    {
+      "name": "Tira de fases",
+      "kind": "custom",
+      "refersTo": "tira-de-fases",
+      "description": "Módulo fijo sobre el compositor: palabra de fase, tiempo tabular y pasos.",
+      "html": "<div class=\"ds-fases\"><div class=\"ds-fases-fila\"><b>Actuando</b><span class=\"ds-fases-tiempo\">0:12</span></div><ol class=\"ds-pasos\"><li class=\"hecho\">Recibir</li><li class=\"hecho\">Pensar</li><li class=\"actual\">Actuar</li><li>Entregar</li></ol></div>",
+      "css": ".ds-fases{padding:0.75rem 1rem;border:1px solid var(--linea);border-radius:0.75rem;background:var(--hoja);}.ds-fases-fila{display:flex;justify-content:space-between;margin-bottom:0.5rem;}.ds-fases-tiempo{font-size:0.9375rem;font-variant-numeric:tabular-nums;color:var(--tinta-3);}.ds-pasos{display:flex;gap:0.25rem;list-style:none;margin:0;padding:0;}.ds-pasos li{flex:1;padding-top:0.5rem;border-top:3px solid var(--linea);font-size:0.9375rem;color:var(--tinta-3);}.ds-pasos li.hecho{border-top-color:var(--acento-linea);color:var(--tinta-2);}.ds-pasos li.actual{border-top-color:var(--acento);color:var(--tinta);font-weight:650;}"
+    },
+    {
+      "name": "Entregable",
+      "kind": "card",
+      "refersTo": "modulo-encargo",
+      "description": "Archivo exportado con chip de formato y acción de descarga.",
+      "html": "<div class=\"ds-entregable\"><span class=\"ds-formato\">IFC</span><div class=\"ds-datos\"><b>casa.ifc</b><small>2,4 MB</small></div><button class=\"ds-btn-p\">Abrir</button></div>",
+      "css": ".ds-entregable{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border:1px solid var(--linea);border-radius:0.75rem;background:var(--hoja);}.ds-formato{display:grid;place-items:center;min-width:3.25rem;height:2.75rem;padding:0 0.5rem;border:1px solid var(--borde-control);border-radius:0.5rem;background:var(--hoja-hover);color:var(--tinta);font-size:0.9375rem;font-weight:700;}.ds-datos{display:flex;flex:1;flex-direction:column;}.ds-datos small{font-size:0.9375rem;color:var(--tinta-3);}.ds-btn-p{min-height:2.5rem;padding:0 1rem;border:0;border-radius:0.5rem;background:var(--accion);color:var(--sobre-accion);font:600 0.9375rem inherit;cursor:pointer;}.ds-btn-p:hover{background:var(--accion-hover);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La hoja modular",
+    "overview": "La pantalla es una hoja de papel dividida en módulos. Lo único que ocupa el centro es la conversación, en una columna de lectura de 46 rem; todo lo demás se pliega a un riel de iconos a la izquierda o se abre bajo demanda como panel (17,5 rem) o cajón derecho (24 rem). El mundo es de día un papel gris verdoso con tinta casi negra verdosa, y de noche carbón de madera con tinta marfil frío. Un único índigo violáceo señala lo pulsable, el foco y la tira de fases (la excepción de la firma); verde pino, ámbar y rojo existen solo para estado.",
+    "keyCharacteristics": [
+      "Un solo acento (índigo) para lo pulsable, el foco y la tira de fases; el color semántico nunca decora. La marca es neutra.",
+      "Superficies planas con hairline; sin degradados, sin glassmorphism, sin halos de color.",
+      "Columna única de lectura; navegación y actividad bajo demanda.",
+      "Cifras tabulares en tiempos y conteos.",
+      "Objetivos pulsables de 2,5 rem como mínimo."
+    ],
+    "rules": [
+      {
+        "name": "La regla de la única voz",
+        "body": "El índigo solo marca lo pulsable, lo seleccionado, el foco y la tira de fases (excepción de la firma). Nunca rellena un módulo de contenido ni decora; el emblema de marca es neutro, con borde.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla del estado",
+        "body": "Verde, ámbar y rojo significan conectado, atención y error; no se usan como color de marca ni de énfasis.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla del par",
+        "body": "Todo color se declara una vez con `light-dark()`; no hay valores sueltos por tema.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla de las cifras",
+        "body": "Tiempos y conteos llevan `font-variant-numeric: tabular-nums`.",
+        "section": "typography"
+      },
+      {
+        "name": "La regla de la rampa",
+        "body": "La rampa en uso es 0,875 (código) / 0,9375 (apoyo y etiquetas) / 1 / 1,0625 / 1,1875 / 1,25 / 1,375 / clamp 1,75–2,25 rem. El detector la marca como fuera de rampa en 0,9375, 1,1875 y 1,375 rem: son pasos deliberados, no deriva.",
+        "section": "typography"
+      },
+      {
+        "name": "La regla del rem",
+        "body": "Todo tamaño de texto está en rem para obedecer el ajuste del usuario (100 / 112,5 / 125 %).",
+        "section": "typography"
+      },
+      {
+        "name": "La regla del módulo fijo",
+        "body": "La tira de fases ocupa siempre el mismo módulo sobre el compositor; no empuja ni salta el contenido.",
+        "section": "layout"
+      },
+      {
+        "name": "La regla del pliegue",
+        "body": "Lo que no es conversación vive en riel, panel o cajón, nunca en una tercera columna fija.",
+        "section": "layout"
+      },
+      {
+        "name": "La regla de lo plano",
+        "body": "Un módulo en reposo no lleva sombra. La sombra señala que algo flota sobre la lectura.",
+        "section": "elevation"
+      },
+      {
+        "name": "La regla del halo",
+        "body": "Nunca una sombra de color ni un resplandor.",
+        "section": "elevation"
+      },
+      {
+        "name": "La regla de la tarea",
+        "body": "Cada elemento visible tiene una tarea; lo secundario se muestra bajo demanda.",
+        "section": "components"
+      },
+      {
+        "name": "La regla del movimiento único",
+        "body": "La animación continua vive solo en la tira de fases; el resto se limita a entradas de 140–420 ms.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do usar índigo solo para acción principal, selección, foco y la tira de fases; la marca queda neutra.",
+      "Do separar módulos con hairlines de 1 px y radios de 0,5 / 0,75 rem.",
+      "Do declarar cada color con `light-dark()` y comprobar 4,5:1 en texto y 3:1 en bordes de control.",
+      "Do mantener los objetivos pulsables en 2,5 rem o más y todo tamaño en rem.",
+      "Do expresar la fase con texto, icono y pasos además de movimiento, para que se lea con movimiento reducido.",
+      "Do animar con las tres duraciones (140, 240, 420 ms) y las tres curvas del sistema."
+    ],
+    "donts": [
+      "Don't usar degradados, glassmorphism ni sombras o halos de color.",
+      "Don't dar un segundo acento ni colorear con verde, ámbar o rojo fuera de su estado.",
+      "Don't añadir una tercera columna fija ni tarjetas anidadas en reposo.",
+      "Don't introducir animación continua fuera de la tira de fases.",
+      "Don't meter una fuente decorativa o de pantalla distinta de la familia de sistema.",
+      "Don't reutilizar la identidad visual anterior (favicon y logo antiguos)."
+    ]
+  }
+}

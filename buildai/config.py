@@ -10,10 +10,12 @@ OLLAMA_URL = "http://127.0.0.1:11434"
 
 # Modelos por defecto de cada proveedor. El usuario puede cambiarlos en Ajustes.
 MODELOS_POR_DEFECTO = {
+    # La IA incluida: corre en el ordenador, sin clave ni límites (ia_local.py).
+    "local": "qwen3.5-4b",
     # Gratuito, sabe usar herramientas y ve las fotos que adjunte el usuario.
     "openrouter": "google/gemma-4-31b-it:free",
     "ollama": "qwen3",
-    "anthropic": "claude-opus-5",
+    "anthropic": "claude-opus-5-5",
     "openai": "gpt-5.6-terra",
     "gemini": "gemini-3.7-flash",
     "opencode": "big-pickle",
@@ -31,6 +33,16 @@ _MODELOS_MIGRADOS = {
 }
 
 PROVEEDORES = {
+    "local": {
+        "nombre": "IA incluida (gratis, sin clave)",
+        "url_clave": "https://huggingface.co/Qwen/Qwen3.5-4B",
+        "url_texto": "Sobre el modelo ↗",
+        "requiere_clave": False,
+        "oauth_disponible": False,
+        "nota": "Viene con BuildAI y funciona en tu ordenador: gratis, sin cuenta, sin límites y "
+                "sin enviar nada a internet. Es un modelo ligero (Qwen3.5 4B): para proyectos "
+                "grandes o más rapidez, elige un proveedor en la nube.",
+    },
     "openrouter": {
         "nombre": "OpenRouter (modelos gratuitos)",
         "url_clave": "https://openrouter.ai/keys",
@@ -78,17 +90,30 @@ PROVEEDORES = {
         "url_clave": "https://opencode.ai/zen",
         "url_texto": "Obtener clave ↗",
         "requiere_clave": True,
-        "oauth_disponible": True,
-        "oauth_url": "https://opencode.ai/zen/oauth/authorize",
+        # Su supuesta página de OAuth no existe (404, comprobado 2026-11-21): el
+        # botón solo daba error. Se conecta con clave, como los demás.
+        "oauth_disponible": False,
         "nota": "Modelos curados para agentes, con gratuitos como Big Pickle, "
                 "DeepSeek V4 Flash Free. Crea cuenta en opencode.ai/zen → API Keys.",
     },
 }
 
+# Servicios opcionales que no son de IA: dan más calidad, pero BuildAI funciona
+# sin ellos (las referencias usan Openverse, que no necesita clave).
+SERVICIOS = {
+    "pexels": {
+        "nombre": "Pexels (fotos de referencia)",
+        "url_clave": "https://www.pexels.com/api/new/",
+        "nota": "Opcional y gratuita. Mejora las fotos de referencia; sin ella se usa Openverse.",
+    },
+}
+
 _CONFIG_DEFECTO = {
-    "proveedor": "openrouter",
+    # Por defecto, lo que funciona nada más instalar: la IA incluida.
+    "proveedor": "local",
     "claves": {p: "" for p in PROVEEDORES},
     "modelos": dict(MODELOS_POR_DEFECTO),
+    "servicios": {s: "" for s in SERVICIOS},
 }
 
 _lock = threading.Lock()
@@ -107,7 +132,7 @@ def cargar() -> dict:
     # Rellenar campos que falten sin perder los existentes
     config = json.loads(json.dumps(_CONFIG_DEFECTO))
     config.update({k: v for k, v in datos.items() if k in config and not isinstance(v, dict)})
-    for seccion in ("claves", "modelos"):
+    for seccion in ("claves", "modelos", "servicios"):
         config[seccion].update(datos.get(seccion, {}))
     if datos.get("proveedor") in PROVEEDORES:
         config["proveedor"] = datos["proveedor"]

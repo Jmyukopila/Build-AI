@@ -46,3 +46,73 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Abrir {#MyAppName} ahora"; Flags: nowait postinstall skipifsilent
+
+[Code]
+// IA incluida: el modelo (2,7 GB) se descarga DURANTE la instalación, para que
+// BuildAI funcione al abrirlo sin que el usuario haga nada. Va a la carpeta de
+// datos del usuario (%USERPROFILE%\.buildai\ia_local\modelos), la misma que
+// lee buildai\ia_local.py. URL y SHA-256 fijados allí: cambiarlos a la vez.
+// Si la descarga falla o se cancela, la instalación sigue: BuildAI la retoma
+// solo al arrancar (y reanuda donde quedó).
+const
+  ModeloArchivo = 'Qwen3.5-4B-Q4_K_M.gguf';
+  ModeloUrl = 'https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf';
+  ModeloSha256 = '00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4';
+
+var
+  PaginaDescarga: TDownloadWizardPage;
+
+function CarpetaModelos: String;
+begin
+  Result := ExpandConstant('{%USERPROFILE}\.buildai\ia_local\modelos');
+end;
+
+function AlDescargar(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
+begin
+  Result := True;
+end;
+
+procedure InitializeWizard;
+begin
+  PaginaDescarga := CreateDownloadPage('Preparando la IA incluida',
+    'Descargando el modelo de IA gratuito (2,7 GB, solo esta vez). Puedes cancelar: BuildAI lo terminará al abrirse.',
+    @AlDescargar);
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if (CurPageID = wpReady) and not FileExists(CarpetaModelos + '\' + ModeloArchivo) then
+  begin
+    PaginaDescarga.Clear;
+    PaginaDescarga.Add(ModeloUrl, ModeloArchivo, ModeloSha256);
+    PaginaDescarga.Show;
+    try
+      try
+        PaginaDescarga.Download;
+      except
+        Log('Descarga del modelo omitida: ' + GetExceptionMessage);
+      end;
+    finally
+      PaginaDescarga.Hide;
+    end;
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Temporal, Destino: String;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    Temporal := ExpandConstant('{tmp}\' + ModeloArchivo);
+    Destino := CarpetaModelos + '\' + ModeloArchivo;
+    if FileExists(Temporal) and not FileExists(Destino) then
+    begin
+      ForceDirectories(CarpetaModelos);
+      // Mover (instantáneo en el mismo disco) y, si no se puede, copiar.
+      if not RenameFile(Temporal, Destino) then
+        FileCopy(Temporal, Destino, False);
+    end;
+  end;
+end;

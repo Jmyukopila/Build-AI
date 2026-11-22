@@ -3,616 +3,678 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F3F4F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101211" media="(prefers-color-scheme: dark)">
 <title>BuildAI — el asistente de IA para arquitectos</title>
-<meta name="description" content="BuildAI conecta una IA con Revit, AutoCAD, SketchUp y Blender para trabajar hablando en tu idioma. Todo corre en tu ordenador. Descarga gratis para Windows.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314171b'/%3E%3Cpath d='M6 24V13.5L16 7l10 6.5V24M6 24h20M9 24v-8h5v8m3-8h5v8' stroke='%234a90c4' stroke-width='1.6' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
-<meta property="og:title" content="BuildAI — el asistente de IA para arquitectos">
-<meta property="og:description" content="Controla Revit, AutoCAD, SketchUp y Blender hablando en tu idioma. Todo corre en tu ordenador.">
-<meta property="og:type" content="website">
-<noscript><style>.reveal, .reveal *{opacity:1!important; transform:none!important;}</style></noscript>
+<meta name="description" content="Tú pones la idea, BuildAI pone las manos: una IA que trabaja dentro de Revit, AutoCAD, SketchUp y Blender a partir de lo que le cuentas. Gratis, de código abierto y en tu ordenador.">
+<link rel="icon" type="image/svg+xml" href="assets/marca.svg">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
+<link rel="preload" href="fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Marca la página como "con JS" antes de pintar: sin JS, los capítulos se leen como una lista normal. -->
+<script>document.documentElement.classList.add("js");</script>
+<link rel="stylesheet" href="base.css">
 <style>
-  /* ============ tokens ============ */
-  :root{
-    --ink:#14171b; --paper:#1a1e23; --paper-alta:#20242a;
-    --line:#323844; --line-fuerte:#454c5a;
-    --texto:#eef1f5; --grafito:#8b93a2;
-    --blueprint:#4a90c4; --blueprint-hi:#7fc0ee; --blueprint-suave:rgba(74,144,196,.14);
-    --marcador:#e2653f; --marcador-suave:rgba(226,101,63,.15);
-    --verde:#3fceA0;
-    --radio:10px;
-    --f-display:-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
-    --f-cuerpo:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --f-mono:ui-monospace,"Cascadia Code","SFMono-Regular",Consolas,"Roboto Mono",monospace;
+  /* ── Escena fijada: la figura cambia de forma con el scroll ── */
+  .escena{position:relative;}
+  .js .escena{height:520vh;}
+  .marco{display:grid; grid-template-rows:auto 1fr auto; padding-top:var(--nav);}
+  .js .marco{position:sticky; top:0; height:100vh; height:100svh;}
+
+  .textos{display:grid; justify-items:center; text-align:center; padding:var(--e6) var(--e5) 0;}
+  .cap{grid-area:1/1; align-self:start; display:flex; flex-direction:column; align-items:center; max-width:46rem; gap:var(--e4);}
+  .cap[data-cap="0"]{max-width:64rem;}
+  .cap h1 span{display:inline-block;}
+  .cap h1{font-size:clamp(2.5rem, 6.4vw, 5rem); line-height:.98; letter-spacing:-.04em;}
+  .cap h2{font-size:clamp(2rem, 5.2vw, 3.75rem); line-height:1.02; letter-spacing:-.035em;}
+  .cap p{font-size:clamp(1.0625rem, 1.9vw, 1.3125rem); line-height:1.4; color:var(--tinta-2); max-width:34rem;}
+  .cap .acciones{display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:var(--e3) var(--e4); margin-top:var(--e2);}
+  .cap .nota{font-size:.9375rem; color:var(--tinta-3);}
+  .no-js .cap, :root:not(.js) .cap{grid-area:auto; margin-bottom:var(--e7);}
+
+  .js .cap{opacity:0; visibility:hidden; transform:translateY(.75rem); filter:blur(6px);
+    transition:opacity var(--d3) var(--sale), transform var(--d3) var(--sale), filter var(--d3) var(--sale), visibility 0s linear var(--d3);}
+  .js .cap.activo{opacity:1; visibility:visible; transform:none; filter:none; transition-delay:0s;}
+
+  .figura{position:relative; min-height:0;}
+  .figura canvas{position:absolute; inset:0; width:100%; height:100%;}
+  /* Con JS el lienzo cubre toda la escena y el texto va encima: la figura ocupa el espacio que deja el capítulo activo. */
+  .js .figura{position:absolute; inset:0; z-index:0;}
+  .js .textos{position:relative; z-index:1;}
+  .js .progreso{position:relative; z-index:1; grid-row:3;}
+  :root:not(.js) .figura{height:22rem;}
+
+  .progreso{display:none; justify-content:center; gap:var(--e2); padding:0 var(--e5) var(--e5);}
+  .js .progreso{display:flex;}
+  .progreso i{display:block; width:2.5rem; height:2px; background:var(--linea); position:relative; overflow:hidden; border-radius:1px;}
+  .progreso i::after{content:""; position:absolute; inset:0; background:var(--tinta); transform:scaleX(var(--llena,0)); transform-origin:left;}
+
+  /* ── Secciones ── */
+  section{padding-block:var(--e9);}
+  .banda{border-top:1px solid var(--linea);}
+  .cabecera{display:grid; grid-template-columns:1fr 2fr; gap:var(--e6); align-items:end; margin-bottom:var(--e7);}
+  .cabecera h2{font-size:clamp(2rem, 4.6vw, 3.5rem); line-height:1.04; letter-spacing:-.035em; grid-column:1 / span 2; max-width:22ch;}
+  .cabecera.simple{grid-template-columns:1fr; gap:var(--e3); margin-bottom:var(--e5);}
+  .cabecera.simple h2{grid-column:1; font-size:clamp(1.5rem,3vw,2rem);}
+  .cabecera.simple p{grid-column:1;}
+  .cabecera p{font-size:1.1875rem; color:var(--tinta-2); max-width:36rem; grid-column:2;}
+
+  /* Programas: filas separadas por filetes, módulos 1:2 */
+  .filas{border-top:1px solid var(--linea);}
+  .fila{display:grid; grid-template-columns:1fr 2fr; gap:var(--e6); padding:var(--e6) 0; border-bottom:1px solid var(--linea); align-items:baseline;}
+  .fila h3{font-size:clamp(1.75rem, 3.4vw, 2.5rem); letter-spacing:-.03em; line-height:1.05;}
+  .fila .cuerpo{display:grid; grid-template-columns:1.6fr 1fr; gap:var(--e5); color:var(--tinta-2);}
+  .fila .cuerpo small{font-size:.9375rem; color:var(--tinta-3); line-height:1.5;}
+
+  /* Del plano al modelo */
+  .plano-grid{display:grid; grid-template-columns:1fr 2fr; gap:var(--e7); align-items:center;}
+  .plano-grid h2{font-size:clamp(2rem, 4vw, 3rem); line-height:1.05; letter-spacing:-.035em;}
+  .plano-grid .txt{display:grid; gap:var(--e4);}
+  .plano-grid .txt p{color:var(--tinta-2); font-size:1.125rem;}
+  .plano-grid ul{margin:0; padding:0; list-style:none; display:grid; gap:var(--e2); color:var(--tinta-2);}
+  .plano-grid li{padding-left:var(--e5); position:relative; font-size:1rem;}
+  .plano-grid li::before{content:""; position:absolute; left:0; top:.7em; width:.75rem; height:1px; background:var(--tinta-3);}
+  .hoja{background:var(--hoja); border:1px solid var(--linea); border-radius:var(--r-l); padding:var(--e5);}
+  .hoja svg{width:100%; height:auto;}
+  .hoja figcaption{margin-top:var(--e3); font-size:.9375rem; color:var(--tinta-3); display:flex; justify-content:space-between; gap:var(--e4); flex-wrap:wrap;}
+  .trazo{fill:none; stroke:var(--tinta-2); stroke-width:2; stroke-linecap:square; stroke-linejoin:miter;}
+  .trazo.fino{stroke-width:1; stroke:var(--tinta-3);}
+  .trazo.muro{stroke:var(--borde-control); stroke-width:9; opacity:.5; stroke-linecap:butt;}
+  .trazo.rec{stroke:var(--acento); stroke-width:2;}
+  .cota{font:500 11px var(--sans); fill:var(--tinta-3); font-variant-numeric:tabular-nums;}
+  .js .dibuja path, .js .dibuja line, .js .dibuja rect{stroke-dasharray:1; stroke-dashoffset:1;}
+  .js .dibuja.listo path, .js .dibuja.listo line, .js .dibuja.listo rect{stroke-dashoffset:0; transition:stroke-dashoffset 1400ms var(--sale);}
+  .js .dibuja.listo .rec{transition-delay:1100ms; transition-duration:1600ms;}
+
+  /* IA incluida y privacidad */
+  .mod{display:grid; grid-template-columns:1fr 2fr; gap:var(--e6);}
+  .mod > h2{font-size:clamp(1.75rem, 3vw, 2.25rem); line-height:1.1; letter-spacing:-.03em;}
+  .mod .txt{display:grid; gap:var(--e5); max-width:40rem;}
+  .mod .txt p{font-size:1.1875rem; color:var(--tinta-2);}
+  .mod .txt p strong{color:var(--tinta); font-weight:600;}
+  .mod + .mod{margin-top:var(--e8); padding-top:var(--e7); border-top:1px solid var(--linea);}
+
+  /* Pasos */
+  .pasos{margin:0; padding:0; list-style:none; border-top:1px solid var(--linea);}
+  .pasos li{display:grid; grid-template-columns:1fr 2fr; gap:var(--e6); padding:var(--e5) 0; border-bottom:1px solid var(--linea); align-items:baseline;}
+  .pasos h3{font-size:1.5rem; letter-spacing:-.02em;}
+  .pasos p{color:var(--tinta-2);}
+
+  /* Terminal */
+  .terminal{border:1px solid var(--linea); border-radius:var(--r-l); background:var(--hoja); overflow:hidden; max-width:50rem;}
+  .tabs{display:flex; border-bottom:1px solid var(--linea);}
+  .tab{appearance:none; background:none; border:0; color:var(--tinta-3); font:500 .9375rem var(--sans); min-height:2.75rem; padding:0 var(--e5); cursor:pointer; position:relative;
+    transition:color var(--d1) var(--mueve);}
+  .tab:hover{color:var(--tinta);}
+  .tab[aria-selected="true"]{color:var(--tinta);}
+  .tab[aria-selected="true"]::after{content:""; position:absolute; left:var(--e3); right:var(--e3); bottom:-1px; height:2px; background:var(--accion);}
+  .panel-term{position:relative; padding:var(--e5); padding-right:6rem;}
+  .panel-term[hidden]{display:none;}
+  .panel-term pre{margin:0; font:.9375rem/1.7 var(--mono); overflow-x:auto; color:var(--tinta);}
+  .panel-term .com{color:var(--tinta-3);}
+  .panel-term .cmd{color:var(--acento); font-weight:600;}
+  .copiar{position:absolute; top:var(--e3); right:var(--e3); min-height:2.5rem; padding:0 var(--e4); border-radius:var(--r); border:1px solid var(--borde-control);
+    background:var(--hoja); color:var(--tinta); font:500 .875rem var(--sans); cursor:pointer; transition:background var(--d1) var(--mueve);}
+  .copiar:hover{background:var(--papel);}
+
+  /* Cierre */
+  .cierre{text-align:center; padding-block:var(--e9) var(--e8);}
+  .cierre .sello{width:5.5rem; height:5.5rem; margin:0 auto var(--e6); border-radius:1.25rem;}
+  .cierre h2{font-size:clamp(2.25rem, 6vw, 4.5rem); line-height:1; letter-spacing:-.04em; max-width:16ch; margin-inline:auto;}
+  .cierre p{margin:var(--e4) auto var(--e6); color:var(--tinta-2); font-size:1.1875rem; max-width:32rem;}
+  .cierre .nota{margin-top:var(--e4); font-size:.9375rem; color:var(--tinta-3);}
+
+  /* ── Pantallas estrechas ── */
+  @media (max-width: 52rem){
+    :root{--nav:3.5rem;}
+    section{padding-block:var(--e8);}
+    .nav nav a:not(.btn){display:none;}
+    .cabecera, .fila, .plano-grid, .mod, .pasos li{grid-template-columns:1fr; gap:var(--e3);}
+    .cabecera h2, .cabecera p{grid-column:1;}
+    .fila .cuerpo{grid-template-columns:1fr; gap:var(--e2);}
+    .plano-grid{gap:var(--e6);}
+    .textos{padding-top:var(--e5);}
+    .panel-term{padding-right:var(--e5); padding-top:3.5rem;}
   }
-  :root[data-theme="light"]{
-    --ink:#eef1f4; --paper:#f7f8fa; --paper-alta:#ffffff;
-    --line:#c9d0da; --line-fuerte:#aab3c0;
-    --texto:#171a1f; --grafito:#5b6472;
-    --blueprint:#2f6ea3; --blueprint-hi:#1d5786; --blueprint-suave:rgba(47,110,163,.10);
-    --marcador:#c94f28; --marcador-suave:rgba(201,79,40,.10);
+  @media (max-height: 40rem) and (min-width: 52rem){
+    .cap p{display:none;}
   }
-  @media (prefers-color-scheme: light){
-    :root:not([data-theme="dark"]){
-      --ink:#eef1f4; --paper:#f7f8fa; --paper-alta:#ffffff;
-      --line:#c9d0da; --line-fuerte:#aab3c0;
-      --texto:#171a1f; --grafito:#5b6472;
-      --blueprint:#2f6ea3; --blueprint-hi:#1d5786; --blueprint-suave:rgba(47,110,163,.10);
-      --marcador:#c94f28; --marcador-suave:rgba(201,79,40,.10);
-    }
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html{scroll-behavior:smooth;}
+
+  /* Movimiento reducido: sin desenfoque ni deslizamientos; el scroll sigue moviendo la figura porque lo controla la persona. */
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto;}
-    *{animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important;}
+    .js .cap{transform:none; filter:none; transition:opacity 1ms linear, visibility 0s;}
+    .js .dibuja path, .js .dibuja line, .js .dibuja rect{stroke-dasharray:none; stroke-dashoffset:0;}
+    .btn .flecha{transition:none;}
   }
-  body{
-    background:
-      repeating-linear-gradient(0deg, transparent 0 39px, color-mix(in srgb, var(--blueprint) 7%, transparent) 39px 40px),
-      repeating-linear-gradient(90deg, transparent 0 39px, color-mix(in srgb, var(--blueprint) 7%, transparent) 39px 40px),
-      var(--ink);
-    color:var(--texto);
-    font:16px/1.6 var(--f-cuerpo);
-    -webkit-font-smoothing:antialiased;
-  }
-  a{color:inherit;}
-  img,svg{display:block;}
-  .envoltura{max-width:1120px; margin:0 auto; padding:0 24px;}
-  ::selection{background:var(--blueprint-suave); color:var(--texto);}
-  :focus-visible{outline:2px solid var(--blueprint-hi); outline-offset:3px; border-radius:3px;}
-
-  .etiqueta{
-    font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--grafito);
-  }
-
-  /* ============ keyframes ============ */
-  @keyframes entra{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
-  @keyframes crecer-h{ from{width:0;} to{width:22px;} }
-  @keyframes crecer-v{ from{height:0;} to{height:22px;} }
-  @keyframes pulso-luz{ 0%,100%{opacity:1;} 50%{opacity:.45;} }
-  @keyframes pulso-suave{ 0%,100%{opacity:.35;} 50%{opacity:1;} }
-  @keyframes parpadeo{ 0%,100%{opacity:0;} 50%{opacity:1;} }
-
-  /* ============ nav ============ */
-  header.nav{
-    position:sticky; top:0; z-index:30;
-    backdrop-filter:blur(10px);
-    background:color-mix(in srgb, var(--ink) 78%, transparent);
-    border-bottom:1px solid var(--line);
-    transition:border-color .3s, box-shadow .3s;
-  }
-  header.nav.con-sombra{border-bottom-color:var(--line-fuerte); box-shadow:0 8px 24px -16px rgba(0,0,0,.5);}
-  .nav .envoltura{display:flex; align-items:center; justify-content:space-between; height:60px;}
-  .marca{display:flex; align-items:center; gap:9px; font-family:var(--f-display); font-weight:800; font-size:16.5px; letter-spacing:-.01em; text-decoration:none;}
-  .marca svg{width:24px; height:24px; flex:none; transition:transform .4s cubic-bezier(.2,.9,.3,1.3);}
-  .marca:hover svg{transform:rotate(-8deg) scale(1.06);}
-  .nav-links{display:flex; align-items:center; gap:26px; font-size:13.5px; color:var(--grafito);}
-  .nav-links a{text-decoration:none; position:relative;}
-  .nav-links a:not(.btn-nav)::after{
-    content:""; position:absolute; left:0; right:100%; bottom:-4px; height:1px; background:var(--blueprint-hi);
-    transition:right .25s ease;
-  }
-  .nav-links a:not(.btn-nav):hover::after{right:0;}
-  .nav-links a:not(.btn-nav):hover{color:var(--texto);}
-  .btn-nav{
-    padding:7px 14px; border-radius:7px; border:1px solid var(--line-fuerte);
-    color:var(--texto)!important; font-family:var(--f-mono); font-size:12.5px; transition:.15s;
-  }
-  .btn-nav:hover{border-color:var(--blueprint); background:var(--blueprint-suave); transform:translateY(-1px);}
-  @media (max-width:720px){ .nav-links a:not(.btn-nav){display:none;} }
-
-  /* ============ hero: hoja de planos ============ */
-  .hoja{
-    max-width:1120px; margin:36px auto 0; position:relative;
-    border:1px solid var(--line); border-radius:16px;
-    background:color-mix(in srgb, var(--paper) 92%, transparent);
-  }
-  .esquina{position:absolute; pointer-events:none; overflow:hidden;}
-  .esquina.tl{top:-1px; left:-1px; border-top:2px solid var(--blueprint); border-left:2px solid var(--blueprint); border-radius:16px 0 0 0; width:22px; height:22px; animation:crecer-h .5s .1s both, crecer-v .5s .1s both;}
-  .esquina.tr{top:-1px; right:-1px; border-top:2px solid var(--blueprint); border-right:2px solid var(--blueprint); border-radius:0 16px 0 0; width:22px; height:22px; animation:crecer-h .5s .18s both, crecer-v .5s .18s both;}
-  .esquina.bl{bottom:-1px; left:-1px; border-bottom:2px solid var(--blueprint); border-left:2px solid var(--blueprint); border-radius:0 0 0 16px; width:22px; height:22px; animation:crecer-h .5s .18s both, crecer-v .5s .18s both;}
-  .esquina.br{bottom:-1px; right:-1px; border-bottom:2px solid var(--blueprint); border-right:2px solid var(--blueprint); border-radius:0 0 16px 0; width:22px; height:22px; animation:crecer-h .5s .26s both, crecer-v .5s .26s both;}
-
-  /* retícula CAD que sigue al cursor */
-  .reticula-h, .reticula-v{position:absolute; pointer-events:none; opacity:0; transition:opacity .25s; z-index:4;}
-  .reticula-h{left:0; right:0; height:1px; top:var(--my, 50%); background:color-mix(in srgb, var(--blueprint) 55%, transparent);}
-  .reticula-v{top:0; bottom:0; width:1px; left:var(--mx, 50%); background:color-mix(in srgb, var(--blueprint) 55%, transparent);}
-  .coord-lectura{
-    position:absolute; left:14px; top:14px; z-index:5; opacity:0; transition:opacity .25s;
-    font-family:var(--f-mono); font-size:11px; color:var(--blueprint-hi);
-    background:color-mix(in srgb, var(--ink) 82%, transparent); border:1px solid var(--line);
-    padding:4px 9px; border-radius:6px; pointer-events:none; font-variant-numeric:tabular-nums;
-  }
-  .hoja.activa .reticula-h, .hoja.activa .reticula-v, .hoja.activa .coord-lectura{opacity:1;}
-  @media (pointer:coarse), (max-width:720px){ .reticula-h, .reticula-v, .coord-lectura{display:none;} }
-
-  .hero{padding:76px 56px 0; text-align:center; position:relative;}
-  @media (max-width:640px){ .hero{padding:56px 20px 0;} }
-  .hero .etiqueta{display:inline-flex; align-items:center; gap:8px; margin-bottom:26px; animation:entra .6s .3s both;}
-  .hero .etiqueta .punto{width:6px; height:6px; border-radius:50%; background:var(--verde); box-shadow:0 0 7px var(--verde); animation:pulso-luz 2.4s ease-in-out infinite;}
-
-  h1{
-    font-family:var(--f-display); font-weight:800; letter-spacing:-.025em;
-    font-size:clamp(32px, 5.2vw, 56px); line-height:1.06; text-wrap:balance;
-    margin-bottom:20px; animation:entra .6s .4s both;
-  }
-  h1 em{
-    font-style:normal;
-    background:linear-gradient(95deg, var(--blueprint-hi), var(--blueprint) 65%);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-  }
-  .hero p.sub{
-    max-width:560px; margin:0 auto 38px; color:var(--grafito); font-size:17.5px; text-wrap:balance;
-    animation:entra .6s .5s both;
-  }
-
-  .btn-descarga{
-    display:inline-flex; align-items:center; gap:11px;
-    padding:15px 28px; border-radius:9px; border:1px solid color-mix(in srgb, var(--blueprint) 55%, var(--line));
-    background:linear-gradient(180deg, color-mix(in srgb, var(--blueprint) 85%, white 15%), var(--blueprint) 55%, color-mix(in srgb, var(--blueprint) 80%, black 20%));
-    color:#0a1116; font-weight:700; font-size:16px; text-decoration:none;
-    box-shadow:0 8px 24px -8px color-mix(in srgb, var(--blueprint) 65%, transparent);
-    transition:filter .15s, box-shadow .15s, transform .15s;
-  }
-  .btn-descarga:hover{filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 14px 32px -6px color-mix(in srgb, var(--blueprint) 70%, transparent);}
-  .btn-descarga:active{transform:translateY(0); filter:brightness(.98);}
-  .btn-descarga svg{width:19px; height:19px; overflow:visible;}
-  .btn-descarga .flecha{transition:transform .25s cubic-bezier(.3,.8,.4,1.4); transform-box:fill-box; transform-origin:center;}
-  .btn-descarga:hover .flecha{transform:translateY(2.5px);}
-  .cta{display:flex; flex-direction:column; align-items:center; gap:16px; margin-bottom:40px; animation:entra .6s .6s both;}
-  .cta .nota{font-family:var(--f-mono); font-size:12px; color:var(--grafito);}
-  .cta .nota a{color:var(--blueprint-hi); text-decoration:none; border-bottom:1px solid transparent; transition:border-color .2s;}
-  .cta .nota a:hover{border-color:var(--blueprint-hi);}
-
-  /* bloque de título técnico (rótulo de plano) */
-  .rotulo{
-    display:grid; grid-template-columns:repeat(4, 1fr);
-    border-top:1px solid var(--line);
-  }
-  .rotulo .celda{
-    padding:16px 18px; border-right:1px solid var(--line); text-align:left;
-    animation:entra .5s both;
-  }
-  .rotulo .celda:nth-child(1){animation-delay:.62s;}
-  .rotulo .celda:nth-child(2){animation-delay:.70s;}
-  .rotulo .celda:nth-child(3){animation-delay:.78s;}
-  .rotulo .celda:nth-child(4){animation-delay:.86s;}
-  .rotulo .celda:last-child{border-right:none;}
-  .rotulo .celda .etiqueta{display:block; margin-bottom:5px;}
-  .rotulo .celda .valor{font-family:var(--f-mono); font-size:14px; font-variant-numeric:tabular-nums;}
-  @media (max-width:720px){
-    .rotulo{grid-template-columns:repeat(2,1fr);}
-    .rotulo .celda:nth-child(2){border-right:none;}
-  }
-
-  /* ventana mock de la app, dentro de la hoja */
-  .vista-app{padding:40px 56px 0; animation:entra .6s .8s both;}
-  @media (max-width:640px){ .vista-app{padding:28px 16px 0;} }
-  .ventana{
-    max-width:820px; margin:0 auto; border-radius:12px; overflow:hidden;
-    border:1px solid var(--line); background:var(--paper-alta);
-    box-shadow:0 30px 70px -30px rgba(0,0,0,.55);
-  }
-  .barra-ventana{display:flex; align-items:center; gap:7px; padding:10px 15px; background:var(--paper); border-bottom:1px solid var(--line);}
-  .barra-ventana i{width:9px; height:9px; border-radius:2px; background:var(--line-fuerte);}
-  .barra-ventana span{margin-left:8px; font-family:var(--f-mono); font-size:11.5px; color:var(--grafito);}
-  .cuerpo-ventana{padding:22px; text-align:left; display:grid; grid-template-columns:150px 1fr; gap:18px;}
-  @media (max-width:560px){ .cuerpo-ventana{grid-template-columns:1fr;} }
-  .panel-lateral{display:flex; flex-direction:column; gap:7px;}
-  .fila-programa{
-    display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:7px;
-    background:var(--ink); border:1px solid var(--line); font-size:12.5px; color:var(--grafito);
-    transition:border-color .2s;
-  }
-  .fila-programa:hover{border-color:var(--line-fuerte);}
-  .fila-programa .luz{width:6px; height:6px; border-radius:50%; background:var(--verde); box-shadow:0 0 5px var(--verde); flex:none; animation:pulso-luz 2.6s ease-in-out infinite;}
-  .fila-programa:nth-child(2) .luz{animation-delay:.4s;}
-  .fila-programa:nth-child(4) .luz{animation-delay:.8s;}
-  .fila-programa .luz.apagada{background:var(--line-fuerte); box-shadow:none; animation:none;}
-  .chat-mock{display:flex; flex-direction:column; gap:9px;}
-  .burbuja{padding:10px 13px; border-radius:9px; font-size:13px; max-width:90%; opacity:0; animation:entra .5s both;}
-  .burbuja.usuario{align-self:flex-end; background:var(--blueprint-suave); border:1px solid color-mix(in srgb, var(--blueprint) 30%, transparent); animation-delay:1.05s;}
-  .burbuja.ia{align-self:flex-start; background:var(--ink); border:1px solid var(--line); color:var(--grafito); font-family:var(--f-mono); font-size:12px;}
-  .burbuja.ia:nth-of-type(2){animation-delay:1.3s;}
-  .burbuja.ia:nth-of-type(3){animation-delay:1.55s;}
-  .burbuja.ia b{color:var(--blueprint-hi); font-weight:600;}
-  .cursor-trabajando{display:inline-block; width:6px; height:11px; margin-left:2px; background:var(--blueprint-hi); vertical-align:-1px; animation:parpadeo 1s step-end infinite;}
-
-  .pie-hoja{padding:28px 56px 34px; display:flex; align-items:center; justify-content:center; gap:10px;}
-  @media (max-width:640px){ .pie-hoja{padding:22px 16px 28px;} }
-  .pie-hoja .linea{flex:1; height:1px; background:var(--line);}
-  .pie-hoja .etiqueta{white-space:nowrap;}
-
-  /* ============ secciones ============ */
-  section{padding:88px 0;}
-  .titulo-fila{display:flex; align-items:baseline; gap:16px; margin-bottom:44px;}
-  .titulo-fila .linea{flex:1; height:1px; background:var(--line); transform:scaleX(0); transform-origin:left; transition:transform .8s ease;}
-  .titulo-fila.visible .linea{transform:scaleX(1);}
-  h2{
-    font-family:var(--f-display); font-weight:800; letter-spacing:-.02em;
-    font-size:clamp(24px, 3vw, 32px); text-wrap:balance; white-space:nowrap;
-  }
-  p.intro{color:var(--grafito); max-width:520px; margin:-28px 0 44px; font-size:15px;}
-
-  .rejilla-4{display:grid; grid-template-columns:repeat(4, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radio); overflow:hidden;}
-  @media (max-width:900px){ .rejilla-4{grid-template-columns:repeat(2,1fr);} }
-  @media (max-width:520px){ .rejilla-4{grid-template-columns:1fr;} }
-  .tarjeta{
-    background:var(--paper); padding:26px 22px;
-    opacity:0; transform:translateY(16px);
-    transition:background .2s, transform .45s ease, opacity .45s ease, box-shadow .2s;
-  }
-  .rejilla-4.visible .tarjeta{opacity:1; transform:translateY(0);}
-  .rejilla-4.visible .tarjeta:nth-child(1){transition-delay:.02s;}
-  .rejilla-4.visible .tarjeta:nth-child(2){transition-delay:.09s;}
-  .rejilla-4.visible .tarjeta:nth-child(3){transition-delay:.16s;}
-  .rejilla-4.visible .tarjeta:nth-child(4){transition-delay:.23s;}
-  .tarjeta:hover{background:var(--paper-alta); transform:translateY(-3px); box-shadow:0 16px 30px -18px rgba(0,0,0,.5);}
-  .tarjeta .glifo{width:34px; height:34px; color:var(--blueprint); margin-bottom:16px;}
-  .tarjeta .glifo svg{width:100%; height:100%; overflow:visible;}
-  .tarjeta .glifo svg path, .tarjeta .glifo svg rect{
-    stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 1s ease .2s;
-  }
-  .rejilla-4.visible .tarjeta .glifo svg path,
-  .rejilla-4.visible .tarjeta .glifo svg rect{stroke-dashoffset:0;}
-  .tarjeta:hover .glifo{transform:scale(1.08); transition:transform .25s cubic-bezier(.3,.8,.4,1.4);}
-  .tarjeta h3{font-family:var(--f-display); font-size:15.5px; font-weight:700; margin-bottom:6px;}
-  .tarjeta p{font-size:13.5px; color:var(--grafito); line-height:1.55;}
-
-  /* pasos: cadena de cota */
-  .pasos{display:grid; grid-template-columns:repeat(4,1fr); gap:0; position:relative; margin-top:8px;}
-  @media (max-width:820px){ .pasos{grid-template-columns:repeat(2,1fr); gap:28px 20px;} }
-  .paso{position:relative; padding-top:26px; padding-right:20px; opacity:0; transform:translateY(12px); transition:opacity .5s ease, transform .5s ease;}
-  .pasos.visible .paso{opacity:1; transform:translateY(0);}
-  .pasos.visible .paso:nth-child(1){transition-delay:.05s;}
-  .pasos.visible .paso:nth-child(2){transition-delay:.16s;}
-  .pasos.visible .paso:nth-child(3){transition-delay:.27s;}
-  .pasos.visible .paso:nth-child(4){transition-delay:.38s;}
-  .paso::before{
-    content:""; position:absolute; top:0; left:0; right:20px; height:1px; background:var(--line-fuerte);
-    transform:scaleX(0); transform-origin:left; transition:transform .6s ease .15s;
-  }
-  .pasos.visible .paso::before{transform:scaleX(1);}
-  .paso::after{
-    content:""; position:absolute; top:-3px; left:0; width:1px; height:7px; background:var(--line-fuerte);
-  }
-  @media (max-width:820px){ .paso::before, .paso::after{display:none;} .paso{padding-top:0;} }
-  .paso .num{font-family:var(--f-mono); font-size:12px; color:var(--blueprint-hi); margin-bottom:10px; display:block;}
-  .paso h3{font-family:var(--f-display); font-size:15px; font-weight:700; margin-bottom:7px;}
-  .paso p{font-size:13.5px; color:var(--grafito); line-height:1.55;}
-
-  /* ============ franja privacidad ============ */
-  .franja-privacidad{
-    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
-    background:var(--paper); padding:52px 0;
-  }
-  .franja-privacidad .envoltura{
-    display:flex; align-items:flex-start; gap:24px;
-    opacity:0; transform:translateY(14px); transition:opacity .55s ease, transform .55s ease;
-  }
-  .franja-privacidad .envoltura.visible{opacity:1; transform:translateY(0);}
-  .franja-privacidad .glifo{flex:none; width:40px; height:40px; color:var(--blueprint);}
-  .franja-privacidad .glifo svg{width:100%; height:100%;}
-  .franja-privacidad h3{font-family:var(--f-display); font-size:17px; font-weight:700; margin-bottom:7px;}
-  .franja-privacidad p{color:var(--grafito); font-size:14.5px; max-width:620px; line-height:1.6;}
-  @media (max-width:640px){ .franja-privacidad .envoltura{flex-direction:column;} }
-
-  /* ============ terminal ============ */
-  .terminal-caja{
-    max-width:680px; margin:0 auto; background:var(--ink); border:1px solid var(--line);
-    border-radius:var(--radio); overflow:hidden;
-    opacity:0; transform:translateY(14px); transition:opacity .55s ease, transform .55s ease;
-  }
-  .terminal-caja.visible{opacity:1; transform:translateY(0);}
-  .terminal-tabs{display:flex; border-bottom:1px solid var(--line); background:var(--paper); position:relative;}
-  .terminal-tab{
-    padding:10px 18px; font-family:var(--f-mono); font-size:12.5px; color:var(--grafito); cursor:pointer;
-    border-right:1px solid var(--line); user-select:none; background:transparent; border-top:none; border-left:none; border-bottom:none;
-    transition:color .2s;
-  }
-  .terminal-tab.activa{color:var(--texto); background:var(--ink);}
-  .indicador-tab{position:absolute; bottom:-1px; height:2px; background:var(--blueprint-hi); transition:left .25s ease, width .25s ease;}
-  .terminal-cuerpo{position:relative;}
-  pre.codigo{
-    display:none; margin:0; padding:20px 22px; overflow-x:auto; font-size:12.5px;
-    font-family:var(--f-mono); color:var(--texto); line-height:1.75;
-  }
-  pre.codigo.activa{display:block; animation:entra .3s both;}
-  pre.codigo .com{color:var(--grafito);}
-  pre.codigo .cmd{color:var(--blueprint-hi);}
-  .btn-copiar{
-    position:absolute; top:9px; right:11px; padding:5px 10px; font-family:var(--f-mono); font-size:11.5px;
-    border:1px solid var(--line); background:var(--paper); color:var(--grafito);
-    border-radius:6px; cursor:pointer; transition:.15s;
-  }
-  .btn-copiar:hover{color:var(--texto); border-color:var(--blueprint);}
-  .btn-copiar.copiado{color:var(--verde); border-color:var(--verde);}
-
-  /* ============ cta final ============ */
-  .cta-final{text-align:center; padding:0 0 96px;}
-  .cta-final h2{white-space:normal; margin-bottom:14px;}
-  .cta-final p{color:var(--grafito); margin-bottom:30px; font-size:15.5px;}
-
-  footer{border-top:1px solid var(--line); padding:26px 0;}
-  footer .envoltura{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;}
-  footer .marca-pie{font-family:var(--f-mono); font-size:12px; color:var(--grafito);}
-  footer .enlaces-pie{display:flex; gap:20px; font-size:12.5px;}
-  footer a{text-decoration:none; color:var(--grafito); position:relative;}
-  footer a::after{content:""; position:absolute; left:0; right:100%; bottom:-3px; height:1px; background:var(--grafito); transition:right .2s ease;}
-  footer a:hover::after{right:0;}
-  footer a:hover{color:var(--texto);}
 </style>
 </head>
 <body>
+<canvas id="fondo" aria-hidden="true"></canvas>
+<a class="salto" href="#programas">Saltar al contenido</a>
 
 <header class="nav">
   <div class="envoltura">
-    <a class="marca" href="#top">
-      <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" style="fill:var(--paper-alta)"/><path d="M6 24V13.5L16 7l10 6.5V24M6 24h20M9 24v-8h5v8m3-8h5v8" style="stroke:var(--blueprint)" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      BuildAI
-    </a>
-    <nav class="nav-links">
+    <a class="marca" href="#inicio" aria-label="BuildAI, inicio"><img src="assets/marca.svg" alt="" width="32" height="32">BuildAI</a>
+    <nav aria-label="Principal">
       <a href="#programas">Programas</a>
-      <a href="#como-funciona">Cómo funciona</a>
-      <a href="#terminal">Terminal</a>
-      <a class="btn-nav" href="https://github.com/Jmyukopila/Build-AI" target="_blank" rel="noopener">GitHub ↗</a>
+      <a href="#planos">Planos</a>
+      <a href="#empezar">Cómo empezar</a>
+      <a href="docs.html">Docs</a>
+      <a class="btn" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">Descargar</a>
     </nav>
   </div>
 </header>
 
-<main id="top">
-  <div class="envoltura">
-    <div class="hoja" id="hoja">
-      <span class="esquina tl"></span><span class="esquina tr"></span><span class="esquina bl"></span><span class="esquina br"></span>
-      <div class="reticula-h"></div>
-      <div class="reticula-v"></div>
-      <div class="coord-lectura" id="coordLectura">X 0.0m&nbsp;&nbsp;Y 0.0m</div>
-
-      <div class="hero">
-        <div class="etiqueta"><span class="punto"></span> DISPONIBLE · WINDOWS 10/11</div>
-        <h1>Diseña hablando con<br><em>tus propios programas</em></h1>
-        <p class="sub">
-          BuildAI conecta un modelo de IA con Revit, AutoCAD, SketchUp y Blender.
-          Describe lo que necesitas y lo construye ahí mismo, sin que escribas una línea de código.
-        </p>
-
-        <div class="cta">
-          <a class="btn-descarga" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <g class="flecha"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/></g>
-              <path d="M5 21h14"/>
-            </svg>
-            Descargar BuildAI-Setup.exe
-          </a>
-          <div class="nota">Sin permisos de administrador · <a href="#terminal">otras formas de instalar ↓</a></div>
-        </div>
-      </div>
-
-      <div class="rotulo">
-        <div class="celda"><span class="etiqueta">Plataforma</span><span class="valor">Windows 10 / 11 · 64-bit</span></div>
-        <div class="celda"><span class="etiqueta">Versión</span><span class="valor">v0.1.0</span></div>
-        <div class="celda"><span class="etiqueta">Peso</span><span class="valor">≈ 21 MB</span></div>
-        <div class="celda"><span class="etiqueta">Licencia</span><span class="valor">Código abierto</span></div>
-      </div>
-
-      <div class="vista-app">
-        <div class="ventana">
-          <div class="barra-ventana"><i></i><i></i><i></i><span>BuildAI</span></div>
-          <div class="cuerpo-ventana">
-            <div class="panel-lateral">
-              <div class="fila-programa"><span class="luz"></span> Blender</div>
-              <div class="fila-programa"><span class="luz"></span> AutoCAD</div>
-              <div class="fila-programa"><span class="luz apagada"></span> SketchUp</div>
-              <div class="fila-programa"><span class="luz"></span> Revit</div>
-            </div>
-            <div class="chat-mock">
-              <div class="burbuja usuario">Crea una casa moderna de 120&nbsp;m², cubierta plana y ventanales al jardín</div>
-              <div class="burbuja ia"><b>🔧 blender_ejecutar_python</b> — levantando muros de planta baja…</div>
-              <div class="burbuja ia"><b>🔧 blender_render</b> — RENDER_GUARDADO: vista_01.png<span class="cursor-trabajando"></span></div>
-            </div>
+<main>
+  <!-- La figura (canvas) cuenta cada capítulo: esquema de volúmenes, casa a dos aguas, forjados, plano y parcela cerrada. -->
+  <div class="escena" id="escena">
+    <div class="marco" id="inicio">
+      <div class="textos">
+        <article class="cap activo" data-cap="0">
+          <h1><span>Tú pones la idea.</span> <span>BuildAI pone las manos.</span></h1>
+          <p>Cuéntale lo que imaginas, con tus palabras. BuildAI lo levanta dentro de Revit, AutoCAD, SketchUp o Blender mientras tú sigues diseñando.</p>
+          <div class="acciones">
+            <a class="btn grande" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="flecha"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/></g><path d="M5 21h14"/></svg>
+              Descargar para Windows
+            </a>
+            <a class="enlace" href="#empezar">Otras formas de instalar</a>
           </div>
-        </div>
+          <p class="nota">Windows 10 y 11 · gratis · sin permisos de administrador</p>
+        </article>
+        <article class="cap" data-cap="1" inert>
+          <h2>Habla como hablas en el estudio.</h2>
+          <p>«Casa de una planta, diez por ocho, cubierta a dos aguas.» Sin comandos, sin scripts y sin aprender otra interfaz: lo que le dirías a un compañero, lo entiende.</p>
+        </article>
+        <article class="cap" data-cap="2" inert>
+          <h2>Y lo ves levantarse, planta a planta.</h2>
+          <p>No te devuelve una descripción: actúa de verdad en tu programa. Cada muro, cada forjado y cada luz aparece delante de ti, mientras ocurre.</p>
+        </article>
+        <article class="cap" data-cap="3" inert>
+          <h2>Dale un plano y te devuelve un modelo.</h2>
+          <p>Un PDF, un DXF o la foto del papel. BuildAI mide los muros, calibra con las cotas y comprueba los metros de cada estancia antes de enseñarte nada.</p>
+        </article>
+        <article class="cap" data-cap="4" inert>
+          <h2>Tu trabajo no sale de tu ordenador.</h2>
+          <p>La IA viene incluida: sin cuenta, sin clave y sin límites. Tus planos y tus modelos se quedan donde los guardas, que es donde deben estar.</p>
+          <div class="acciones">
+            <a class="btn grande" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="flecha"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/></g><path d="M5 21h14"/></svg>
+              Descargar para Windows
+            </a>
+          </div>
+        </article>
       </div>
 
-      <div class="pie-hoja">
-        <span class="linea"></span>
-        <span class="etiqueta">BuildAI · asistente de IA para arquitectos</span>
-        <span class="linea"></span>
-      </div>
+      <div class="figura" aria-hidden="true"><canvas id="figura"></canvas></div>
+      <div class="progreso" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     </div>
   </div>
 
-  <section id="programas">
+  <section id="programas" class="banda">
     <div class="envoltura">
-      <div class="titulo-fila reveal"><h2>Cuatro programas, un mismo idioma</h2><span class="linea"></span></div>
-      <p class="intro">Cada uno tiene un puente local que se conecta solo: abre el programa y el punto se pone verde.</p>
-      <div class="rejilla-4 reveal">
-        <div class="tarjeta">
-          <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" pathLength="1"><path pathLength="1" d="M4 20V9l8-5 8 5v11"/><path pathLength="1" d="M9 20v-7h6v7"/><path pathLength="1" d="M4 20h16"/></svg></div>
+      <div class="cabecera">
+        <h2>Trabajas en el programa de siempre. BuildAI se sienta a tu lado.</h2>
+        <p>Cada programa tiene su puente local, que se instala solo. Lo abres, el punto de la barra lateral se pone verde y ya te está escuchando.</p>
+      </div>
+      <div class="filas">
+        <div class="fila">
           <h3>Blender</h3>
-          <p>Kit paramétrico — muros, cubiertas, escaleras, ventanales — con renders que llegan directo al chat.</p>
+          <div class="cuerpo"><span>Muros, cubiertas, escaleras y ventanales paramétricos, y renders que aparecen en el chat en cuanto terminan.</span><small>Versiones 2.80 a 4.x. Sin pasos previos: el puente arranca con Blender.</small></div>
         </div>
-        <div class="tarjeta">
-          <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect pathLength="1" x="4" y="4" width="16" height="16"/><path pathLength="1" d="M4 9h16M9 4v16"/></svg></div>
+        <div class="fila">
           <h3>AutoCAD</h3>
-          <p>Planos 2D por capas: plantas, alzados y secciones, editados con instrucciones normales.</p>
+          <div class="cuerpo"><span>Plantas, alzados y secciones por capas, y órdenes como «organízame las capas de este dibujo».</span><small>2004 en adelante, versión completa (no LT). Se conecta solo si está abierto.</small></div>
         </div>
-        <div class="tarjeta">
-          <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path pathLength="1" d="M4 17 12 4l8 13"/><path pathLength="1" d="M4 17h16M8 17l4-7 4 7"/></svg></div>
+        <div class="fila">
           <h3>SketchUp</h3>
-          <p>Modela volúmenes con la misma naturalidad con la que se lo pedirías a un compañero.</p>
+          <div class="cuerpo"><span>Volúmenes modelados como se lo pedirías a un compañero de mesa.</span><small>2014 en adelante. La extensión se instala y se inicia sola.</small></div>
         </div>
-        <div class="tarjeta">
-          <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path pathLength="1" d="M4 21V10l8-6 8 6v11"/><path pathLength="1" d="M4 14h16M11 21v-5h2v5"/></svg></div>
+        <div class="fila">
           <h3>Revit</h3>
-          <p>Elementos BIM nativos — niveles, muros, suelos, familias — nunca geometría suelta.</p>
+          <div class="cuerpo"><span>Elementos BIM de verdad (niveles, muros, suelos, familias), nunca geometría suelta que luego haya que rehacer.</span><small>2014 en adelante con pyRevit 4.8 o superior, que es gratuito.</small></div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="como-funciona">
+  <section id="planos" class="banda">
+    <div class="envoltura plano-grid">
+      <div class="txt">
+        <h2>Del plano al modelo, con las cuentas hechas.</h2>
+        <p>Adjuntas el dibujo y dices qué quieres: «hazme esta casa en 3D en Blender» o «pásame este plano a AutoCAD». Medir y comprobar lo hace antes de enseñarte nada.</p>
+        <ul>
+          <li>Mide los muros sobre el dibujo y calibra con las cotas.</li>
+          <li>Comprueba la superficie de cada estancia contra la del plano.</li>
+          <li>Te enseña una imagen de control con la reconstrucción sobre el original.</li>
+        </ul>
+      </div>
+      <figure class="hoja" style="margin:0">
+        <svg class="dibuja" id="dibujoPlano" viewBox="0 0 480 300" role="img" aria-label="Plano de una vivienda con sus muros, una puerta y una ventana, y encima la reconstrucción de BuildAI en índigo">
+          <!-- Plano original: muros con grosor, en gris -->
+          <g>
+            <rect class="trazo muro" pathLength="1" x="40" y="30" width="400" height="220"/>
+            <line class="trazo muro" pathLength="1" x1="250" y1="30" x2="250" y2="250"/>
+            <line class="trazo muro" pathLength="1" x1="250" y1="150" x2="440" y2="150"/>
+            <path class="trazo fino" pathLength="1" d="M250 205 A45 45 0 0 1 295 250"/>
+            <line class="trazo fino" pathLength="1" x1="90" y1="30" x2="170" y2="30" style="stroke-width:6"/>
+            <line class="trazo fino" pathLength="1" x1="40" y1="272" x2="440" y2="272"/>
+            <line class="trazo fino" pathLength="1" x1="40" y1="266" x2="40" y2="278"/>
+            <line class="trazo fino" pathLength="1" x1="440" y1="266" x2="440" y2="278"/>
+          </g>
+          <text class="cota" x="240" y="292" text-anchor="middle">10,00 m</text>
+          <text class="cota" x="145" y="145" text-anchor="middle">Salón · 34,8 m²</text>
+          <text class="cota" x="345" y="95" text-anchor="middle">Dorm. · 17,2 m²</text>
+          <text class="cota" x="345" y="205" text-anchor="middle">Cocina · 15,6 m²</text>
+          <!-- Reconstrucción: sobre el original, en índigo -->
+          <g>
+            <rect class="trazo rec" pathLength="1" x="40" y="30" width="400" height="220"/>
+            <line class="trazo rec" pathLength="1" x1="250" y1="30" x2="250" y2="250"/>
+            <line class="trazo rec" pathLength="1" x1="250" y1="150" x2="440" y2="150"/>
+          </g>
+        </svg>
+        <figcaption><span>Muros del plano en gris; ejes reconstruidos en índigo.</span><span>Ejemplo ilustrativo</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="ia" class="banda">
     <div class="envoltura">
-      <div class="titulo-fila reveal"><h2>De la descarga al primer plano</h2><span class="linea"></span></div>
-      <p class="intro">Cuatro pasos, unos cinco minutos.</p>
-      <div class="pasos reveal">
-        <div class="paso"><span class="num">01 — INSTALAR</span><h3>Ejecuta el instalador</h3><p>Sin Python, sin permisos de administrador. Queda en tu menú Inicio.</p></div>
-        <div class="paso"><span class="num">02 — CONFIGURAR</span><h3>Elige tu proveedor de IA</h3><p>OpenRouter gratis, Ollama local, Claude, GPT o Gemini — pega tu clave en Ajustes.</p></div>
-        <div class="paso"><span class="num">03 — CONECTAR</span><h3>Abre tu programa</h3><p>Blender, AutoCAD, SketchUp o Revit: BuildAI los detecta solo.</p></div>
-        <div class="paso"><span class="num">04 — TRABAJAR</span><h3>Pide tu proyecto</h3><p>Escribe lo que necesitas o pulsa una tarea rápida de la barra lateral.</p></div>
+      <div class="mod">
+        <h2>Funciona el primer día, sin registrarte</h2>
+        <div class="txt">
+          <p><strong>No hay nada que configurar.</strong> BuildAI trae su propia IA, que corre en tu ordenador: gratis, sin cuenta, sin clave y sin límites. El instalador la deja lista (descarga el modelo, de 2,7 GB, una sola vez).</p>
+          <p>Es un modelo ligero. Cuando el proyecto crezca o quieras más rapidez, cambias en Ajustes a OpenRouter, Ollama, Claude, GPT o Gemini.</p>
+        </div>
+      </div>
+      <div class="mod">
+        <h2>Tus planos se quedan en casa</h2>
+        <div class="txt">
+          <p>La aplicación y sus puentes escuchan solo en <strong>127.0.0.1</strong>. Las conversaciones y las claves se guardan en tu carpeta de usuario. Solo si eliges un proveedor en la nube se envían los mensajes del chat a ese proveedor.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <div class="franja-privacidad">
-    <div class="envoltura reveal">
-      <div class="glifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
-      <div>
-        <h3>Todo corre en tu ordenador</h3>
-        <p>BuildAI y sus puentes a Blender, AutoCAD, SketchUp y Revit escuchan solo en 127.0.0.1. Tus archivos y modelos no salen de tu equipo — únicamente se envían los mensajes de chat al proveedor de IA que elijas.</p>
-      </div>
-    </div>
-  </div>
-
-  <section id="terminal">
+  <section id="empezar" class="banda">
     <div class="envoltura">
-      <div class="titulo-fila reveal"><h2>¿Prefieres la terminal?</h2><span class="linea"></span></div>
-      <p class="intro">BuildAI también se instala como paquete de Python, sin descargar nada a mano.</p>
-      <div class="terminal-caja reveal">
-        <div class="terminal-tabs">
-          <button class="terminal-tab activa" data-tab="pipx">pipx</button>
-          <button class="terminal-tab" data-tab="uv">uv</button>
-          <button class="terminal-tab" data-tab="pip">pip</button>
-          <span class="indicador-tab" id="indicadorTab"></span>
+      <div class="cabecera">
+        <h2>De la descarga al primer encargo.</h2>
+        <p>Unos cinco minutos, la primera vez.</p>
+      </div>
+      <ol class="pasos">
+        <li><h3>Instálalo</h3><p>Dos clics, sin Python y sin permisos de administrador. Queda en tu menú Inicio, con su desinstalador, como cualquier otro programa.</p></li>
+        <li><h3>Ábrelo junto a tu programa</h3><p>Abre Blender, AutoCAD, SketchUp o Revit. BuildAI prepara el puente y, cuando el punto se pone verde, ya está escuchando.</p></li>
+        <li><h3>Pídele algo</h3><p>Escribe lo que necesitas o pulsa una tarea rápida de la barra lateral. No hace falta ser exacto: puedes ir afinando sobre la marcha.</p></li>
+        <li><h3>Recíbelo</h3><p>Ves en directo qué hace la IA dentro del programa, y el resultado llega a la misma conversación: modelo, render o archivo exportado.</p></li>
+      </ol>
+
+      <div style="height:var(--e8)"></div>
+      <div class="cabecera simple">
+        <h2>¿Prefieres la terminal?</h2>
+        <p>También se instala como paquete de Python. La guía completa está en la <a href="docs.html" style="color:var(--acento)">documentación</a>.</p>
+      </div>
+      <div class="terminal">
+        <div class="tabs" role="tablist" aria-label="Gestor de paquetes">
+          <button class="tab" role="tab" id="t-pipx" aria-controls="p-pipx" aria-selected="true">pipx</button>
+          <button class="tab" role="tab" id="t-uv" aria-controls="p-uv" aria-selected="false" tabindex="-1">uv</button>
+          <button class="tab" role="tab" id="t-pip" aria-controls="p-pip" aria-selected="false" tabindex="-1">pip</button>
         </div>
-        <div class="terminal-cuerpo">
-          <pre class="codigo activa" data-tab="pipx"><button class="btn-copiar">Copiar</button><span class="com"># instala en un entorno aislado, como npx/npm -g</span>
+        <div class="panel-term" role="tabpanel" id="p-pipx" aria-labelledby="t-pipx">
+          <button class="copiar" type="button">Copiar</button>
+          <pre><span class="com"># entorno aislado, como npm -g</span>
 <span class="cmd">pipx</span> install git+https://github.com/Jmyukopila/Build-AI.git
-<span class="cmd">buildai-instalar</span>   <span class="com"># puentes + acceso directo</span>
-<span class="cmd">buildai</span>            <span class="com"># arranca la ventana de la app</span></pre>
-          <pre class="codigo" data-tab="uv"><button class="btn-copiar">Copiar</button><span class="com"># equivalente a "npx", sin instalar nada de forma permanente</span>
+<span class="cmd">buildai-instalar</span>   <span class="com"># puentes y acceso directo</span>
+<span class="cmd">buildai</span>            <span class="com"># abre la ventana</span></pre>
+        </div>
+        <div class="panel-term" role="tabpanel" id="p-uv" aria-labelledby="t-uv" hidden>
+          <button class="copiar" type="button">Copiar</button>
+          <pre><span class="com"># sin instalar nada de forma permanente</span>
 <span class="cmd">uvx</span> --from git+https://github.com/Jmyukopila/Build-AI.git buildai</pre>
-          <pre class="codigo" data-tab="pip"><button class="btn-copiar">Copiar</button><span class="com"># dentro de un entorno virtual (recomendado)</span>
+        </div>
+        <div class="panel-term" role="tabpanel" id="p-pip" aria-labelledby="t-pip" hidden>
+          <button class="copiar" type="button">Copiar</button>
+          <pre><span class="com"># dentro de un entorno virtual (recomendado)</span>
 <span class="cmd">python</span> -m venv %USERPROFILE%\buildai-env
 %USERPROFILE%\buildai-env\Scripts\activate
 <span class="cmd">pip</span> install git+https://github.com/Jmyukopila/Build-AI.git
 <span class="cmd">buildai-instalar</span>
 <span class="cmd">buildai</span></pre>
         </div>
+        <span class="sr" role="status" id="aviso-copia"></span>
       </div>
     </div>
   </section>
 
-  <section class="cta-final">
+  <section class="cierre banda">
     <div class="envoltura">
-      <h2>Empieza tu próximo proyecto hablando</h2>
-      <p>Gratis, de código abierto, y sin que tus archivos salgan de tu ordenador.</p>
-      <a class="btn-descarga" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <g class="flecha"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/></g>
-          <path d="M5 21h14"/>
-        </svg>
-        Descargar BuildAI
+      <img class="sello" src="assets/marca.svg" alt="" width="88" height="88">
+      <h2>Tu próximo proyecto empieza con una frase.</h2>
+      <p>Gratis, de código abierto y en tu ordenador.</p>
+      <a class="btn grande" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="flecha"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/></g><path d="M5 21h14"/></svg>
+        Descargar para Windows
       </a>
+      <p class="nota">Windows 10 y 11 · la versión más reciente está en <a href="https://github.com/Jmyukopila/Build-AI/releases" target="_blank" rel="noopener">Versiones</a></p>
     </div>
   </section>
 </main>
 
 <footer>
   <div class="envoltura">
-    <span class="marca-pie">BUILDAI · SHEET 1/1 · 2026</span>
-    <div class="enlaces-pie">
-      <a href="https://github.com/Jmyukopila/Build-AI" target="_blank" rel="noopener">GitHub</a>
+    <span>BuildAI · 2026</span>
+    <nav aria-label="Enlaces del proyecto">
+      <a href="docs.html">Documentación</a>
       <a href="https://github.com/Jmyukopila/Build-AI/releases" target="_blank" rel="noopener">Versiones</a>
       <a href="https://github.com/Jmyukopila/Build-AI/issues" target="_blank" rel="noopener">Reportar un problema</a>
-    </div>
+    </nav>
   </div>
 </footer>
 
+<script src="fondo.js" defer></script>
 <script>
-  // ---- pestañas de instalación por terminal, con indicador deslizante ----
-  var tabs = document.querySelectorAll(".terminal-tab");
-  var indicador = document.getElementById("indicadorTab");
-  function moverIndicador(tab){
-    if(!indicador) return;
-    indicador.style.left = tab.offsetLeft + "px";
-    indicador.style.width = tab.offsetWidth + "px";
+(() => {
+  const reducido = matchMedia("(prefers-reduced-motion: reduce)");
+  const oscuro = matchMedia("(prefers-color-scheme: dark)");
+
+  /* ══ La figura: una parcela que cambia de forma según lo que cuenta cada capítulo ═══
+     Cada forma es una lista de volúmenes [x, y0, z, ancho, alto, fondo, cumbrera, material]:
+     x y z = centro en planta, y0 = base, cumbrera > 0 convierte la caja en cubierta a dos aguas.
+     Materiales: 0 claro, 1 índigo (lo importante), 2 suelo, 3 cristal.
+     Entre dos formas se interpolan las medidas; lo que no hace falta nace de tamaño cero.
+     El último volumen de cada lista es siempre el suelo de la parcela, para que el cambio sea continuo. */
+  const K = 20;
+  const NADA = [0, 1, 0, 0, 0, 0, 0, 0];
+  const SUELO = [0, -.12, 0, 4.4, .12, 3.4, 0, 2];
+  // Rellena hasta K volúmenes dejando el suelo en el último hueco.
+  const forma = (lista, conSuelo = true) => {
+    const l = lista.slice();
+    while (l.length < K - 1) l.push(NADA);
+    l.push(conSuelo ? SUELO : NADA);
+    return l;
+  };
+  // Dos hojas de ventana separadas por un montante, a ras de un muro de fachada (z = cara del muro).
+  const ventana = (cx, y0, zc, alto = .5) => [[cx - .15, y0, zc, .25, alto, .06, 0, 3], [cx + .15, y0, zc, .25, alto, .06, 0, 3]];
+
+  // La casa pedida: muros índigo, cubierta a dos aguas con alero, garaje con losa, chimenea, ventanas, puerta y porche.
+  const CASA = [
+    [-.55, 0, 0, 2.7, 1.1, 2, 0, 1],            // muros
+    [-.55, 1.1, 0, 3, .07, 2.36, .85, 0],       // cubierta a dos aguas
+    [1.3, 0, .2, 1.1, .8, 1.4, 0, 0],           // garaje
+    [1.3, .8, .2, 1.26, .07, 1.56, 0, 1],       // losa del garaje
+    [-1.15, 1.3, -.3, .3, .9, .3, 0, 0],        // chimenea
+    [-1.15, 2.2, -.3, .4, .06, .4, 0, 0],       // remate de la chimenea
+    ...ventana(-1.4, .4, 1.03), ...ventana(-.5, .4, 1.03),
+    [.35, 0, 1.03, .46, .85, .06, 0, 0],        // puerta
+    [.35, 0, 1.2, .9, .07, .45, 0, 0],          // porche
+    [1.3, 0, .93, .84, .55, .06, 0, 3],         // puerta del garaje
+  ];
+  // La parcela cerrada: muro perimetral con la entrada abierta y un camino hasta el porche.
+  const VALLA = [
+    [0, 0, -1.58, 4.2, .5, .12, 0, 0], [-2.1, 0, 0, .12, .5, 3.1, 0, 0], [2.1, 0, 0, .12, .5, 3.1, 0, 0],
+    [-1.125, 0, 1.58, 1.95, .5, .12, 0, 0], [1.475, 0, 1.58, 1.25, .5, .12, 0, 0], [.35, 0, 1.68, .5, .03, .5, 0, 0],
+  ];
+  const FORMAS = [
+    // 0 · la idea: un cubo sin más, todavía sin forma de nada (el suelo nace después)
+    forma([[0, 0, 0, 2, 2, 2, 0, 1]], false),
+    // 1 · «casa de una planta con cubierta a dos aguas»: la casa pedida, con sus huecos y su cubierta
+    forma(CASA),
+    // 2 · se levanta planta a planta: núcleo, forjados, pilares y cerramientos de cristal
+    forma([
+      [0, 0, 0, .9, 2.94, .9, 0, 1],
+      [0, 0, 0, 3, .14, 2.2, 0, 0], [0, 1.4, 0, 3, .14, 2.2, 0, 0], [0, 2.8, 0, 3.2, .12, 2.4, 0, 0],
+      [-.95, .14, 1, .9, 1.1, .05, 0, 3], [.95, .14, 1, .9, 1.1, .05, 0, 3],
+      [-.95, 1.54, 1, .9, 1.1, .05, 0, 3], [.95, 1.54, 1, .9, 1.1, .05, 0, 3],
+      [-1.4, .14, .95, .12, 2.66, .12, 0, 0], [1.4, .14, .95, .12, 2.66, .12, 0, 0],
+      [-1.4, .14, -.95, .12, 2.66, .12, 0, 0], [1.4, .14, -.95, .12, 2.66, .12, 0, 0],
+    ]),
+    // 3 · el plano hecho modelo: muros con sus huecos, ventanas, tabiques y mobiliario
+    forma([
+      [.3, 0, 0, .16, .5, 2.04, 0, 1],                                         // tabique principal
+      [1.035, 0, .1, 1.33, .5, .16, 0, 0],                                     // tabique del baño
+      [-1.19, 0, -1.1, 1.18, .5, .16, 0, 0], [1.04, 0, -1.1, 1.48, .5, .16, 0, 0], [-.15, .12, -1.1, .9, .3, .06, 0, 3],
+      [-.99, 0, 1.1, 1.58, .5, .16, 0, 0], [1.14, 0, 1.1, 1.28, .5, .16, 0, 0],     // fachada con hueco de puerta
+      [-1.7, 0, -.65, .16, .5, .9, 0, 0], [-1.7, 0, .75, .16, .5, .7, 0, 0], [-1.7, .12, .1, .06, .3, .6, 0, 3],
+      [1.7, 0, 0, .16, .5, 2.36, 0, 0],
+      [-1, 0, .5, 1.1, .22, .45, 0, 0], [-.9, 0, -.3, .6, .14, .4, 0, 0],            // sofá y mesa
+      [1.05, 0, -.5, .9, .16, 1, 0, 0], [1, 0, .85, 1.1, .3, .3, 0, 0],              // cama y cocina
+    ]),
+    // 4 · tu casa, en tu parcela cerrada: nada sale de ahí
+    forma([...CASA, ...VALLA]),
+  ];
+  // Cámara por forma: giro, elevación, escala y altura del punto que se mira.
+  const CAMARAS = [
+    { giro: 35,  elev: 27, escala: 1.15, mira: 1 },
+    { giro: -30, elev: 24, escala: 1.0,  mira: .6 },
+    { giro: 28,  elev: 20, escala: .78,  mira: 1.4 },
+    { giro: -18, elev: 56, escala: 1.0,  mira: .2 },
+    { giro: 32,  elev: 30, escala: 1.0,  mira: .5 },
+  ];
+  // Tonos por tema: [cara iluminada, cara en sombra] para el material neutro y el índigo; trazo de arista.
+  const PALETAS = {
+    claro:  { neutro: ["#FBFBF9", "#C3C9BE"], suelo: ["#E3E6DE", "#BCC2B6"], cristal: ["#7B8CA0", "#46556A"], acento: ["#6E5FE6", "#3D3396"], arista: "rgba(26,31,27,.62)" },
+    oscuro: { neutro: ["#DADED6", "#59605A"], suelo: ["#2E3330", "#222624"], cristal: ["#4F6178", "#1B2430"], acento: ["#9A8DFA", "#4B3FB0"], arista: "rgba(233,236,229,.6)" },
+  };
+  const LUZ = (() => { const v = [-.45, .85, .55], n = Math.hypot(...v); return v.map(c => c / n); })();
+
+  const escena = document.getElementById("escena");
+  const lienzo = document.getElementById("figura");
+  const ctx = lienzo.getContext("2d");
+  const caps = [...document.querySelectorAll(".cap")];
+  const tramos = [...document.querySelectorAll(".progreso i")];
+  const ULTIMO = FORMAS.length - 1;
+
+  let ancho = 0, alto = 0, dpr = 1;
+  let tope = 0, topeObjetivo = 0;     // borde inferior del capítulo activo: la figura vive debajo
+  let objetivo = 0, actual = 0;        // progreso 0..4: el que pide el scroll y el que se dibuja
+  let puntero = { x: 0, y: 0 }, punteroSuave = { x: 0, y: 0 };
+  let pendiente = false;
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const suave = (t) => t * t * (3 - 2 * t);
+  // La forma se mantiene quieta en cada extremo del tramo y cambia en el centro, para que se lea antes de moverse.
+  const tramoT = (f) => suave(Math.min(1, Math.max(0, (f - .22) / .56)));
+
+  function medir() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    const r = lienzo.getBoundingClientRect();
+    ancho = r.width; alto = r.height;
+    lienzo.width = Math.round(ancho * dpr);
+    lienzo.height = Math.round(alto * dpr);
   }
-  tabs.forEach(function(tab){
-    tab.addEventListener("click", function(){
-      var grupo = tab.dataset.tab;
-      tabs.forEach(function(t){ t.classList.toggle("activa", t === tab); });
-      document.querySelectorAll("pre.codigo").forEach(function(p){ p.classList.toggle("activa", p.dataset.tab === grupo); });
-      moverIndicador(tab);
+
+  function leerScroll() {
+    const r = escena.getBoundingClientRect();
+    const recorrido = escena.offsetHeight - window.innerHeight;
+    const avance = Math.min(1, Math.max(0, -r.top / Math.max(1, recorrido)));
+    objetivo = avance * ULTIMO;
+  }
+
+  // Interpola cámara y cajas entre las dos formas vecinas de `p`.
+  function estadoEn(p) {
+    const i = Math.min(ULTIMO - 1, Math.floor(p));
+    const t = tramoT(p - i);
+    const a = CAMARAS[i], b = CAMARAS[i + 1];
+    const cam = { giro: lerp(a.giro, b.giro, t), elev: lerp(a.elev, b.elev, t), escala: lerp(a.escala, b.escala, t), mira: lerp(a.mira, b.mira, t) };
+    const cajas = FORMAS[i].map((c, k) => {
+      const sig = FORMAS[i + 1][k];
+      const m = c.map((v, j) => j < 7 ? lerp(v, sig[j], t) : v);
+      m[7] = t < .5 ? c[7] : sig[7];                    // el material no se mezcla: cambia a mitad del tramo
+      return m;
+    });
+    return { cam, cajas };
+  }
+
+  function dibujar() {
+    const paleta = oscuro.matches ? PALETAS.oscuro : PALETAS.claro;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, ancho, alto);
+    const { cam, cajas } = estadoEn(actual);
+
+    // Un leve parallax con el puntero da profundidad; con movimiento reducido no se aplica.
+    const giro = (cam.giro + punteroSuave.x * 9) * Math.PI / 180;
+    const elev = Math.min(88, Math.max(0, cam.elev - punteroSuave.y * 4)) * Math.PI / 180;
+    const cg = Math.cos(giro), sg = Math.sin(giro), ce = Math.cos(elev), se = Math.sin(elev);
+    const abajo = alto - 44;                       // deja sitio a las marcas de progreso
+    const libre = Math.max(120, abajo - tope);
+    const u = Math.min(ancho / 5.6, libre / 3.8) * cam.escala;
+    const ox = ancho / 2, oy = tope + libre / 2;
+
+    // Gira un punto del mundo a coordenadas de cámara: x a la derecha, y arriba, z hacia quien mira.
+    const girar = (x, y, z) => {
+      const x1 = x * cg + z * sg, z1 = -x * sg + z * cg;
+      return [x1, y * ce - z1 * se, y * se + z1 * ce];
+    };
+    const pantalla = (x, y, z) => { const [px, py] = girar(x, y - cam.mira, z); return [ox + px * u, oy - py * u]; };
+
+    // Caras de una caja: normal y cuatro esquinas.
+    const dibujables = [];
+    cajas.forEach((c, k) => {
+      const [x, y0, z, w, h, d, r, mat] = c;
+      if (w < .03 || h < .03 || d < .03) return;       // aún no ha nacido
+      const x0 = x - w / 2, x1 = x + w / 2, z0 = z - d / 2, z1 = z + d / 2, y1 = y0 + h;
+      const caras = [
+        { n: [0, 0, 1],  p: [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]] },
+        { n: [0, 0, -1], p: [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]] },
+      ];
+      if (r > .005) {
+        // Cubierta a dos aguas con la cumbrera a lo largo de x: dos faldones y dos hastiales.
+        const yc = y1 + r, ln = Math.hypot(d / 2, r), ny = d / 2 / ln, nz = r / ln;
+        caras.push(
+          { n: [0, ny, nz],  p: [[x0, y1, z1], [x1, y1, z1], [x1, yc, z], [x0, yc, z]] },
+          { n: [0, ny, -nz], p: [[x0, y1, z0], [x1, y1, z0], [x1, yc, z], [x0, yc, z]] },
+          { n: [1, 0, 0],    p: [[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, yc, z], [x1, y1, z0]] },
+          { n: [-1, 0, 0],   p: [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, yc, z], [x0, y1, z0]] });
+      } else {
+        caras.push(
+          { n: [0, 1, 0],  p: [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]] },
+          { n: [1, 0, 0],  p: [[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]] },
+          { n: [-1, 0, 0], p: [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]] });
+      }
+      const centro = girar(x, y0 + h / 2 - cam.mira, z);
+      dibujables.push({ k, mat, caras, profundidad: k === K - 1 ? -1e9 : centro[2] });   // el suelo siempre va al fondo
+    });
+    dibujables.sort((a, b) => a.profundidad - b.profundidad);   // de lejos a cerca
+
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 1.25;
+    for (const caja of dibujables) {
+      const tono = [paleta.neutro, paleta.acento, paleta.suelo, paleta.cristal][caja.mat] || paleta.neutro;
+      for (const cara of caja.caras) {
+        // Visible si su normal, ya girada, apunta hacia la cámara.
+        const [nx, ny, nz] = cara.n;
+        const nz1 = -nx * sg + nz * cg, ny1 = ny;
+        if (ny1 * se + nz1 * ce <= .02) continue;
+        const brillo = Math.max(0, nx * LUZ[0] + ny * LUZ[1] + nz * LUZ[2]);
+        ctx.fillStyle = mezcla(tono[1], tono[0], Math.min(1, .15 + brillo));
+        ctx.beginPath();
+        cara.p.forEach(([px, py, pz], j) => { const [sx, sy] = pantalla(px, py, pz); j ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); });
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = paleta.arista;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Mezcla lineal entre dos colores #rrggbb.
+  function mezcla(a, b, t) {
+    const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+    const c = (s) => Math.round(lerp((pa >> s) & 255, (pb >> s) & 255, t));
+    return `rgb(${c(16)},${c(8)},${c(0)})`;
+  }
+
+  function medirTope() {
+    const cap = caps[Math.round(objetivo)];
+    topeObjetivo = cap.parentElement.offsetTop + cap.offsetTop + cap.offsetHeight + 8;
+  }
+
+  function actualizarTextos() {
+    const activo = Math.round(objetivo);
+    medirTope();
+    caps.forEach((c, i) => {
+      const es = i === activo;
+      c.classList.toggle("activo", es);
+      c.inert = !es;
+    });
+    tramos.forEach((t, i) => t.style.setProperty("--llena", Math.min(1, Math.max(0, objetivo - i + 1))));
+  }
+
+  // Un solo bucle que solo corre mientras algo se mueve: la figura persigue al scroll con un poco de inercia.
+  function fotograma() {
+    pendiente = false;
+    const factor = reducido.matches ? 1 : .14;
+    actual += (objetivo - actual) * factor;
+    punteroSuave.x += (puntero.x - punteroSuave.x) * .08;
+    punteroSuave.y += (puntero.y - punteroSuave.y) * .08;
+    tope += (topeObjetivo - tope) * (reducido.matches ? 1 : .12);
+    const quieto = Math.abs(topeObjetivo - tope) < .5 && Math.abs(objetivo - actual) < .0008 && Math.abs(puntero.x - punteroSuave.x) < .002 && Math.abs(puntero.y - punteroSuave.y) < .002;
+    if (quieto) { actual = objetivo; tope = topeObjetivo; punteroSuave.x = puntero.x; punteroSuave.y = puntero.y; }
+    dibujar();
+    if (!quieto) pedir();
+  }
+  function pedir() { if (!pendiente) { pendiente = true; requestAnimationFrame(fotograma); } }
+
+  function alScroll() { leerScroll(); actualizarTextos(); pedir(); }
+
+  if (lienzo && ctx) {
+    medir(); leerScroll(); actual = objetivo; actualizarTextos(); tope = topeObjetivo; dibujar();
+    addEventListener("scroll", alScroll, { passive: true });
+    addEventListener("resize", () => { medir(); alScroll(); tope = topeObjetivo; });
+    oscuro.addEventListener("change", pedir);
+    reducido.addEventListener("change", pedir);
+    escena.addEventListener("pointermove", (e) => {
+      if (reducido.matches) return;
+      puntero.x = (e.clientX / innerWidth - .5) * 2;
+      puntero.y = (e.clientY / innerHeight - .5) * 2;
+      pedir();
+    });
+    // Las fuentes pueden cambiar la altura del texto y con ella el lienzo.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { medir(); medirTope(); tope = topeObjetivo; pedir(); });
+  }
+
+  /* ══ Plano: se dibuja al entrar en pantalla ═══════════════════════════ */
+  const plano = document.getElementById("dibujoPlano");
+  if (plano && "IntersectionObserver" in window) {
+    new IntersectionObserver((es, ob) => {
+      if (es.some(e => e.isIntersecting)) { plano.classList.add("listo"); ob.disconnect(); }
+    }, { threshold: .4 }).observe(plano);
+  } else if (plano) plano.classList.add("listo");
+
+  /* ══ Terminal: pestañas con teclado y copiar ══════════════════════════ */
+  const pestanas = [...document.querySelectorAll(".tab")];
+  function elegir(tab, enfocar) {
+    pestanas.forEach(t => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", on);
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+    if (enfocar) tab.focus();
+  }
+  pestanas.forEach((t, i) => {
+    t.addEventListener("click", () => elegir(t));
+    t.addEventListener("keydown", (e) => {
+      const paso = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (e.key === "Home") { e.preventDefault(); elegir(pestanas[0], true); }
+      else if (e.key === "End") { e.preventDefault(); elegir(pestanas[pestanas.length - 1], true); }
+      else if (paso) { e.preventDefault(); elegir(pestanas[(i + paso + pestanas.length) % pestanas.length], true); }
     });
   });
-  window.addEventListener("load", function(){
-    var activa = document.querySelector(".terminal-tab.activa");
-    if(activa) moverIndicador(activa);
-  });
-  window.addEventListener("resize", function(){
-    var activa = document.querySelector(".terminal-tab.activa");
-    if(activa) moverIndicador(activa);
-  });
-
-  // ---- copiar comandos ----
-  document.querySelectorAll(".btn-copiar").forEach(function(btn){
-    btn.addEventListener("click", function(){
-      var texto = btn.parentElement.innerText.replace(/^Copiar\n?/, "");
-      navigator.clipboard.writeText(texto).then(function(){
-        var original = btn.textContent;
-        btn.textContent = "¡Copiado!";
-        btn.classList.add("copiado");
-        setTimeout(function(){ btn.textContent = original; btn.classList.remove("copiado"); }, 1500);
-      });
-    });
-  });
-
-  // ---- retícula CAD que sigue al cursor sobre la hoja ----
-  var hoja = document.getElementById("hoja");
-  var coordLectura = document.getElementById("coordLectura");
-  var rafPendiente = false, ultimoEvento = null;
-  function actualizarReticula(){
-    rafPendiente = false;
-    if(!ultimoEvento) return;
-    var r = hoja.getBoundingClientRect();
-    var x = ultimoEvento.clientX - r.left, y = ultimoEvento.clientY - r.top;
-    hoja.style.setProperty("--mx", x + "px");
-    hoja.style.setProperty("--my", y + "px");
-    coordLectura.textContent = "X " + (x / 40).toFixed(1) + "m   Y " + (y / 40).toFixed(1) + "m";
-  }
-  if(hoja && window.matchMedia("(pointer:fine)").matches){
-    hoja.addEventListener("mouseenter", function(){ hoja.classList.add("activa"); });
-    hoja.addEventListener("mouseleave", function(){ hoja.classList.remove("activa"); });
-    hoja.addEventListener("mousemove", function(e){
-      ultimoEvento = e;
-      if(!rafPendiente){ rafPendiente = true; requestAnimationFrame(actualizarReticula); }
-    });
-  }
-
-  // ---- sombra de la barra de navegación al hacer scroll ----
-  var nav = document.querySelector("header.nav");
-  window.addEventListener("scroll", function(){
-    nav.classList.toggle("con-sombra", window.scrollY > 8);
-  }, { passive: true });
-
-  // ---- revelado de secciones al hacer scroll ----
-  var prefiereMenosMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var elementosRevelados = document.querySelectorAll(".reveal");
-  if("IntersectionObserver" in window && !prefiereMenosMovimiento){
-    var observador = new IntersectionObserver(function(entradas){
-      entradas.forEach(function(entrada){
-        if(entrada.isIntersecting){
-          entrada.target.classList.add("visible");
-          observador.unobserve(entrada.target);
-        }
-      });
-    }, { threshold: 0.2, rootMargin: "0px 0px -60px 0px" });
-    elementosRevelados.forEach(function(el){ observador.observe(el); });
-  } else {
-    elementosRevelados.forEach(function(el){ el.classList.add("visible"); });
-  }
+  const aviso = document.getElementById("aviso-copia");
+  document.querySelectorAll(".copiar").forEach(b => b.addEventListener("click", async () => {
+    const texto = b.parentElement.querySelector("pre").innerText;
+    try {
+      await navigator.clipboard.writeText(texto);
+      b.textContent = "Copiado"; aviso.textContent = "Comandos copiados al portapapeles";
+    } catch (_) {
+      b.textContent = "Selecciona y copia"; aviso.textContent = "No se pudo copiar automáticamente";
+    }
+    setTimeout(() => { b.textContent = "Copiar"; aviso.textContent = ""; }, 1800);
+  }));
+})();
 </script>
 </body>
 </html>

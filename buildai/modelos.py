@@ -27,10 +27,12 @@ _RESPALDO_OPENROUTER = [
 ]
 
 _ESTATICOS = {
-    "gemini": ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash",
-               "gemini-3.5-flash-lite", "gemini-3.1-pro"],
-    "anthropic": ["claude-opus-5", "claude-sonnet-5", "claude-fable-5",
-                  "claude-haiku-4-5-20251001"],
+    # Ids comprobados el 2026-11-21 (Gemini contra el catálogo público que
+    # replica OpenRouter; Claude contra la referencia oficial de modelos).
+    "gemini": ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash",
+               "gemini-3.5-flash-lite", "gemini-3.1-pro-preview"],
+    "anthropic": ["claude-opus-5-5", "claude-sonnet-5-5", "claude-fable-5-2",
+                  "claude-haiku-5-5", "claude-opus-5", "claude-sonnet-5"],
     "openai": ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "gpt-5.2"],
 }
 
@@ -116,6 +118,7 @@ def _openrouter_gratuitos() -> dict:
         modelos.append({
             "id": m["id"],
             "nombre": f"{nombre} · {' · '.join(detalles)}" if detalles else nombre,
+            "ve_imagenes": ve_imagenes,
         })
     return {
         "disponible": True,
@@ -219,3 +222,27 @@ def listar(proveedor: str) -> dict:
     ttl = 5 if proveedor == "ollama" else _CACHE_SEGUNDOS
     _cache[proveedor] = (ahora - (_CACHE_SEGUNDOS - ttl), resultado)
     return resultado
+
+
+def es_gratuito(proveedor: str, modelo: str) -> bool:
+    if proveedor == "openrouter":
+        return modelo.endswith(":free")
+    if proveedor == "opencode":
+        return _es_gratis_zen(modelo)
+    return False
+
+
+def alternativas_gratuitas(proveedor: str, modelo: str, con_imagenes: bool = False, maximo: int = 3) -> list:
+    """Otros modelos GRATUITOS con herramientas a los que pasar si `modelo` se satura.
+
+    Nunca ofrece modelos de pago (cambiar a uno costaría dinero sin preguntar).
+    Si la conversación lleva imágenes, primero los que las ven. El orden del
+    catálogo (más contexto primero) decide el resto.
+    """
+    if not es_gratuito(proveedor, modelo):
+        return []
+    candidatos = [m for m in listar(proveedor).get("modelos", [])
+                  if m["id"] != modelo and es_gratuito(proveedor, m["id"])]
+    if con_imagenes:
+        candidatos.sort(key=lambda m: not m.get("ve_imagenes", False))
+    return [m["id"] for m in candidatos[:maximo]]

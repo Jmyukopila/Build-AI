@@ -22,7 +22,8 @@ funciones (unidades en metros, eje Z hacia arriba, puntos (x, y) en planta):
 
 - muro(inicio, fin, alto=2.7, espesor=0.2, nivel=0.0, huecos=None, material="blanco", capa=None)
   Muro recto entre dos puntos (x, y). `nivel` es la cota de su base. Cada hueco es
-  {"tipo": "ventana"|"puerta"|"ventanal"|"paso", "a": distancia desde el inicio, "ancho": m}
+  {"tipo": "ventana"|"puerta"|"ventanal"|"paso", "a": distancia del inicio del muro al BORDE del
+  hueco (no a su centro; centrado → a = (largo - ancho) / 2), "ancho": m}
   (opcionales "alto" y "antepecho"); ventanas y puertas añaden solas marco, cristal u hoja.
 - ventanal(inicio, fin, alto=2.5, nivel=0.0, division=1.2, capa=None)
   Muro cortina de vidrio de suelo a techo con montantes (fachadas modernas).
@@ -57,6 +58,12 @@ FOTORREALISMO Y RENDER — así se consiguen imágenes de nivel profesional:
   "amanecer", "dia", "tarde", "atardecer" (hora dorada/azul: LA más fotogénica con las luces
   interiores encendidas), "anochecer", "noche". Sustituye al cielo anterior sin duplicar.
 - sol(elevacion=35, azimut=200, fuerza=3.0) — alternativa rápida con cielo plano.
+- RECURSOS REALES (búscalos con recursos_buscar y descárgalos con recursos_descargar; el
+  salto de realismo frente a lo procedimental es enorme):
+  hdri("<id>", fuerza=1.0, rotacion=0) — cielo HDRI fotografiado (sustituye a cielo(); gira
+  `rotacion` para orientar su sol). material="ph:<id>" en muro/forjado/caja/cubierta… —
+  textura PBR real a tamaño real, sin UV (o material_pbr("<id>", escala=1.0)).
+  modelo("<id>", posicion=(x, y), rotacion=0, nivel=0.0) — mueble/objeto 3D real a su escala.
 - camara(objetivo, distancia=20, azimut=225, altura=6, lente=50, apertura=None) — cámara activa
   mirando al objetivo; sustituye a la anterior. Fachadas: altura 1.6-2, lente 30-35, desde una
   esquina (azimut 225-250). Interiores: lente=24, altura=1.5, distancia 3-5, apertura=2.8.
@@ -137,6 +144,38 @@ Iluminación interior (imprescindible en estancias con techo, si no salen negras
 Usa SIEMPRE estas funciones para construir; recurre a `bpy` directo solo para lo que el kit
 no cubre (modificadores, renders, formas curvas…). Construye cada planta con su
 capa="Planta 0", capa="Planta 1"… y niveles acumulados (p. ej. planta 1 en nivel=3.0)."""
+
+
+# Referencia compacta para modelos pequeños (modo ligero de la IA incluida):
+# las funciones imprescindibles con sus parámetros reales, sin la guía de estilo.
+REFERENCIA_KIT_LIGERA = """Antes de tu código se carga un KIT (metros, Z hacia arriba, puntos (x, y) en planta).
+Usa SIEMPRE estas funciones:
+- muro(inicio, fin, alto=2.7, espesor=0.2, nivel=0.0, huecos=None, material="blanco")
+  huecos: [{"tipo": "puerta"|"ventana"|"ventanal"|"paso", "a": m, "ancho": m}] donde "a" es la
+  distancia del INICIO del muro al BORDE del hueco (no a su centro): centrado → a = (largo - ancho) / 2
+- forjado(contorno, nivel=0.0, espesor=0.3, material="hormigon")  contorno = [(x, y), ...]
+- cubierta_plana(contorno, nivel)  y  cubierta_dos_aguas(origen, ancho, fondo, nivel)
+- escalera(origen, direccion="+x", ancho=1.0, alto_total=2.7, nivel=0.0)
+- terreno(ancho=60, fondo=60, material="cesped")
+- caja(nombre, origen, dimensiones, material, capa)
+- Estancias amuebladas (origen = esquina interior suroeste): dormitorio(origen, ancho, fondo),
+  salon(origen, ancho, fondo), bano(origen, ancho, fondo), cocina_estancia(origen, ancho, fondo)
+- Materiales: blanco, hormigon, madera, parquet, marmol, ladrillo, baldosa, piedra, teja, vidrio
+- Presentación: cielo("atardecer"), camara(objetivo=(x, y, z), distancia=20, azimut=225,
+  altura=6), render(calidad="borrador") (el usuario ve el render en el chat)
+- revisar_escena() antes de render(); capa="Planta 0" agrupa por plantas.
+- limpiar_todo() vacía la escena (solo si el usuario lo pide).
+Usa print() para devolver información. Los puntos son SIEMPRE (x, y) en planta, nunca (x, y, z).
+
+Ejemplo completo y correcto (casa 8 × 6 m, puerta centrada al sur, ventana en cada lateral):
+limpiar_todo()
+muro((0, 0), (8, 0), huecos=[{"tipo": "puerta", "a": 3.6, "ancho": 0.8}])
+muro((8, 0), (8, 6), huecos=[{"tipo": "ventana", "a": 2.4, "ancho": 1.2}])
+muro((8, 6), (0, 6))
+muro((0, 6), (0, 0), huecos=[{"tipo": "ventana", "a": 2.4, "ancho": 1.2}])
+forjado([(0, 0), (8, 0), (8, 6), (0, 6)], nivel=0.0)
+cubierta_plana([(0, 0), (8, 0), (8, 6), (0, 6)], nivel=2.7)
+salon((0.1, 0.1), 7.8, 5.8)"""
 
 
 def _enviar(peticion: dict, timeout: float = 60.0) -> dict:
@@ -229,6 +268,17 @@ class ConectorBlender(Conector):
                 },
             },
         ]
+
+    def herramientas_ligeras(self) -> list:
+        """Las mismas herramientas con la referencia del kit compacta (modo ligero)."""
+        lista = self.herramientas()
+        for h in lista:
+            if h["nombre"] == "blender_ejecutar_python":
+                h["descripcion"] = (
+                    "Ejecuta código Python dentro de Blender (bpy disponible). Cambios en pasos "
+                    "pequeños.\n\n" + REFERENCIA_KIT_LIGERA
+                )
+        return lista
 
     def ejecutar(self, nombre: str, argumentos: dict) -> str:
         if nombre == "blender_exportar":

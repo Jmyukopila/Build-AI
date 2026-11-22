@@ -156,8 +156,11 @@ def buscar(consulta: str, programas: Optional[list] = None) -> list[dict]:
                 recetas_filtradas.append(r)
         recetas = recetas_filtradas
 
+    consulta_fts = _consulta_fts(consulta)
+    if not consulta_fts:
+        return []
+
     # Indexar con FTS5 en memoria.
-    consulta_norm = _normalizar_acentos(consulta).lower()
     con = sqlite3.connect(":memory:")
     con.execute("CREATE VIRTUAL TABLE recetas_fts USING fts5("
                 "id, nombre, descripcion, tags, cuerpo)")
@@ -177,7 +180,7 @@ def buscar(consulta: str, programas: Optional[list] = None) -> list[dict]:
     resultados = []
     for rank, row in enumerate(con.execute(
         "SELECT id, rank FROM recetas_fts WHERE recetas_fts MATCH ? ORDER BY rank",
-        (consulta_norm,)
+        (consulta_fts,)
     )):
         receta_id = row[0]
         receta = next((r for r in recetas if r["id"] == receta_id), None)
@@ -186,6 +189,33 @@ def buscar(consulta: str, programas: Optional[list] = None) -> list[dict]:
 
     con.close()
     return resultados
+
+
+# Palabras vacías: aparecen en casi cualquier petición y solo meten ruido en el
+# ranking. No hace falta que la lista sea exhaustiva: bm25 ya pondera poco las
+# palabras frecuentes; esto quita las más comunes de un mensaje de chat.
+_PALABRAS_VACIAS = frozenset(
+    "que para con los las del una unos unas por como mas pero sus este esta estos "
+    "estas ese esa eso hay muy sin sobre entre cuando donde quiero hazme haz puedes "
+    "me te se le lo al de en el la y o a un es".split()
+)
+
+
+def _consulta_fts(consulta: str) -> str:
+    """Convierte el mensaje del usuario en una consulta FTS5 segura.
+
+    El mensaje no puede pasarse tal cual a MATCH: en FTS5 la puntuación es
+    sintaxis ("," "?" "." ":" "-" provocan errores) y las palabras sueltas se
+    combinan con AND, así que una frase larga exigiría que TODAS aparecieran en
+    una misma receta. Aquí cada palabra va entre comillas (literal) y se unen
+    con OR: el ranking bm25 sube las recetas que comparten más términos.
+    """
+    palabras = re.findall(r"\w+", _normalizar_acentos(consulta).lower())
+    utiles = []
+    for palabra in palabras:
+        if len(palabra) >= 3 and palabra not in _PALABRAS_VACIAS and palabra not in utiles:
+            utiles.append(palabra)
+    return " OR ".join(f'"{p}"' for p in utiles[:32])
 
 
 def bloque_para_sistema(consulta: str, programas: Optional[list] = None,

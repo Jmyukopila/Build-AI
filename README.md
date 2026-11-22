@@ -53,13 +53,17 @@ Haz doble clic en el acceso directo **BuildAI** (Escritorio o Menú Inicio, o
 aplicación** — como VS Code o Excel, no una pestaña del navegador — con la
 interfaz servida internamente en `http://127.0.0.1:8600`.
 
-### 3. Configurar la IA
+### 3. Configurar la IA (opcional)
 
-Pulsa **⚙️ Ajustes de IA** y elige proveedor:
+**No hace falta configurar nada:** BuildAI trae una **IA incluida** que funciona en
+tu ordenador, gratis, sin cuenta, sin clave y sin límites. El instalador la deja
+lista (descarga el modelo, 2,7 GB, una sola vez). Es un modelo ligero: para
+proyectos grandes o más rapidez puedes elegir en **⚙️ Ajustes** un proveedor en la nube:
 
 | Proveedor | Coste | Dónde sacar la clave |
 |---|---|---|
-| **OpenRouter** (recomendado para empezar) | Gratis (modelos `:free`) | [openrouter.ai/keys](https://openrouter.ai/keys) |
+| **IA incluida** (predeterminada) | Gratis, sin clave ni límites | Nada: viene instalada |
+| **OpenRouter** | Gratis (modelos `:free`, 50 peticiones/día) | [openrouter.ai/keys](https://openrouter.ai/keys) |
 | **Ollama** (IA local en tu PC) | Gratis, sin clave | Solo [instalar Ollama](https://ollama.com/download); BuildAI detecta tus modelos |
 | Anthropic (Claude) | De pago | [platform.claude.com](https://platform.claude.com/) |
 | OpenAI (GPT) | De pago | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
@@ -107,6 +111,17 @@ el detalle técnico si te interesa.
   conversación como archivo Markdown, útil para documentar un proyecto.
 - **Copiar**: al pasar el ratón por una respuesta aparece un botón para
   copiarla entera.
+- **Planos → modelo**: adjunta un plano con el clip (foto, escaneo, **PDF** o
+  **DXF**) y pide, por ejemplo, _"hazme esta casa en 3D en Blender"_ o
+  _"pásame este plano a AutoCAD"_. BuildAI mide los muros sobre el dibujo,
+  calibra con las cotas, comprueba la superficie de cada estancia contra la del
+  plano y te enseña una imagen de control con la reconstrucción encima del
+  original. Funciona con Blender, AutoCAD, SketchUp y Revit.
+- **Renders con materiales reales y referencias**: pide _"busca referencias de
+  casas mediterráneas"_ y verás fotos reales en el chat (con su autor y
+  licencia). En Blender, BuildAI usa cielos HDRI, texturas fotográficas y
+  muebles reales de Poly Haven (gratis, CC0) y compara cada render con la
+  referencia. Opcional: una clave gratuita de Pexels en Ajustes mejora las fotos.
 
 ## ⚠️ Notas de seguridad
 
@@ -139,6 +154,8 @@ BuildAI/
 │   ├── main.py           Servidor FastAPI y arranque de la ventana
 │   ├── agent.py          Bucle del agente y conocimiento de arquitectura
 │   ├── connectors/       Puentes con Blender, AutoCAD, SketchUp y Revit
+│   ├── planos/           Planos → modelo: detector de muros, PDF/DXF y constructores
+│   ├── recursos/         Poly Haven (HDRI, texturas, modelos) y fotos de referencia
 │   ├── providers/        Adaptadores de OpenRouter, Claude, GPT, Gemini y Ollama
 │   ├── ui/               Interfaz web (HTML, CSS, JS y assets)
 │   ├── addons/           Add-ons que se copian dentro de cada programa CAD/BIM

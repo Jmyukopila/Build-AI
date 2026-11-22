@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F3F4F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101211" media="(prefers-color-scheme: dark)">
+<title>Documentación — BuildAI</title>
+<meta name="description" content="Guía de BuildAI para quien acaba de descargarlo: instalar, elegir la IA, conectar Blender, AutoCAD, SketchUp y Revit, trabajar con planos y resolver los problemas más frecuentes.">
+<link rel="icon" type="image/svg+xml" href="assets/marca.svg">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
+<link rel="preload" href="fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="base.css">
+<style>
+  .doc{display:grid; grid-template-columns:1fr 2fr; gap:var(--e7); padding-top:calc(var(--nav) + var(--e8)); padding-bottom:var(--e9); align-items:start;}
+
+  /* Índice lateral: se queda a la vista mientras lees */
+  .indice{position:sticky; top:calc(var(--nav) + var(--e6));}
+  .indice h1{font-size:clamp(2rem, 3.6vw, 3rem); line-height:1.02; letter-spacing:-.035em; margin-bottom:var(--e4);}
+  .indice > p{color:var(--tinta-2); margin-bottom:var(--e6); max-width:22rem;}
+  .indice ol{list-style:none; margin:0; padding:0; border-top:1px solid var(--linea);}
+  .indice li{border-bottom:1px solid var(--linea);}
+  .indice a{display:flex; align-items:center; min-height:2.75rem; text-decoration:none; color:var(--tinta-2); font-size:.9375rem; transition:color var(--d1) var(--mueve), padding var(--d2) var(--sale);}
+  .indice a:hover{color:var(--tinta); padding-left:var(--e2);}
+  .indice a[aria-current="true"]{color:var(--acento); font-weight:600;}
+
+  /* Contenido */
+  .contenido > section{padding:0 0 var(--e8); margin:0 0 var(--e8); border-bottom:1px solid var(--linea);}
+  .contenido > section:last-child{border-bottom:0; margin-bottom:0; padding-bottom:0;}
+  .contenido h2{font-size:clamp(1.75rem, 3.2vw, 2.5rem); line-height:1.05; letter-spacing:-.03em; margin-bottom:var(--e4);}
+  .contenido h3{font-size:1.25rem; letter-spacing:-.015em; margin:var(--e6) 0 var(--e2);}
+  .contenido p, .contenido li{color:var(--tinta-2); max-width:42rem;}
+  .contenido p + p{margin-top:var(--e3);}
+  .contenido strong{color:var(--tinta); font-weight:600;}
+  .contenido a:not(.btn){color:var(--acento); text-underline-offset:.25em;}
+  .contenido ul, .contenido ol.pasos-doc{margin:var(--e3) 0 0; padding-left:var(--e5); display:grid; gap:var(--e2);}
+  code, kbd{font:.9em var(--mono); background:var(--hoja); border:1px solid var(--linea); border-radius:.375rem; padding:.15em .5em; color:var(--tinta);}
+  .aviso{margin-top:var(--e5); padding:var(--e4) var(--e5); background:var(--hoja); border:1px solid var(--linea); border-radius:var(--r-l); max-width:42rem;}
+  .aviso p{color:var(--tinta-2);}
+
+  /* Tablas como filas con filetes */
+  .tabla{margin-top:var(--e4); border-top:1px solid var(--linea);}
+  .tabla .f{display:grid; grid-template-columns:1fr 1.4fr; gap:var(--e5); padding:var(--e3) 0; border-bottom:1px solid var(--linea); align-items:baseline;}
+  .tabla .f.tres{grid-template-columns:1fr 1.4fr 1fr;}
+  .tabla .f > :first-child{color:var(--tinta); font-weight:600;}
+  .tabla .f span{color:var(--tinta-2); font-size:.9375rem;}
+
+  .bloque{margin-top:var(--e4); border:1px solid var(--linea); border-radius:var(--r-l); background:var(--hoja); max-width:42rem; position:relative;}
+  .bloque pre{margin:0; padding:var(--e5); padding-right:6rem; font:.9375rem/1.7 var(--mono); overflow-x:auto; color:var(--tinta);}
+  .bloque .com{color:var(--tinta-3);}
+  .bloque .cmd{color:var(--acento); font-weight:600;}
+  .copiar{position:absolute; top:var(--e3); right:var(--e3); min-height:2.5rem; padding:0 var(--e4); border-radius:var(--r); border:1px solid var(--borde-control);
+    background:var(--hoja); color:var(--tinta); font:500 .875rem var(--sans); cursor:pointer; transition:background var(--d1) var(--mueve);}
+  .copiar:hover{background:var(--papel);}
+
+  .cta-doc{margin-top:var(--e6);}
+
+  @media (max-width: 52rem){
+    :root{--nav:3.5rem;}
+    .nav nav a:not(.btn){display:none;}
+    .doc{grid-template-columns:1fr; gap:var(--e6); padding-top:calc(var(--nav) + var(--e6));}
+    .indice{position:static;}
+    .tabla .f, .tabla .f.tres{grid-template-columns:1fr; gap:var(--e1);}
+    .bloque pre{padding-right:var(--e5); padding-top:3.5rem;}
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} .indice a{transition:none;} }
+</style>
+</head>
+<body>
+<canvas id="fondo" aria-hidden="true"></canvas>
+<a class="salto" href="#contenido">Saltar al contenido</a>
+
+<header class="nav">
+  <div class="envoltura">
+    <a class="marca" href="index.html" aria-label="BuildAI, inicio"><img src="assets/marca.svg" alt="" width="32" height="32">BuildAI</a>
+    <nav aria-label="Principal">
+      <a href="index.html">Inicio</a>
+      <a href="docs.html" aria-current="page" style="color:var(--tinta)">Docs</a>
+      <a class="btn" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">Descargar</a>
+    </nav>
+  </div>
+</header>
+
+<main class="envoltura doc">
+  <aside class="indice" aria-label="Índice de la documentación">
+    <h1>Documentación</h1>
+    <p>Todo lo que necesitas después de descargar BuildAI, en el orden en que lo vas a usar.</p>
+    <ol>
+      <li><a href="#instalar">Instalar y arrancar</a></li>
+      <li><a href="#ia">Elegir la IA</a></li>
+      <li><a href="#conectar">Conectar tus programas</a></li>
+      <li><a href="#trabajar">Trabajar con BuildAI</a></li>
+      <li><a href="#seguridad">Antes de empezar un proyecto real</a></li>
+      <li><a href="#problemas">Problemas frecuentes</a></li>
+      <li><a href="#terminal">Instalar desde la terminal</a></li>
+    </ol>
+  </aside>
+
+  <div class="contenido" id="contenido">
+    <section id="instalar">
+      <h2>Instalar y arrancar</h2>
+      <p>Ejecuta <code>BuildAI-Setup.exe</code> y sigue el asistente. Son dos clics y <strong>no pide permisos de administrador</strong>: instala BuildAI en tu carpeta de usuario y crea accesos directos en el menú Inicio y, si lo marcas, en el Escritorio. Se desinstala desde <em>Agregar o quitar programas</em>, como cualquier otro programa.</p>
+      <p>Funciona en Windows 10 y 11. No necesitas tener Python instalado.</p>
+      <h3>Arrancar</h3>
+      <p>Abre el acceso directo <strong>BuildAI</strong>. Se abre una ventana propia, como la de cualquier aplicación de escritorio, no una pestaña del navegador. Por dentro se sirve en <code>http://127.0.0.1:8600</code>, es decir, solo en tu equipo.</p>
+      <div class="cta-doc"><a class="btn" href="https://github.com/Jmyukopila/Build-AI/releases/latest/download/BuildAI-Setup.exe">Descargar BuildAI-Setup.exe</a></div>
+    </section>
+
+    <section id="ia">
+      <h2>Elegir la IA</h2>
+      <p><strong>No hace falta configurar nada.</strong> BuildAI trae una IA incluida que funciona en tu ordenador, gratis, sin cuenta, sin clave y sin límites. El instalador la deja lista: descarga el modelo (2,7 GB) una sola vez.</p>
+      <p>Es un modelo ligero. Para proyectos grandes o más rapidez, elige otro proveedor en <strong>Ajustes</strong>:</p>
+      <div class="tabla tres" role="table" aria-label="Proveedores de IA">
+        <div class="f tres" role="row"><div role="cell">IA incluida</div><span role="cell">Gratis, sin clave ni límites</span><span role="cell">Viene instalada</span></div>
+        <div class="f tres" role="row"><div role="cell">OpenRouter</div><span role="cell">Gratis (modelos <code>:free</code>, 50 peticiones al día)</span><span role="cell"><a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a></span></div>
+        <div class="f tres" role="row"><div role="cell">Ollama</div><span role="cell">Gratis, en tu PC, sin clave</span><span role="cell"><a href="https://ollama.com/download" target="_blank" rel="noopener">Instalar Ollama</a>; BuildAI detecta tus modelos</span></div>
+        <div class="f tres" role="row"><div role="cell">Claude (Anthropic)</div><span role="cell">De pago</span><span role="cell"><a href="https://platform.claude.com/" target="_blank" rel="noopener">platform.claude.com</a></span></div>
+        <div class="f tres" role="row"><div role="cell">GPT (OpenAI)</div><span role="cell">De pago</span><span role="cell"><a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a></span></div>
+        <div class="f tres" role="row"><div role="cell">Gemini (Google)</div><span role="cell">Nivel gratuito</span><span role="cell"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a></span></div>
+      </div>
+      <p style="margin-top:var(--e4)">Los proveedores en la nube funcionan con una <strong>clave de API</strong>, que se crea en un minuto con los enlaces de la tabla. La clave se guarda solo en tu equipo. Para controlar los programas, el modelo debe saber usar herramientas; con Ollama, por ejemplo, sirven <code>qwen3</code> o <code>llama3.1</code> y posteriores. Al elegir proveedor en Ajustes, BuildAI te muestra la lista de modelos compatibles.</p>
+    </section>
+
+    <section id="conectar">
+      <h2>Conectar tus programas</h2>
+      <p>El instalador ya prepara los puentes en los programas que detecte. Cuando abres un programa conectado, su punto en el panel <strong>Programas</strong> se pone verde.</p>
+      <div class="tabla tres" role="table" aria-label="Programas compatibles">
+        <div class="f tres" role="row"><div role="cell">Blender</div><span role="cell">Nada: el puente se instala solo y arranca con Blender</span><span role="cell">2.80 a 4.x</span></div>
+        <div class="f tres" role="row"><div role="cell">AutoCAD</div><span role="cell">Nada: se conecta solo si AutoCAD está abierto</span><span role="cell">2004 en adelante, no LT</span></div>
+        <div class="f tres" role="row"><div role="cell">SketchUp</div><span role="cell">Nada: la extensión se instala y se inicia sola</span><span role="cell">2014 en adelante</span></div>
+        <div class="f tres" role="row"><div role="cell">Revit</div><span role="cell">Instalar <a href="https://github.com/pyrevitlabs/pyRevit/releases" target="_blank" rel="noopener">pyRevit</a> (gratis); el resto es automático</span><span role="cell">2014 en adelante, con pyRevit 4.8 o superior</span></div>
+      </div>
+      <h3>Si instalas un programa después</h3>
+      <ol class="pasos-doc">
+        <li>En el panel <strong>Programas</strong>, pulsa el programa que quieres conectar.</li>
+        <li>Elige <strong>Conectar automáticamente</strong>.</li>
+        <li>Abre (o reinicia) el programa y espera unos diez segundos hasta que el punto se ponga verde.</li>
+      </ol>
+      <p style="margin-top:var(--e3)">Dentro de la aplicación tienes además un <strong>Manual de conexión</strong> con la solución de problemas paso a paso.</p>
+    </section>
+
+    <section id="trabajar">
+      <h2>Trabajar con BuildAI</h2>
+      <p>Escribe lo que necesitas en el chat: <kbd>Enter</kbd> envía y <kbd>Mayús</kbd>+<kbd>Enter</kbd> hace un salto de línea. También puedes pulsar una <strong>tarea rápida</strong>. Verás en cada momento qué hace la IA: recibir el encargo, pensar, actuar sobre tu programa y entregar el resultado.</p>
+      <h3>De un plano a un modelo</h3>
+      <p>Adjunta un plano con el clip (foto, escaneo, <strong>PDF</strong> o <strong>DXF</strong>) y pide, por ejemplo, «hazme esta casa en 3D en Blender» o «pásame este plano a AutoCAD». BuildAI mide los muros sobre el dibujo, calibra con las cotas, comprueba la superficie de cada estancia contra la del plano y te enseña una imagen de control con la reconstrucción encima del original. Funciona con los cuatro programas.</p>
+      <h3>Renders y referencias</h3>
+      <p>Pide «busca referencias de casas mediterráneas» y verás fotos reales en el chat, con su autor y su licencia. En Blender, BuildAI usa cielos HDRI, texturas fotográficas y muebles reales de Poly Haven (gratis, CC0) y compara cada render con la referencia. Opcional: una clave gratuita de Pexels en Ajustes mejora las fotos.</p>
+      <h3>Historial y exportación</h3>
+      <ul>
+        <li><strong>Historial:</strong> cada conversación se guarda sola en <code>~/.buildai/sesiones/</code>, dentro de tu carpeta de usuario. Puedes retomarla donde la dejaste o borrarla.</li>
+        <li><strong>Exportar:</strong> guarda la conversación como archivo Markdown, útil para documentar un proyecto.</li>
+        <li><strong>Copiar:</strong> al pasar el ratón por una respuesta aparece un botón para copiarla entera.</li>
+        <li><strong>Entregables:</strong> los archivos exportados desde el programa (IFC, DWG, DXF, PDF) llegan a la misma conversación.</li>
+      </ul>
+    </section>
+
+    <section id="seguridad">
+      <h2>Antes de empezar un proyecto real</h2>
+      <div class="aviso"><p>La IA ejecuta código dentro de tus programas para poder trabajar. <strong>Trabaja siempre sobre copias de seguridad</strong> de tus proyectos importantes.</p></div>
+      <ul>
+        <li>El agente tiene instrucciones de no borrar nada sin confirmarlo, pero los modelos de IA pueden equivocarse: revisa los cambios.</li>
+        <li>Todos los puentes escuchan solo en <code>127.0.0.1</code>, tu propio equipo.</li>
+        <li>Tus conversaciones, tu configuración y tus claves viven en <code>~/.buildai/</code>, nunca junto al programa.</li>
+        <li>Con la IA incluida o con Ollama no sale nada de tu ordenador. Con un proveedor en la nube, solo se envían los mensajes del chat a ese proveedor.</li>
+      </ul>
+    </section>
+
+    <section id="problemas">
+      <h2>Problemas frecuentes</h2>
+      <div class="tabla" role="table" aria-label="Problemas y soluciones">
+        <div class="f" role="row"><div role="cell">«Falta la clave de API»</div><span role="cell">Abre Ajustes y pega la clave del proveedor elegido.</span></div>
+        <div class="f" role="row"><div role="cell">El punto de un programa no se pone verde</div><span role="cell">Pulsa el programa en el panel Programas, elige «Conectar automáticamente» y espera unos diez segundos. Reinicia el programa si hace falta.</span></div>
+        <div class="f" role="row"><div role="cell">AutoCAD no conecta</div><span role="cell">Ábrelo con un dibujo cargado y ejecuta ambos programas con el mismo nivel de permisos.</span></div>
+        <div class="f" role="row"><div role="cell">El modelo gratuito responde raro o no usa herramientas</div><span role="cell">En Ajustes, cambia el modelo de OpenRouter por otro que soporte herramientas, o usa Claude, GPT o Gemini.</span></div>
+        <div class="f" role="row"><div role="cell">Error 429 (límite de peticiones)</div><span role="cell">BuildAI espera y reintenta solo. Si persiste, es el cupo diario del modelo gratuito: elige otro modelo <code>:free</code> o usa Ollama.</span></div>
+        <div class="f" role="row"><div role="cell">El asistente se detiene en una tarea muy larga</div><span role="cell">No es un error: escribe «continúa» y retoma donde quedó.</span></div>
+      </div>
+      <p style="margin-top:var(--e5)">¿Algo más? Cuéntalo en <a href="https://github.com/Jmyukopila/Build-AI/issues" target="_blank" rel="noopener">el apartado de incidencias</a>.</p>
+    </section>
+
+    <section id="terminal">
+      <h2>Instalar desde la terminal</h2>
+      <p>BuildAI también es un paquete de Python. Con <a href="https://pipx.pypa.io/" target="_blank" rel="noopener">pipx</a> o <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">uv</a> se instala en su propio entorno, como haría <code>npm -g</code>.</p>
+      <div class="bloque">
+        <button class="copiar" type="button">Copiar</button>
+        <pre><span class="com"># con pipx</span>
+<span class="cmd">pipx</span> install git+https://github.com/Jmyukopila/Build-AI.git
+<span class="cmd">buildai-instalar</span>   <span class="com"># puentes y acceso directo</span>
+<span class="cmd">buildai</span>            <span class="com"># abre la ventana</span>
+
+<span class="com"># o con uv, sin instalar nada de forma permanente</span>
+<span class="cmd">uvx</span> --from git+https://github.com/Jmyukopila/Build-AI.git buildai</pre>
+      </div>
+      <p style="margin-top:var(--e5)">Con <code>pip</code>, hazlo dentro de un entorno virtual en una carpeta normal (Escritorio, Documentos…), no con <code>pip install --user</code>:</p>
+      <div class="bloque">
+        <button class="copiar" type="button">Copiar</button>
+        <pre><span class="cmd">python</span> -m venv %USERPROFILE%\buildai-env
+%USERPROFILE%\buildai-env\Scripts\activate
+<span class="cmd">pip</span> install git+https://github.com/Jmyukopila/Build-AI.git
+<span class="cmd">buildai-instalar</span>
+<span class="cmd">buildai</span></pre>
+      </div>
+      <span class="sr" role="status" id="aviso-copia"></span>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="envoltura">
+    <span>BuildAI · 2026</span>
+    <nav aria-label="Enlaces del proyecto">
+      <a href="index.html">Inicio</a>
+      <a href="https://github.com/Jmyukopila/Build-AI/releases" target="_blank" rel="noopener">Versiones</a>
+      <a href="https://github.com/Jmyukopila/Build-AI/issues" target="_blank" rel="noopener">Reportar un problema</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="fondo.js" defer></script>
+<script>
+(() => {
+  // Índice: marca la sección que estás leyendo.
+  const enlaces = [...document.querySelectorAll(".indice a")];
+  const secciones = enlaces.map(a => document.querySelector(a.getAttribute("href")));
+  const marcar = () => {
+    const linea = innerHeight * .35;
+    let activa = 0;
+    secciones.forEach((s, i) => { if (s && s.getBoundingClientRect().top <= linea) activa = i; });
+    enlaces.forEach((a, i) => a.toggleAttribute("aria-current", i === activa));
+    enlaces.forEach((a, i) => { if (i === activa) a.setAttribute("aria-current", "true"); });
+  };
+  addEventListener("scroll", marcar, { passive: true });
+  marcar();
+
+  // Copiar comandos
+  const aviso = document.getElementById("aviso-copia");
+  document.querySelectorAll(".copiar").forEach(b => b.addEventListener("click", async () => {
+    const texto = b.parentElement.querySelector("pre").innerText;
+    try {
+      await navigator.clipboard.writeText(texto);
+      b.textContent = "Copiado"; aviso.textContent = "Comandos copiados al portapapeles";
+    } catch (_) {
+      b.textContent = "Selecciona y copia"; aviso.textContent = "No se pudo copiar automáticamente";
+    }
+    setTimeout(() => { b.textContent = "Copiar"; aviso.textContent = ""; }, 1800);
+  }));
+})();
+</script>
+</body>
+</html>

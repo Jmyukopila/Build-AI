@@ -44,6 +44,7 @@ buildai/              The only package — server, agent, connectors, providers,
 ├── conocimiento.py   Knowledge base: Markdown files with front-matter, FTS5 search via SQLite
 ├── entregables.py    Exported file pipeline (IFC, DWG, DXF, PDF, etc.) with whitelist validation
 ├── instalador.py     Auto-installs bridges into detected CAD/BIM programs
+├── ia_local.py       Bundled free local AI (default provider "local"): llama.cpp engine + Qwen3.5-4B, light mode
 ├── connectors/       Bridges to each CAD/BIM program
 │   ├── base.py       Conector base class (disponible, herramientas, ejecutar)
 │   ├── blender.py    HTTP bridge on port 8601
@@ -52,6 +53,9 @@ buildai/              The only package — server, agent, connectors, providers,
 │   ├── revit.py      HTTP bridge on port 48884 (pyRevit Routes)
 │   ├── blender_kit.py   Export helpers (read as text, injected into Blender at runtime)
 │   └── revit_kit.py     Export helpers (read as text, injected into Revit extension at runtime)
+├── planos/           Floor plan → model: wall detector (numpy+Pillow), PDF/DXF import,
+│   │                 normalizer (scale, cleanup, room areas) and per-program builders
+├── recursos/         Render assets (Poly Haven HDRI/PBR/models) and reference photos (Openverse/Pexels)
 ├── providers/        Adapters for AI APIs
 │   ├── base.py       Proveedor base class, neutral history format, LlamadaHerramienta
 │   ├── openai_compat.py  OpenRouter, OpenAI, Gemini, Ollama, OpenCode (OpenAI-compatible APIs)
@@ -101,4 +105,4 @@ Desktop installer: `powershell -File empaquetado\build_installer.ps1` — runs P
 
 ## Deep references
 
-`docs/README.md` maps 14 technical documents. Read the relevant one before modifying connectors (06), providers (07), skills/knowledge (08), sessions (09), or packaging (10). `docs/11-buenas-practicas.md` records existing conventions and tech debt. `docs/12-pruebas-y-desarrollo.md` covers debugging workflow.
+`docs/README.md` maps 14 technical documents. Read the relevant one before modifying connectors (06), providers (07), skills/knowledge (08), sessions (09), packaging (10), floor plan reconstruction (15), or render assets/reference photos and tool-image vision (16). `docs/11-buenas-practicas.md` records existing conventions and tech debt. `docs/12-pruebas-y-desarrollo.md` covers debugging workflow.

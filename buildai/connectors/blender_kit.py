@@ -77,6 +77,10 @@ def material(nombre, color=None, rugosidad=None, metalico=None, transparente=Non
     añade veteado y relieve procedimental ("madera", "marmol", "hormigon",
     "ladrillo", "tela", "baldosa", "cesped" o "agua"); `emision` (vatios aprox.)
     hace que el material brille con luz propia (pantallas de lámparas, letreros)."""
+    if str(nombre).startswith("ph:") and color is None:
+        # Textura fotográfica de Poly Haven ya descargada (recursos_descargar):
+        # así cualquier función del kit acepta material="ph:<id>".
+        return material_pbr(str(nombre)[3:])
     existente = bpy.data.materials.get(nombre)
     if existente is not None and color is None:
         return existente
@@ -1907,6 +1911,163 @@ def cielo(momento="dia", azimut=200, intensidad=None):
         _crear_sol(35, azimut + 130, 0.05, m["color"])
     print(f"✔ Cielo de {momento} (sol a {m['elev']}°)")
     return mundo
+
+
+# --------------------------------------------- recursos reales (Poly Haven)
+
+# BuildAI descarga aquí los recursos (herramienta recursos_descargar); el kit
+# solo los lee: Blender no descarga nada ni necesita conexión.
+CARPETA_RECURSOS = Path.home() / ".buildai" / "recursos" / "polyhaven"
+
+
+def _manifiesto(tipo, recurso):
+    """Datos de un recurso descargado (por id, con o sin "ph:"), o None."""
+    import json
+
+    ident = str(recurso)
+    if ident.startswith("ph:"):
+        ident = ident[3:]
+    if "/" in ident or "\\" in ident or ident.startswith("."):
+        return None
+    ruta = CARPETA_RECURSOS / tipo / ident / "manifest.json"
+    if not ruta.is_file():
+        return None
+    return json.loads(ruta.read_text(encoding="utf-8"))
+
+
+def _imagen(ruta, datos=False):
+    img = bpy.data.images.load(ruta, check_existing=True)
+    if datos:
+        # Rugosidad y normal son datos, no color: sin esto Blender les aplica
+        # la curva sRGB y el relieve y el brillo salen falseados.
+        try:
+            img.colorspace_settings.name = "Non-Color"
+        except TypeError:
+            img.colorspace_settings.is_data = True
+    return img
+
+
+def hdri(recurso, fuerza=1.0, rotacion=0.0, sol=False):
+    """Cielo HDRI REAL de Poly Haven (descárgalo antes con recursos_descargar):
+    ilumina con la luz fotografiada de un lugar real (reflejos, color y sombras
+    de ese cielo). Sustituye al cielo anterior. `rotacion` (grados) gira el
+    entorno para orientar el sol; con sol=False se quita el sol del kit, porque
+    el propio HDRI ya trae la luz solar."""
+    m = _manifiesto("hdri", recurso)
+    if m is None or not Path(m["archivo"]).is_file():
+        print(f"✘ el HDRI '{recurso}' no está descargado: usa antes recursos_descargar(tipo='hdri')")
+        return None
+    mundo = bpy.context.scene.world or bpy.data.worlds.new("Mundo")
+    bpy.context.scene.world = mundo
+    mundo.use_nodes = True
+    nt = mundo.node_tree
+    nt.nodes.clear()
+    salida = nt.nodes.new("ShaderNodeOutputWorld")
+    fondo = nt.nodes.new("ShaderNodeBackground")
+    entorno = nt.nodes.new("ShaderNodeTexEnvironment")
+    coord = nt.nodes.new("ShaderNodeTexCoord")
+    mapeo = nt.nodes.new("ShaderNodeMapping")
+    entorno.image = _imagen(m["archivo"])
+    _entrada(mapeo, "Rotation").default_value = (0.0, 0.0, math.radians(rotacion))
+    nt.links.new(coord.outputs["Generated"], mapeo.inputs[0])
+    if "puresky" in m["id"]:
+        # Los HDRI "Pure Sky" solo traen cielo: su mitad inferior es negra y
+        # asoma como una franja negra tras el terreno. Los rayos que miran bajo
+        # el horizonte toman el color justo encima de él (fondo continuo).
+        separar = nt.nodes.new("ShaderNodeSeparateXYZ")
+        tope = nt.nodes.new("ShaderNodeMath")
+        tope.operation = "MAXIMUM"
+        tope.inputs[1].default_value = 0.02
+        unir = nt.nodes.new("ShaderNodeCombineXYZ")
+        nt.links.new(mapeo.outputs[0], separar.inputs[0])
+        nt.links.new(separar.outputs[0], unir.inputs[0])
+        nt.links.new(separar.outputs[1], unir.inputs[1])
+        nt.links.new(separar.outputs[2], tope.inputs[0])
+        nt.links.new(tope.outputs[0], unir.inputs[2])
+        nt.links.new(unir.outputs[0], entorno.inputs[0])
+    else:
+        nt.links.new(mapeo.outputs[0], entorno.inputs[0])
+    nt.links.new(entorno.outputs["Color"], fondo.inputs["Color"])
+    nt.links.new(fondo.outputs["Background"], salida.inputs["Surface"])
+    fondo.inputs["Strength"].default_value = fuerza
+    if not sol:
+        _quitar_objetos(("Sol",), ("LIGHT",))
+    print(f"✔ Cielo HDRI '{m['id']}' (fuerza {fuerza}, giro {rotacion}°)")
+    return mundo
+
+
+def material_pbr(recurso, nombre=None, escala=1.0):
+    """Material con una textura PBR FOTOGRÁFICA de Poly Haven (color, rugosidad
+    y relieve normal), a su tamaño real: un ladrillo mide lo que mide en la
+    realidad. Descárgala antes con recursos_descargar(tipo='textura'). No hace
+    falta desplegar UV: se proyecta en caja sobre la geometría. `escala` > 1
+    agranda el dibujo de la textura. También vale material="ph:<id>" en
+    cualquier función del kit."""
+    m = _manifiesto("textura", recurso)
+    if m is None:
+        print(f"✘ la textura '{recurso}' no está descargada: usa antes recursos_descargar(tipo='textura')")
+        return material("gris_claro")
+    nombre = nombre or "ph:" + m["id"]
+    existente = bpy.data.materials.get(nombre)
+    if existente is not None:
+        return existente
+    mat = bpy.data.materials.new(nombre)
+    mat.use_nodes = True
+    nt = mat.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    coord = nt.nodes.new("ShaderNodeTexCoord")
+    mapeo = nt.nodes.new("ShaderNodeMapping")
+    ancho, alto = (m.get("tamano_m") or [2.0, 2.0])[:2]
+    # Coordenadas de objeto en metros → una repetición cada `tamaño real` metros.
+    _entrada(mapeo, "Scale").default_value = (1.0 / (ancho * escala), 1.0 / (alto * escala), 1.0 / (ancho * escala))
+    nt.links.new(coord.outputs["Object"], mapeo.inputs[0])
+
+    def textura(papel, datos):
+        nodo = nt.nodes.new("ShaderNodeTexImage")
+        nodo.image = _imagen(m["mapas"][papel], datos)
+        # Proyección en caja: las mallas del kit no tienen UV y así la textura
+        # cae bien en muros, suelos y cantos sin estirarse.
+        nodo.projection = "BOX"
+        nodo.projection_blend = 0.2
+        nt.links.new(mapeo.outputs[0], nodo.inputs[0])
+        return nodo
+
+    nt.links.new(textura("color", False).outputs["Color"], _entrada(bsdf, "Base Color"))
+    if "rugosidad" in m["mapas"]:
+        nt.links.new(textura("rugosidad", True).outputs["Color"], _entrada(bsdf, "Roughness"))
+    if "normal" in m["mapas"]:
+        mapa_normal = nt.nodes.new("ShaderNodeNormalMap")
+        nt.links.new(textura("normal", True).outputs["Color"], mapa_normal.inputs["Color"])
+        nt.links.new(mapa_normal.outputs["Normal"], _entrada(bsdf, "Normal"))
+    print(f"✔ Material PBR '{nombre}' ({ancho:.2f} × {alto:.2f} m por repetición)")
+    return mat
+
+
+def modelo(recurso, posicion=(0, 0), rotacion=0, nivel=0.0, escala=1.0, capa=None):
+    """Coloca un modelo 3D REAL de Poly Haven (mueble, planta, decoración) ya
+    descargado con recursos_descargar(tipo='modelo'). Llega a su tamaño real;
+    `posicion` es el punto (x, y) donde se apoya y `rotacion` gira en grados."""
+    m = _manifiesto("modelo", recurso)
+    if m is None or not Path(m["archivo"]).is_file():
+        print(f"✘ el modelo '{recurso}' no está descargado: usa antes recursos_descargar(tipo='modelo')")
+        return None
+    antes = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=m["archivo"])
+    nuevos = [o for o in bpy.data.objects if o not in antes]
+    destino = coleccion(capa) if capa else bpy.context.scene.collection
+    raiz = bpy.data.objects.new(f"Modelo {m['id']}", None)
+    destino.objects.link(raiz)
+    for obj in nuevos:
+        for col in list(obj.users_collection):
+            col.objects.unlink(obj)
+        destino.objects.link(obj)
+        if obj.parent is None:
+            obj.parent = raiz
+    raiz.location = (posicion[0], posicion[1], nivel)
+    raiz.rotation_euler = (0.0, 0.0, math.radians(rotacion))
+    raiz.scale = (escala, escala, escala)
+    print(f"✔ Modelo '{m['id']}' en ({posicion[0]:.2f}, {posicion[1]:.2f}) con {len(nuevos)} pieza(s)")
+    return raiz
 
 
 CARPETA_RENDERS = Path.home() / ".buildai" / "renders"

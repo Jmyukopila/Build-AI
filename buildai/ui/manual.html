@@ -4,85 +4,89 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Manual de conexión — BuildAI</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="/ui/assets/marca.svg">
+  <link rel="icon" type="image/png" href="/ui/assets/favicon.png">
+  <script>
+    /* Mismo tema y tamaño de texto que eligió el usuario en la aplicación */
+    try {
+      const raiz = document.documentElement;
+      const tema = localStorage.getItem("buildai.tema");
+      const texto = localStorage.getItem("buildai.texto");
+      if (tema) raiz.dataset.tema = tema;
+      if (texto) raiz.dataset.texto = texto;
+    } catch (_) { /* valores por defecto */ }
+  </script>
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=DM+Mono:wght@400;500&display=swap");
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      /* Misma paleta que la app (buildai/ui/style.css): negro-azulado +
-         cian de marca/interacción + verde lima para pasos a seguir. */
-      --fondo: #060a10; --panel: #0b131c; --borde: #1c2c3a;
-      --texto: #eaf3f7; --texto-suave: #7d92a1;
-      --acento: #57d8ff; --acento-suave: rgba(87, 216, 255, 0.13);
-      --verde: #b8ff4d; --verde-suave: rgba(184, 255, 77, 0.12);
-      --ambar: #ffc857; --ambar-suave: rgba(255, 200, 87, 0.12);
-      --fuente-marca: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
-      --fuente-tecnica: "DM Mono", ui-monospace, Consolas, monospace;
+      /* Mismos tokens que la aplicación (style.css): papel de día, madera quemada de noche */
+      color-scheme: light dark;
+      --fondo: light-dark(#F3F4F0, #151716);
+      --hoja: light-dark(#FBFBF9, #1C1F1D);
+      --hoja-hover: light-dark(#EBEEE7, #232725);
+      --tinta: light-dark(#1A1F1B, #E9ECE5);
+      --tinta-2: light-dark(#454D46, #B3BBB2);
+      --tinta-3: light-dark(#5D655D, #98A197);
+      --linea: light-dark(#D4D8CF, #2A2F2C);
+      --borde-control: light-dark(#7C847A, #6B746C);
+      --acento: light-dark(#4B3FB0, #B5ACFF);
+      --acento-fondo: light-dark(rgba(75, 63, 176, 0.09), rgba(181, 172, 255, 0.12));
+      --pino: light-dark(#27683A, #72CD8D);
+      --pino-fondo: light-dark(rgba(39, 104, 58, 0.1), rgba(114, 205, 141, 0.12));
+      --ambar: light-dark(#80500A, #EBBB52);
+      --ambar-fondo: light-dark(rgba(166, 106, 0, 0.12), rgba(235, 187, 82, 0.12));
+      --fuente-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      --fuente-tecnica: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+      interpolate-size: allow-keywords;
     }
-    body {
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-      background:
-        radial-gradient(900px 500px at 12% -10%, rgba(87, 216, 255, 0.08) 0%, transparent 55%),
-        var(--fondo);
-      color: var(--texto);
-      line-height: 1.65; font-size: 15.5px;
-    }
-    .contenido { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
-    header.cabecera {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
-    }
-    header.cabecera h1 { font-family: var(--fuente-marca); }
+    :root[data-tema="claro"] { color-scheme: light; }
+    :root[data-tema="oscuro"] { color-scheme: dark; }
+    :root { font-size: 100%; }
+    :root[data-texto="grande"] { font-size: 112.5%; }
+    :root[data-texto="enorme"] { font-size: 125%; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--fuente-ui); background: var(--fondo); color: var(--tinta); line-height: 1.7; font-size: 1rem; -webkit-font-smoothing: antialiased; }
+    ::selection { background: color-mix(in srgb, var(--acento) 30%, transparent); }
+    :focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; border-radius: 4px; }
+    .contenido { max-width: 46rem; margin: 0 auto; padding: 2rem 1rem 5rem; }
+    header.cabecera { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
     header.cabecera .volver {
-      margin-left: auto; font-size: 14px; text-decoration: none;
-      color: var(--acento); border: 1px solid var(--borde);
-      padding: 8px 14px; border-radius: 10px; background: var(--panel);
-      transition: background 180ms ease, border-color 180ms ease;
+      margin-left: auto; text-decoration: none; color: var(--tinta);
+      border: 1px solid var(--borde-control); padding: 0 1rem; min-height: 2.5rem; display: inline-flex; align-items: center;
+      border-radius: 0.5rem; font-weight: 600; background: var(--hoja); transition: background 140ms;
     }
-    header.cabecera .volver:hover { background: var(--acento-suave); border-color: var(--acento); }
-    h1 { font-size: 26px; letter-spacing: -0.4px; }
-    .subtitulo { color: var(--texto-suave); margin-bottom: 28px; }
-    h2 {
-      font-family: var(--fuente-marca);
-      font-size: 20px; margin: 40px 0 10px; padding-top: 18px;
-      border-top: 1px solid var(--borde); letter-spacing: -0.2px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    h3 { font-size: 15px; margin: 18px 0 6px; }
-    p, ul, ol { margin: 8px 0; }
-    ul, ol { padding-left: 24px; }
-    li { margin: 4px 0; }
-    a { color: var(--acento); }
-    code, kbd {
-      font-family: var(--fuente-tecnica); font-size: 13px;
-      background: var(--acento-suave); padding: 2px 6px; border-radius: 6px;
-    }
-    table {
-      width: 100%; border-collapse: collapse; margin: 14px 0;
-      background: var(--panel); border: 1px solid var(--borde);
-      border-radius: 12px; overflow: hidden;
-      font-size: 14px;
-    }
-    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--borde); }
-    th {
-      font-family: var(--fuente-tecnica);
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--texto-suave);
-    }
+    header.cabecera .volver:hover { background: var(--hoja-hover); }
+    h1 { font-size: clamp(1.5rem, 4vw, 1.875rem); font-weight: 650; letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance; }
+    .subtitulo { color: var(--tinta-2); margin-bottom: 1.5rem; }
+    h2 { font-size: 1.375rem; font-weight: 650; margin: 3rem 0 0.75rem; padding-top: 1.5rem; border-top: 1px solid var(--linea); letter-spacing: -0.01em; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; scroll-margin-top: 1rem; }
+    h3 { font-size: 1.0625rem; font-weight: 650; margin: 1.5rem 0 0.5rem; }
+    p, ul, ol { margin: 0.5rem 0; }
+    ul, ol { padding-left: 1.5rem; }
+    li { margin: 0.25rem 0; }
+    a { color: var(--acento); text-underline-offset: 0.2em; }
+    code, kbd { font-family: var(--fuente-tecnica); font-size: 0.875em; background: var(--hoja-hover); padding: 0.1em 0.4em; border-radius: 4px; overflow-wrap: anywhere; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: var(--hoja); border: 1px solid var(--linea); border-radius: 0.75rem; overflow: hidden; font-size: 0.9375rem; }
+    th, td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--linea); vertical-align: top; }
+    th { font-size: 0.875rem; font-weight: 650; color: var(--tinta-2); }
     tr:last-child td { border-bottom: none; }
-    .tarjeta {
-      background: var(--panel); border: 1px solid var(--borde);
-      border-radius: 12px; padding: 16px 18px; margin: 12px 0;
+    .tarjeta { background: var(--hoja); border: 1px solid var(--linea); border-radius: 0.75rem; padding: 1rem 1.25rem; margin: 0.75rem 0; }
+    .tarjeta.pasos { border-color: color-mix(in srgb, var(--pino) 45%, transparent); background: var(--pino-fondo); }
+    .tarjeta.aviso { border-color: color-mix(in srgb, var(--ambar) 45%, transparent); background: var(--ambar-fondo); }
+    .etiqueta { font-size: 0.875rem; font-weight: 600; color: var(--acento); background: var(--acento-fondo); border-radius: 0.5rem; padding: 0.1rem 0.6rem; }
+    details { margin: 0.75rem 0; border: 1px solid var(--linea); border-radius: 0.5rem; background: var(--hoja); }
+    summary { cursor: pointer; font-weight: 600; padding: 0.75rem 1rem; min-height: 2.5rem; }
+    details > :not(summary) { margin-left: 1rem; margin-right: 1rem; }
+    details > :last-child { margin-bottom: 1rem; }
+    details > ul, details > ol { margin-left: 2.5rem; }
+    .indice { background: var(--hoja); border: 1px solid var(--linea); border-radius: 0.75rem; padding: 1rem 1.25rem; }
+    .indice ul { list-style: none; padding-left: 0.25rem; }
+    .indice a { display: inline-block; padding: 0.15rem 0; }
+    details::details-content { block-size: 0; overflow: clip; transition: block-size 240ms cubic-bezier(0.16, 1, 0.3, 1), content-visibility 240ms allow-discrete; }
+    details[open]::details-content { block-size: auto; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition-duration: 1ms !important; }
     }
-    .tarjeta.pasos { border-left: 4px solid var(--verde); background: var(--verde-suave); }
-    .tarjeta.aviso { border-left: 4px solid var(--ambar); background: var(--ambar-suave); }
-    .etiqueta {
-      display: inline-block; font-family: var(--fuente-tecnica); font-size: 11px; font-weight: 500;
-      background: var(--acento-suave); color: var(--acento);
-      border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: middle;
-    }
-    details { margin: 10px 0; }
-    summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
-    .indice { background: var(--panel); border: 1px solid var(--borde); border-radius: 12px; padding: 16px 20px; }
-    .indice ul { list-style: none; padding-left: 4px; }
     @media print {
       body { background: white; color: black; }
       header.cabecera .volver { display: none; }
@@ -93,7 +97,7 @@
 <div class="contenido">
 
   <header class="cabecera">
-    <h1>🏗️ Manual de conexión de BuildAI</h1>
+    <h1>Manual de conexión de BuildAI</h1>
     <a class="volver" href="/">← Volver a BuildAI</a>
   </header>
   <p class="subtitulo">Cómo conectar Blender, AutoCAD, SketchUp y Revit con tu asistente,
@@ -121,24 +125,23 @@
   <div class="tarjeta pasos">
     <ol>
       <li><b>INSTALAR.bat</b> ya busca tus programas e instala los puentes al instalar BuildAI.</li>
-      <li>Si instalas un programa después, pulsa <b>❓</b> junto a su nombre en la barra
-          lateral y luego <b>⚡ Conectar automáticamente</b>.</li>
+      <li>Si instalas un programa después, abre el panel <b>Programas</b> (icono de llave en el riel de la izquierda), pulsa el botón de ayuda <b>?</b> junto a su nombre y luego <b>Conectar automáticamente</b>.</li>
       <li>Abre (o reinicia) el programa. Cuando el punto se ponga <b>verde</b>, ya puedes trabajar.</li>
     </ol>
   </div>
   <table>
     <tr><th>Programa</th><th>Versiones compatibles</th><th>Necesita algo a mano</th><th>Puerto local</th></tr>
-    <tr><td>🟠 Blender</td><td>2.80 – 5.x</td><td>No</td><td>8601</td></tr>
-    <tr><td>🔴 AutoCAD</td><td>2004+ (completo, no LT)</td><td>No (solo tenerlo abierto)</td><td>— (COM)</td></tr>
-    <tr><td>🔵 SketchUp</td><td>2014+ (8+ con instalación manual)</td><td>No</td><td>8602</td></tr>
-    <tr><td>🟣 Revit</td><td>2014+ </td><td>Instalar pyRevit (gratis) una vez</td><td>48884</td></tr>
+    <tr><td>Blender</td><td>2.80 – 5.x</td><td>No</td><td>8601</td></tr>
+    <tr><td>AutoCAD</td><td>2004+ (completo, no LT)</td><td>No (solo tenerlo abierto)</td><td>— (COM)</td></tr>
+    <tr><td>SketchUp</td><td>2014+ (8+ con instalación manual)</td><td>No</td><td>8602</td></tr>
+    <tr><td>Revit</td><td>2014+ </td><td>Instalar pyRevit (gratis) una vez</td><td>48884</td></tr>
   </table>
 
   <h2 id="blender">2. Blender <span class="etiqueta">2.80 – 5.x</span></h2>
   <h3>Conexión automática (recomendada)</h3>
   <div class="tarjeta pasos">
     <ol>
-      <li>Pulsa <b>❓</b> junto a Blender → <b>⚡ Conectar automáticamente</b>.
+      <li>Pulsa el botón <b>?</b> del panel <b>Programas</b> junto a Blender → <b>Conectar automáticamente</b>.
           BuildAI copia el puente en todas las versiones de Blender que encuentre.</li>
       <li>Abre (o reinicia) Blender. El puente arranca solo: <b>no hay que activar nada</b>.</li>
     </ol>
@@ -187,14 +190,14 @@
   <h3>Conexión automática (recomendada)</h3>
   <div class="tarjeta pasos">
     <ol>
-      <li>Pulsa <b>❓</b> junto a SketchUp → <b>⚡ Conectar automáticamente</b>.</li>
+      <li>Pulsa el botón <b>?</b> del panel <b>Programas</b> junto a SketchUp → <b>Conectar automáticamente</b>.</li>
       <li>Abre (o reinicia) SketchUp. La extensión <b>se inicia sola</b>; verás
           "BuildAI Bridge activo" en la barra de estado.</li>
     </ol>
   </div>
   <div class="tarjeta aviso">
     Si acabas de instalar SketchUp y nunca lo has abierto, ábrelo una vez y
-    ciérralo antes de pulsar "Conectar automáticamente" (SketchUp crea su
+    ciérralo antes de pulsar «Conectar automáticamente» (SketchUp crea su
     carpeta de plugins en el primer arranque).
   </div>
   <h3>Instalación manual</h3>
@@ -225,7 +228,7 @@
       <li>Instala pyRevit (si no lo tienes): descarga el instalador <code>.exe</code> desde
           <a href="https://github.com/pyrevitlabs/pyRevit/releases" target="_blank" rel="noopener">github.com/pyrevitlabs/pyRevit/releases</a>
           y pulsa siguiente → siguiente.</li>
-      <li>En BuildAI, pulsa <b>❓</b> junto a Revit → <b>⚡ Conectar automáticamente</b>.
+      <li>En BuildAI, pulsa el botón <b>?</b> del panel <b>Programas</b> junto a Revit → <b>Conectar automáticamente</b>.
           BuildAI copia la extensión <b>y activa el servidor</b> por ti.</li>
       <li>Abre (o reinicia) Revit y abre un proyecto. El punto se pondrá verde.</li>
     </ol>
@@ -252,7 +255,7 @@
   </details>
 
   <h2 id="ia">6. Configurar la inteligencia artificial</h2>
-  <p>BuildAI necesita un proveedor de IA. Pulsa <b>⚙️ Ajustes</b> en la barra superior,
+  <p>BuildAI necesita un proveedor de IA. Pulsa <b>Ajustes</b> (el engranaje) en la barra superior,
   elige proveedor y pega tu clave de API (se guarda solo en tu ordenador, en
   <code>config.json</code>).</p>
   <table>
@@ -306,7 +309,7 @@
   </details>
   <details>
     <summary>He actualizado mi programa a una versión nueva, ¿tengo que hacer algo?</summary>
-    <p>Pulsa <b>⚡ Conectar automáticamente</b> otra vez: BuildAI instala el puente en
+    <p>Pulsa <b>Conectar automáticamente</b> otra vez: BuildAI instala el puente en
     todas las versiones que detecte, incluida la nueva.</p>
   </details>
   <details>

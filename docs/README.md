@@ -22,6 +22,9 @@ Esta documentación describe el comportamiento implementado, no una arquitectura
 | [12 · Pruebas y desarrollo](12-pruebas-y-desarrollo.md) | Desarrollo en Windows y pruebas. |
 | [13 · MCP y entorno asistido](13-mcp-y-entorno-asistido.md) | Servidores MCP del entorno de desarrollo y su relación con los conectores. |
 | [14 · Plan de entrenamiento](14-plan-de-entrenamiento.md) | Plan por fases (trabajo futuro) para el dominio de las cuatro apps y el criterio de diseño. |
+| [15 · Planos → modelo](15-planos-a-modelo.md) | Reconstruir un plano adjunto (imagen, PDF o DXF) en Blender, AutoCAD, SketchUp o Revit. |
+| [17 · IA incluida](17-ia-incluida.md) | El modelo gratuito y sin clave que trae BuildAI (llama.cpp + Qwen3.5 4B) y el modo ligero. |
+| [16 · Recursos y referencias](16-recursos-y-referencias.md) | Poly Haven (HDRI, texturas PBR, modelos), fotos de referencia y visión de las imágenes de herramientas. |
 
 ## Quiero… → lee…
 
@@ -37,6 +40,8 @@ Esta documentación describe el comportamiento implementado, no una arquitectura
 | Ejecutar pruebas | [12 · Pruebas](12-pruebas-y-desarrollo.md) |
 | Saber qué MCP se usan y por qué | [13 · MCP](13-mcp-y-entorno-asistido.md) |
 | Mejorar lo que BuildAI sabe hacer | [14 · Plan de entrenamiento](14-plan-de-entrenamiento.md) |
+| Entender cómo se reconstruye un plano | [15 · Planos → modelo](15-planos-a-modelo.md) |
+| Usar texturas, cielos o fotos de referencia reales | [16 · Recursos y referencias](16-recursos-y-referencias.md) |
 | Revisar decisiones y límites | [01 · Arquitectura](01-arquitectura.md) y [11 · Buenas prácticas](11-buenas-practicas.md) |
 
 ## Fuente de verdad

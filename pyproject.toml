@@ -15,6 +15,12 @@ dependencies = [
     "anthropic>=0.90",
     "pywebview>=5.3",
     "pywin32>=306; sys_platform == 'win32'",
+    # Planos → modelo: detector de muros (numpy + Pillow), páginas de PDF a
+    # imagen (pypdfium2, licencia BSD/Apache) y lectura de DXF (ezdxf).
+    "numpy>=1.26",
+    "pillow>=10.1",
+    "pypdfium2>=4.30",
+    "ezdxf>=1.1",
 ]
 
 [project.optional-dependencies]

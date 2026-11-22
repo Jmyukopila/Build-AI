@@ -88,6 +88,11 @@ class TestInterfazEntregables(unittest.TestCase):
         self.addCleanup(self.pagina.close)
         self.addCleanup(lambda: self.assertEqual(self.errores, [], "errores de JavaScript"))
 
+    def abrir_rail(self):
+        """El panel de entregables es un cajón plegado: se abre como lo haría el usuario."""
+        self.pagina.click("#btn-rail")
+        self.pagina.wait_for_selector("#rail-derecho:not(.oculto)")
+
     def entregar(self, archivo, formato, tamano):
         self.pagina.evaluate(
             "ev => agregarEntregable(ev)",
@@ -115,6 +120,7 @@ class TestInterfazEntregables(unittest.TestCase):
         self.assertIn("attachment", r.headers["content-disposition"])
 
     def test_aparece_una_ficha_en_el_rail(self):
+        self.abrir_rail()
         self.entregar("estructura.ifc", "IFC", len(IFC))
         ficha = self.pagina.locator("#rail-entregables .entregable-archivo")
         self.assertEqual(ficha.count(), 1)
@@ -122,12 +128,14 @@ class TestInterfazEntregables(unittest.TestCase):
         self.assertEqual(ficha.get_attribute("href"), "/api/entregables/estructura.ifc")
 
     def test_el_rail_deja_de_estar_vacio(self):
+        self.abrir_rail()
         vacio = self.pagina.locator('.rail-vacio[data-vacio-de="rail-entregables"]')
         self.assertFalse(vacio.is_hidden(), "debería verse el aviso antes de exportar nada")
         self.entregar("planta-baja.dxf", "DXF", len(DXF))
         self.assertTrue(vacio.is_hidden())
 
     def test_el_rail_pone_los_mas_recientes_primero(self):
+        self.abrir_rail()
         self.entregar("planta-baja.dxf", "DXF", len(DXF))
         self.entregar("estructura.ifc", "IFC", len(IFC))
         formatos = self.pagina.locator("#rail-entregables .entregable-archivo").all_inner_texts()

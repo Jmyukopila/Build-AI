@@ -4,13 +4,25 @@
 #   .venv\Scripts\pyinstaller empaquetado\buildai.spec --noconfirm
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
+
 # SPECPATH es empaquetado/, la raiz del proyecto es su padre.
 RAIZ = Path(SPECPATH).resolve().parent
+
+# Planos (PDF/DXF): pypdfium2 carga pdfium como biblioteca nativa y lee su
+# version.json al importarse; ezdxf trae recursos propios. Se declaran a mano
+# para no depender de que la versión instalada de hooks-contrib los cubra.
+_BINARIOS_LIBRERIAS = collect_dynamic_libs("pypdfium2_raw")
+_DATOS_LIBRERIAS = (
+    collect_data_files("pypdfium2_raw")
+    + collect_data_files("pypdfium2")
+    + collect_data_files("ezdxf")
+)
 
 a = Analysis(
     [str(RAIZ / "empaquetado" / "run_buildai.py")],
     pathex=[str(RAIZ)],
-    binaries=[],
+    binaries=_BINARIOS_LIBRERIAS,
     datas=[
         (str(RAIZ / "buildai" / "ui"), "buildai/ui"),
         (str(RAIZ / "buildai" / "conocimiento_semillas"), "buildai/conocimiento_semillas"),
@@ -19,7 +31,7 @@ a = Analysis(
         # fuente en Blender/Revit, así que PyInstaller no los detecta solo.
         (str(RAIZ / "buildai" / "connectors" / "blender_kit.py"), "buildai/connectors"),
         (str(RAIZ / "buildai" / "connectors" / "revit_kit.py"), "buildai/connectors"),
-    ],
+    ] + _DATOS_LIBRERIAS,
     hiddenimports=[
         "uvicorn.logging",
         "uvicorn.loops.auto",

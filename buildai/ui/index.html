@@ -1,78 +1,107 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-tema="sistema" data-texto="normal">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>BuildAI — Tu asistente de IA para arquitectura</title>
+  <link rel="icon" type="image/svg+xml" href="/ui/assets/marca.svg">
   <link rel="icon" type="image/png" href="/ui/assets/favicon.png">
+  <script>
+    /* Aplica tema y tamaño de texto antes del primer pintado para evitar el parpadeo */
+    try {
+      const raiz = document.documentElement;
+      const tema = localStorage.getItem("buildai.tema");
+      const texto = localStorage.getItem("buildai.texto");
+      if (tema) raiz.dataset.tema = tema;
+      if (texto) raiz.dataset.texto = texto;
+    } catch (_) { /* sin almacenamiento: valores por defecto */ }
+  </script>
   <link rel="stylesheet" href="/ui/style.css">
 </head>
 <body>
+  <a class="salto" href="#entrada">Saltar al cuadro de texto</a>
   <div id="fondo-lateral" class="fondo-lateral oculto"></div>
 
-  <aside id="lateral" class="oculto">
-    <div class="marca">
-      <div class="marca-emblema">
-        <img class="logo-plate" src="/ui/assets/icono-marca.png" alt="">
+  <aside id="lateral" class="oculto" aria-label="Navegación">
+    <nav class="riel">
+      <div class="marca-emblema" id="icono-logo" aria-hidden="true"></div>
+      <div class="tabs-lateral" data-tab-activo="sesiones" aria-label="Secciones del panel">
+        <span class="tab-realce" aria-hidden="true"></span>
+        <button type="button" class="tab-lateral activo" data-tab="sesiones" aria-current="true" title="Historial" aria-label="Historial">
+          <span class="icono" id="icono-panel-sesiones"></span>
+          <span class="tab-etiqueta">Historial</span>
+        </button>
+        <button type="button" class="tab-lateral" data-tab="skills" title="Tareas rápidas" aria-label="Tareas rápidas">
+          <span class="icono" id="icono-panel-skills"></span>
+          <span class="tab-etiqueta">Tareas</span>
+        </button>
+        <button type="button" class="tab-lateral" data-tab="programas" title="Programas" aria-label="Programas">
+          <span class="icono" id="icono-panel-programas"></span>
+          <span class="tab-etiqueta">Programas</span>
+        </button>
       </div>
-      <div class="marca-textos">
-        <span class="marca-titulo">BUILD&nbsp;AI</span>
-        <span class="marca-sub">Asistente de IA para arquitectos</span>
-      </div>
-    </div>
+    </nav>
 
-    <div class="tabs-lateral" data-tab-activo="programas" role="tablist">
-      <span class="tab-realce" aria-hidden="true"></span>
-      <button type="button" class="tab-lateral activo" data-tab="programas" role="tab">
-        <span class="icono" id="icono-panel-programas"></span>
-        <span>Programas</span>
-      </button>
-      <button type="button" class="tab-lateral" data-tab="skills" role="tab">
-        <span class="icono" id="icono-panel-skills"></span>
-        <span>Tareas</span>
-      </button>
-      <button type="button" class="tab-lateral" data-tab="sesiones" role="tab">
-        <span class="icono" id="icono-panel-sesiones"></span>
-        <span>Historial</span>
-      </button>
-    </div>
+    <div class="panel-lateral">
+      <header class="panel-cabecera">
+        <span class="marca-titulo">BuildAI</span>
+        <button id="btn-nueva-lateral" type="button" class="btn-nueva-lateral">
+          <span class="icono" data-icono="mas"></span>Nueva conversación
+        </button>
+      </header>
 
-    <div class="panel-lateral-cuerpos">
-      <div class="panel-tab-cuerpo" data-panel="programas">
-        <div id="programas" class="lista-programas"></div>
-        <p class="pista">El punto verde indica que el programa está conectado.</p>
+      <div class="panel-lateral-cuerpos">
+        <div class="panel-tab-cuerpo" data-panel="sesiones">
+          <div id="sesiones" class="lista-sesiones" aria-busy="true">
+            <div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div>
+          </div>
+          <p class="pista">Cada conversación se guarda en tu ordenador. Pulsa una para retomarla.</p>
+        </div>
+        <div class="panel-tab-cuerpo oculto" data-panel="skills">
+          <div id="skills" class="lista-skills" aria-busy="true">
+            <div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div>
+          </div>
+        </div>
+        <div class="panel-tab-cuerpo oculto" data-panel="programas">
+          <div id="programas" class="lista-programas" aria-busy="true">
+            <div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div>
+          </div>
+          <p class="pista">Un programa conectado está listo para recibir encargos.</p>
+        </div>
       </div>
-      <div class="panel-tab-cuerpo oculto" data-panel="skills">
-        <div id="skills" class="lista-skills"></div>
-      </div>
-      <div class="panel-tab-cuerpo oculto" data-panel="sesiones">
-        <div id="sesiones" class="lista-sesiones"></div>
-        <p class="pista">Cada conversación se guarda en tu ordenador. Pulsa una para retomarla.</p>
-      </div>
-    </div>
 
-    <div class="pie-lateral">
-      <a class="enlace-manual" href="/manual" target="_blank" rel="noopener">
-        <span id="icono-manual"></span> Manual de conexión
-      </a>
-      <div id="info-modelo" class="info-modelo"></div>
+      <div class="pie-lateral">
+        <a class="enlace-manual" href="/manual" target="_blank" rel="noopener">
+          <span class="icono" id="icono-manual"></span> Manual de conexión
+        </a>
+        <div id="info-modelo" class="info-modelo" role="button" tabindex="0"></div>
+      </div>
     </div>
   </aside>
 
   <main id="principal">
     <header id="barra-superior">
-      <button id="btn-menu" class="icono-btn" title="Mostrar/ocultar panel lateral"></button>
-      <h2 class="titulo-barra">Conversación</h2>
+      <button id="btn-menu" class="icono-btn" title="Mostrar u ocultar el panel" aria-label="Mostrar u ocultar el panel"></button>
+      <p class="titulo-barra" id="titulo-barra">Nueva conversación</p>
       <div id="lectura-estado" class="lectura-estado"></div>
       <div class="acciones-barra">
-        <button id="btn-exportar" class="icono-btn" title="Descargar la conversación (Markdown)"></button>
-        <button id="btn-ajustes" class="icono-btn" title="Ajustes de IA"></button>
-        <button id="btn-nueva" class="icono-btn" title="Nueva conversación"></button>
-        <button id="btn-rail" class="icono-btn" title="Mostrar/ocultar actividad"></button>
+        <button id="btn-nueva" class="icono-btn" title="Nueva conversación" aria-label="Nueva conversación"></button>
+        <button id="btn-exportar" class="icono-btn" title="Descargar la conversación (Markdown)" aria-label="Descargar la conversación"></button>
+        <button id="btn-ajustes" class="icono-btn" title="Ajustes" aria-label="Ajustes"></button>
+        <button id="btn-rail" class="icono-btn" title="Actividad y entregables" aria-label="Actividad y entregables"></button>
       </div>
     </header>
 
-    <div id="chat">
+    <div id="banner" class="banner oculto" role="status" aria-live="polite">
+      <span class="icono" id="banner-icono"></span>
+      <span id="banner-texto"></span>
+      <button id="banner-accion" type="button" class="banner-accion oculto"></button>
+    </div>
+
+    <button id="btn-abajo" type="button" title="Ir al último mensaje" aria-label="Ir al último mensaje"></button>
+
+    <div id="chat" tabindex="-1">
       <div class="mensaje asistente bienvenida">
         <div class="burbuja hero-bienvenida">
           <h1 class="hero-titulo">Tu estudio de arquitectura con IA</h1>
@@ -80,82 +109,81 @@
             <b>Blender, Revit, AutoCAD y SketchUp</b>. Pídemelo con tus palabras,
             sin código ni tecnicismos.</p>
 
-          <div class="tarjetas-rasgos">
-            <div class="rasgo">
-              <span class="icono" id="icono-rasgo-construye"></span>
-              <b>Construye</b>
-              <small>Casas y edificios completos, planta a planta</small>
-            </div>
-            <div class="rasgo">
-              <span class="icono" id="icono-rasgo-interiores"></span>
-              <b>Amuebla e ilumina</b>
-              <small>Interiores con mobiliario, texturas y luz</small>
-            </div>
-            <div class="rasgo">
-              <span class="icono" id="icono-rasgo-render"></span>
-              <b>Renderiza</b>
-              <small>Imágenes fotorrealistas directas al chat</small>
-            </div>
-          </div>
-
-          <p class="hero-prueba">Prueba con uno de estos encargos:</p>
+          <p class="hero-prueba">Empieza con un encargo</p>
           <div class="chips-ejemplo">
             <button type="button" class="chip"
               data-ejemplo="Crea una casa moderna de dos plantas con piscina y jardín, y enséñamela con un render fotorrealista al atardecer">
-              🌇 Casa moderna con piscina + render</button>
+              <span class="icono" data-icono="casa"></span>Casa moderna con piscina y render</button>
             <button type="button" class="chip"
               data-ejemplo="Haz el diseño interior del salón: sofá, alfombra, mesa de centro, televisor, cuadros e iluminación cálida en capas">
-              🛋️ Interiorismo del salón</button>
-            <button type="button" class="chip"
-              data-ejemplo="Dibuja en AutoCAD la planta acotada de una vivienda de 90 m² con dos dormitorios, por capas">
-              📐 Planta acotada en AutoCAD</button>
+              <span class="icono" data-icono="luces"></span>Interiorismo del salón</button>
             <button type="button" class="chip"
               data-ejemplo="Levanta en Revit los niveles y muros de una vivienda de dos plantas con elementos BIM nativos">
-              🧱 Muros BIM en Revit</button>
+              <span class="icono" data-icono="muros"></span>Muros BIM en Revit</button>
+            <button type="button" class="chip"
+              data-ejemplo="Dibuja en AutoCAD la planta acotada de una vivienda de 90 m² con dos dormitorios, por capas">
+              <span class="icono" data-icono="planta"></span>Planta acotada en AutoCAD</button>
           </div>
 
-          <p class="nota-bienvenida">Primer uso: elige tu IA en <b>Ajustes</b> (engranaje,
-            arriba a la derecha) y conecta tu programa desde el panel <b>Programas</b>.
-            ¿Dudas? <a href="/manual" target="_blank" rel="noopener">Manual de conexión</a>.</p>
+          <p class="nota-bienvenida">Primer uso: elige tu IA en <b>Ajustes</b> y conecta tu programa
+            desde el panel <b>Programas</b>. ¿Dudas?
+            <a href="/manual" target="_blank" rel="noopener">Manual de conexión</a>.</p>
         </div>
       </div>
     </div>
 
     <form id="formulario">
+      <!-- Tira de fases: el único lugar donde se muestra en qué va la IA -->
+      <span class="solo-lectores" id="fase-anuncio" role="status"></span>
+      <div id="fases" class="fases oculto" data-fase="recibir">
+        <span class="fase-icono" id="fase-icono" aria-hidden="true"></span>
+        <span class="fase-texto">
+          <span class="fase-palabra" id="fase-palabra"></span>
+          <span class="fase-detalle" id="fase-detalle"></span>
+        </span>
+        <span class="fase-tiempo" id="fase-tiempo"></span>
+        <ol class="fase-pasos" aria-label="Fases del encargo">
+          <li data-paso="recibir">Recibir</li>
+          <li data-paso="pensar">Pensar</li>
+          <li data-paso="actuar">Actuar</li>
+          <li data-paso="entregar">Entregar</li>
+        </ol>
+      </div>
       <div id="adjuntos-previa" class="adjuntos-previa oculto"></div>
       <div class="fila-entrada">
-        <input id="input-archivos" type="file" accept="image/*,video/*" multiple hidden>
+        <input id="input-archivos" type="file" accept="image/*,video/*,.pdf,.dxf,application/pdf" multiple hidden>
         <button id="btn-adjuntar" type="button" class="icono-btn"
-          title="Adjuntar fotos o vídeos"></button>
-        <textarea id="entrada" rows="1"
-          placeholder="Pídeme una casa, un plano, un interior o un render… (Enter envía)"></textarea>
-        <button id="btn-enviar" type="submit" title="Enviar"></button>
+          title="Adjuntar fotos, vídeos o planos (PDF, DXF)" aria-label="Adjuntar archivos"></button>
+        <textarea id="entrada" rows="1" aria-label="Escribe tu encargo"
+          placeholder="Pídeme una casa, un plano o un render…"></textarea>
+        <button id="btn-enviar" type="submit" title="Enviar (Enter)" aria-label="Enviar"></button>
       </div>
+      <p class="pista-form">Enter envía · Mayús+Enter salta de línea · puedes pegar o arrastrar archivos</p>
     </form>
   </main>
 
   <div id="fondo-rail" class="fondo-lateral oculto"></div>
 
-  <aside id="rail-derecho" class="oculto">
+  <aside id="rail-derecho" class="oculto" aria-label="Actividad y entregables">
     <div class="rail-cabecera">
       <span class="rail-titulo-app"><span class="icono" id="icono-rail-actividad"></span>Actividad</span>
-      <button id="btn-x-rail" class="icono-btn icono-btn-chico" title="Cerrar"></button>
+      <button id="btn-x-rail" class="icono-btn icono-btn-chico" title="Cerrar" aria-label="Cerrar actividad"></button>
     </div>
 
     <div class="rail-cuerpo">
       <section class="rail-seccion">
-        <h3 class="rail-seccion-titulo">Estado del sistema</h3>
+        <h2 class="rail-seccion-titulo">Estado del sistema</h2>
         <div id="rail-estado" class="rail-estado"></div>
       </section>
 
       <section class="rail-seccion">
-        <h3 class="rail-seccion-titulo">Actividad reciente</h3>
+        <h2 class="rail-seccion-titulo">Actividad reciente</h2>
         <div id="rail-actividad" class="lista-actividad-rail"></div>
         <p class="pista rail-vacio" data-vacio-de="rail-actividad">Aquí verás cada acción sobre tus programas en cuanto empieces a pedir algo.</p>
       </section>
 
       <section class="rail-seccion">
-        <h3 class="rail-seccion-titulo">Entregables</h3>
+        <h2 class="rail-seccion-titulo">Entregables</h2>
         <div id="rail-entregables" class="lista-entregables"></div>
         <p class="pista rail-vacio" data-vacio-de="rail-entregables">Aquí aparecerán tus renders y los archivos que exportes (IFC, DWG, DXF, PDF…).</p>
       </section>
@@ -163,11 +191,11 @@
   </aside>
 
   <!-- Ventana de ajustes -->
-  <div id="modal-ajustes" class="modal oculto">
+  <div id="modal-ajustes" class="modal oculto" role="dialog" aria-modal="true" aria-labelledby="titulo-ajustes">
     <div class="modal-caja modal-ajustes">
       <div class="modal-cabecera">
-        <h2><span class="icono" id="icono-cabecera-ajustes"></span>Ajustes de IA</h2>
-        <button id="btn-x-ajustes" class="icono-btn" title="Cerrar"></button>
+        <h2 id="titulo-ajustes"><span class="icono" id="icono-cabecera-ajustes"></span>Ajustes</h2>
+        <button id="btn-x-ajustes" class="icono-btn" title="Cerrar" aria-label="Cerrar ajustes"></button>
       </div>
       <p class="pista intro-ajustes">Elige qué inteligencia artificial usar. Si no tienes ninguna,
         empieza con <b>OpenRouter</b> u <b>OpenCode Zen</b> (gratis con clave) o
@@ -175,7 +203,7 @@
 
       <section class="seccion-ajustes">
         <h3 class="seccion-titulo"><span class="icono" id="icono-seccion-proveedor"></span>Proveedor</h3>
-        <select id="sel-proveedor"></select>
+        <select id="sel-proveedor" aria-label="Proveedor de IA"></select>
         <p id="nota-proveedor" class="pista"></p>
       </section>
 
@@ -194,7 +222,7 @@
 
           <div id="modo-apikey">
             <label>Clave de API
-              <input id="inp-clave" type="password" placeholder="Pega aquí tu clave (se guarda solo en tu ordenador)">
+              <input id="inp-clave" type="password" autocomplete="off" placeholder="Pega aquí tu clave (se guarda solo en tu ordenador)">
             </label>
           </div>
 
@@ -210,10 +238,40 @@
 
       <section class="seccion-ajustes">
         <h3 class="seccion-titulo"><span class="icono" id="icono-seccion-modelo"></span>Modelo</h3>
-        <input id="inp-modelo" type="text" list="lista-modelos" autocomplete="off"
+        <input id="inp-modelo" type="text" list="lista-modelos" autocomplete="off" aria-label="Modelo"
           placeholder="Elige de la lista o escribe el nombre del modelo">
         <datalist id="lista-modelos"></datalist>
         <p id="estado-modelos" class="pista"></p>
+      </section>
+
+      <section class="seccion-ajustes">
+        <h3 class="seccion-titulo"><span class="icono" data-icono="imagen"></span>Fotos de referencia <small>(opcional)</small></h3>
+        <label>Clave de Pexels
+          <input id="inp-pexels" type="password" autocomplete="off" placeholder="Sin clave se usan fotos de Openverse">
+        </label>
+        <p id="estado-pexels" class="pista">Con una clave gratuita de
+          <a href="https://www.pexels.com/api/new/" target="_blank" rel="noopener">Pexels ↗</a>
+          las fotos de referencia son de más calidad. Se guarda solo en tu ordenador.</p>
+      </section>
+
+      <section class="seccion-ajustes">
+        <h3 class="seccion-titulo"><span class="icono" data-icono="texto"></span>Apariencia</h3>
+        <div class="grupo-opciones" role="group" aria-labelledby="etq-tema">
+          <span class="etiqueta-grupo" id="etq-tema">Tema</span>
+          <div class="opciones" data-grupo="tema">
+            <button type="button" class="opcion" data-valor="sistema">Sistema</button>
+            <button type="button" class="opcion" data-valor="claro">Claro</button>
+            <button type="button" class="opcion" data-valor="oscuro">Oscuro</button>
+          </div>
+        </div>
+        <div class="grupo-opciones" role="group" aria-labelledby="etq-texto">
+          <span class="etiqueta-grupo" id="etq-texto">Tamaño del texto</span>
+          <div class="opciones" data-grupo="texto">
+            <button type="button" class="opcion" data-valor="normal">Normal</button>
+            <button type="button" class="opcion" data-valor="grande">Grande</button>
+            <button type="button" class="opcion" data-valor="enorme">Muy grande</button>
+          </div>
+        </div>
       </section>
 
       <div class="modal-botones">
@@ -224,11 +282,11 @@
   </div>
 
   <!-- Ventana de ayuda de conexión -->
-  <div id="modal-ayuda" class="modal oculto">
+  <div id="modal-ayuda" class="modal oculto" role="dialog" aria-modal="true" aria-labelledby="ayuda-titulo">
     <div class="modal-caja">
       <div class="modal-cabecera">
         <h2 id="ayuda-titulo"></h2>
-        <button id="btn-x-ayuda" class="icono-btn" title="Cerrar"></button>
+        <button id="btn-x-ayuda" class="icono-btn" title="Cerrar" aria-label="Cerrar ayuda"></button>
       </div>
       <pre id="ayuda-texto"></pre>
       <p id="ayuda-resultado" class="pista oculto"></p>
@@ -241,7 +299,7 @@
   </div>
 
   <!-- Visor de renders a pantalla completa -->
-  <div id="lightbox" class="modal lightbox oculto">
+  <div id="lightbox" class="modal lightbox oculto" role="dialog" aria-modal="true" aria-label="Render ampliado">
     <img id="lightbox-img" alt="Render ampliado">
     <div class="lightbox-acciones">
       <a id="lightbox-descargar" class="boton-lightbox" download title="Descargar la imagen">Descargar</a>

@@ -1,7 +1,7 @@
 /* BuildAI — set de iconos SVG (sin emojis) */
 
 const ICONOS = {
-  logo: '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/>',
+  logo: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="9" y1="12" x2="21" y2="12"/><rect x="3" y="3" width="6" height="18" rx="2" fill="currentColor"/>',
   menu: '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
   chevron: '<polyline points="6 9 12 15 18 9"/>',
   cerrar: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
@@ -40,7 +40,14 @@ const ICONOS = {
   video: '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>',
   actividad: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
   panel: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="15" y1="3" x2="15" y2="21"/>',
+  info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+  texto: '<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>',
+  rayo: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
 };
+// Las herramientas de planos llegan con programa "Planos": sin alias caerían en
+// el icono de tarea, que en la actividad parece un indicador de carga.
+ICONOS.planos = ICONOS.planta;
+ICONOS.recursos = ICONOS.imagen;
 
 function svgIcono(nombre) {
   const contenido = ICONOS[nombre] || ICONOS.tarea;

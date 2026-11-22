@@ -10,6 +10,7 @@ let configuracion = null;
 
 /* ---------- Iconos estáticos ---------- */
 
+document.getElementById("icono-logo").innerHTML = '<img src="/ui/assets/icono-marca.png" alt="" width="40" height="40">';
 document.getElementById("btn-menu").innerHTML = svgIcono("menu");
 document.getElementById("btn-ajustes").innerHTML = svgIcono("ajustes");
 document.getElementById("btn-nueva").innerHTML = svgIcono("mas");
@@ -18,7 +19,7 @@ document.getElementById("icono-panel-sesiones").innerHTML = svgIcono("historial"
 document.getElementById("btn-enviar").innerHTML = svgIcono("enviar");
 document.getElementById("btn-x-ajustes").innerHTML = svgIcono("cerrar");
 document.getElementById("btn-x-ayuda").innerHTML = svgIcono("cerrar");
-document.getElementById("icono-manual").innerHTML = svgIcono("manual");
+document.getElementById("icono-manual").innerHTML = svgIcono("libro");
 document.getElementById("icono-panel-programas").innerHTML = svgIcono("herramienta");
 document.getElementById("icono-panel-skills").innerHTML = svgIcono("chispa");
 document.getElementById("icono-cabecera-ajustes").innerHTML = svgIcono("ajustes");
@@ -28,13 +29,125 @@ document.getElementById("icono-seccion-modelo").innerHTML = svgIcono("sliders");
 document.getElementById("icono-switch-apikey").innerHTML = svgIcono("llave");
 document.getElementById("icono-switch-oauth").innerHTML = svgIcono("globo");
 document.getElementById("icono-oauth-btn").innerHTML = svgIcono("globo");
-document.getElementById("icono-rasgo-construye").innerHTML = svgIcono("muros");
-document.getElementById("icono-rasgo-interiores").innerHTML = svgIcono("luces");
-document.getElementById("icono-rasgo-render").innerHTML = svgIcono("chispa");
 document.getElementById("btn-adjuntar").innerHTML = svgIcono("clip");
 document.getElementById("btn-rail").innerHTML = svgIcono("panel");
 document.getElementById("btn-x-rail").innerHTML = svgIcono("cerrar");
 document.getElementById("icono-rail-actividad").innerHTML = svgIcono("actividad");
+document.getElementById("btn-abajo").innerHTML = svgIcono("chevron");
+document.getElementById("banner-icono").innerHTML = svgIcono("advertencia");
+// Iconos declarados en el HTML con data-icono="nombre"
+document.querySelectorAll("[data-icono]").forEach((el) => { el.innerHTML = svgIcono(el.dataset.icono); });
+
+/* ---------- Movimiento e interactividad ---------- */
+
+const reducirMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+// Hace entrar una lista escalonada. El retraso por elemento baja cuanto más
+// larga es la lista (tope total ~400 ms) para que no se vuelva lenta al crecer.
+function escalonar(elementos) {
+  const lista = Array.from(elementos);
+  const paso = Math.min(50, 400 / Math.max(lista.length, 1));
+  lista.forEach((el, i) => {
+    el.classList.add("entra");
+    el.style.animationDelay = `${Math.round(i * paso)}ms`;
+  });
+}
+
+// Aviso efímero (arriba, centrado). No bloquea ni roba el foco. Tipos: ok,
+// error, info y atencion; los errores se quedan más tiempo para poder leerlos.
+const ICONO_AVISO = { ok: "check", error: "advertencia", info: "info", atencion: "advertencia" };
+function avisar(texto, tipo = "ok") {
+  let cont = document.querySelector(".avisos");
+  if (!cont) {
+    cont = document.createElement("div");
+    cont.className = "avisos";
+    cont.setAttribute("role", "status");
+    cont.setAttribute("aria-live", "polite");
+    document.body.appendChild(cont);
+  }
+  const a = document.createElement("div");
+  a.className = "aviso" + (tipo === "ok" ? "" : " " + tipo);
+  a.innerHTML = `<span class="icono">${svgIcono(ICONO_AVISO[tipo] || "check")}</span><span></span>`;
+  a.lastElementChild.textContent = texto;
+  cont.appendChild(a);
+  while (cont.children.length > 3) cont.firstElementChild.remove();
+  setTimeout(() => {
+    a.classList.add("sale");
+    a.addEventListener("animationend", () => a.remove(), { once: true });
+  }, tipo === "error" ? 5200 : 2800);
+}
+
+// Aviso fijo bajo la barra: persiste mientras la causa siga ahí (sin IA
+// configurada, sin conexión con el servidor). `accion` es {texto, hacer}.
+const banner = document.getElementById("banner");
+const bannerAccion = document.getElementById("banner-accion");
+function mostrarBanner(texto, { tipo = "atencion", accion = null } = {}) {
+  banner.className = "banner" + (tipo === "atencion" ? "" : " " + tipo);
+  document.getElementById("banner-icono").innerHTML = svgIcono(tipo === "info" ? "info" : "advertencia");
+  document.getElementById("banner-texto").textContent = texto;
+  bannerAccion.classList.toggle("oculto", !accion);
+  bannerAccion.textContent = accion ? accion.texto : "";
+  bannerAccion.onclick = accion ? accion.hacer : null;
+}
+function ocultarBanner() { banner.classList.add("oculto"); }
+
+// Texto con anillo de carga para botones que esperan al servidor
+const conSpinner = (texto) => `<span class="spinner"></span>${texto}`;
+
+// Espera a que termine la animación de un elemento; el plazo evita colgarse si
+// no llega a dispararse (p. ej. pestaña en segundo plano).
+function esperarAnimacion(el, plazo = 400) {
+  return new Promise((resolver) => {
+    const fin = () => { clearTimeout(reloj); resolver(); };
+    const reloj = setTimeout(fin, plazo);
+    el.addEventListener("animationend", fin, { once: true });
+  });
+}
+
+// Con la ventana en segundo plano se pausan los bucles ambientales
+document.addEventListener("visibilitychange", () => {
+  document.documentElement.classList.toggle("pausa-ambiente", document.hidden);
+});
+
+// Scroll del chat: sigue lo nuevo solo si el usuario ya estaba abajo, y ofrece
+// un botón para volver al final cuando ha subido a releer.
+const btnAbajo = document.getElementById("btn-abajo");
+let pintandoHistorial = false; // true mientras se repinta una sesión guardada
+
+function distanciaAlFinal() {
+  return chat.scrollHeight - chat.scrollTop - chat.clientHeight;
+}
+function actualizarBtnAbajo() {
+  btnAbajo.classList.toggle("visible", distanciaAlFinal() > 240);
+}
+function bajarChat({ suave = true } = {}) {
+  chat.scrollTo({ top: chat.scrollHeight, behavior: suave && !reducirMovimiento.matches ? "smooth" : "auto" });
+}
+chat.addEventListener("scroll", actualizarBtnAbajo, { passive: true });
+btnAbajo.addEventListener("click", () => bajarChat());
+// El botón flota justo encima del formulario, cuya altura cambia (adjuntos, texto largo)
+new ResizeObserver(() => {
+  document.getElementById("principal").style.setProperty("--alto-form", `${formulario.offsetHeight}px`);
+}).observe(formulario);
+
+// Lo que llega en vivo se despliega como la respuesta; el historial guardado no
+function revelarEnVivo(el) {
+  if (pintandoHistorial) return;
+  el.classList.add("despliega");
+  el.addEventListener("animationend", (e) => {
+    if (e.animationName === "despliega") el.classList.remove("despliega");
+  });
+}
+
+// Único punto por el que entra un mensaje al chat (antes estaba triplicado)
+function insertarMensaje(d, { forzar = false } = {}) {
+  const estabaAbajo = distanciaAlFinal() < 120;
+  if (pintandoHistorial) d.classList.add("sin-anim");
+  document.querySelector(".bienvenida")?.classList.add("oculto");
+  chat.appendChild(d);
+  if (forzar || estabaAbajo) bajarChat({ suave: !pintandoHistorial });
+  actualizarBtnAbajo();
+}
 
 // Encargos de ejemplo de la bienvenida: rellenan la caja para que el usuario
 // pueda ajustarlos antes de enviar
@@ -43,24 +156,50 @@ document.querySelectorAll(".chip").forEach((c) => {
     entrada.value = c.dataset.ejemplo || c.textContent.trim();
     ajustarAltura();
     entrada.focus();
+    // Destello breve: confirma que el texto llegó a la caja
+    entrada.classList.remove("destello");
+    void entrada.offsetWidth; // reinicia la animación si se pulsa dos veces seguidas
+    entrada.classList.add("destello");
   });
 });
+entrada.addEventListener("animationend", () => entrada.classList.remove("destello"));
 
 /* ---------- Estado y programas ---------- */
 
 let estadoAnterior = null;
+let firmaEstado = "";
 
 async function cargarEstado() {
-  const r = await fetch("/api/estado");
-  if (!r.ok) return;
-  const datos = await r.json();
+  let datos;
+  try {
+    const r = await fetch("/api/estado");
+    if (!r.ok) throw new Error("estado " + r.status);
+    datos = await r.json();
+  } catch (_) {
+    mostrarBanner("Sin conexión con BuildAI. Reintentando…", { tipo: "error" });
+    firmaEstado = ""; // al volver, se repinta todo
+    return;
+  }
+  const previo = estadoAnterior;
+  estadoAnterior = datos;
+  // El sondeo corre cada 10 s: si nada cambió no se reescribe el DOM (evita
+  // parpadeos, reinicios de animación y perder el hover sobre un programa).
+  const firma = JSON.stringify(datos);
+  if (firma === firmaEstado) return;
+  const primera = firmaEstado === "";
+  firmaEstado = firma;
   const cont = document.getElementById("programas");
   cont.innerHTML = "";
+  cont.removeAttribute("aria-busy");
   for (const p of datos.programas) {
     const d = document.createElement("div");
     d.className = "programa" + (p.conectado ? " conectado" : "");
     d.innerHTML = `<span class="punto"></span><span class="icono">${svgIcono(p.icono)}</span><span class="nombre">${p.nombre}</span>`;
     if (!p.conectado) {
+      const sin = document.createElement("span");
+      sin.className = "estado-txt";
+      sin.textContent = "sin conectar";
+      d.appendChild(sin);
       const btn = document.createElement("button");
       btn.className = "icono-btn icono-btn-chico";
       btn.title = "Ayuda para conectar " + p.nombre;
@@ -75,19 +214,40 @@ async function cargarEstado() {
     }
     cont.appendChild(d);
   }
+  if (primera) escalonar(cont.children);
+  // Un programa que pasa a conectado merece confirmación visible
+  for (const p of datos.programas) {
+    const antes = previo?.programas.find((x) => x.id === p.id);
+    if (p.conectado && antes && !antes.conectado) avisar(`${p.nombre} conectado`);
+  }
+  // La IA incluida se descarga (solo la primera vez) y arranca sola: mientras
+  // tanto se enseña el progreso y se sondea más a menudo para que avance fluido.
+  const ia = datos.ia_local;
+  if (ia && (ia.fase === "descargando" || ia.fase === "arrancando")) {
+    const pct = ia.fase === "descargando" ? ` ${Math.round(ia.progreso * 100)} %` : "";
+    mostrarBanner(`${ia.mensaje}${pct}`, { tipo: "info" });
+    clearTimeout(cargarEstado.siguiente);
+    cargarEstado.siguiente = setTimeout(cargarEstado, 2000);
+  } else if (ia && ia.fase === "error") {
+    mostrarBanner(`La IA incluida no pudo prepararse: ${ia.mensaje}`,
+      { tipo: "error", accion: { texto: "Elegir otra IA", hacer: () => abrirAjustes() } });
+  } else if (datos.clave_configurada) ocultarBanner();
+  else mostrarBanner("Aún no has elegido una IA: configúrala para empezar a conversar.",
+    { accion: { texto: "Abrir ajustes", hacer: () => abrirAjustes() } });
+  if (ia && previo?.ia_local && previo.ia_local.fase !== "lista" && ia.fase === "lista") avisar(ia.mensaje);
+  const nombreProveedor = datos.proveedor === "local" ? "IA incluida" : datos.proveedor;
   const info = document.getElementById("info-modelo");
   info.classList.toggle("sin-clave", !datos.clave_configurada);
   info.textContent = datos.clave_configurada
-    ? `${datos.proveedor} · ${datos.modelo}`
+    ? `${nombreProveedor} · ${datos.modelo}`
     : "Configura la IA en Ajustes";
-  estadoAnterior = datos;
 
   const conectados = datos.programas.filter((p) => p.conectado).length;
   document.getElementById("lectura-estado").innerHTML =
     `<span class="punto ${conectados > 0 ? "conectado" : ""}"></span>${conectados}/${datos.programas.length} programas`;
   document.getElementById("rail-estado").innerHTML = `
     <div class="rail-estado-fila"><span>Programas conectados</span><b>${conectados} / ${datos.programas.length}</b></div>
-    <div class="rail-estado-fila"><span>Proveedor de IA</span><b>${datos.clave_configurada ? datos.proveedor : "sin configurar"}</b></div>
+    <div class="rail-estado-fila"><span>Proveedor de IA</span><b>${datos.clave_configurada ? nombreProveedor : "sin configurar"}</b></div>
     <div class="rail-estado-fila"><span>Modelo</span><b>${datos.clave_configurada ? datos.modelo : "—"}</b></div>`;
 }
 
@@ -98,6 +258,8 @@ async function cargarSkills() {
   if (!r.ok) return;
   const lista = await r.json();
   const cont = document.getElementById("skills");
+  cont.innerHTML = "";
+  cont.removeAttribute("aria-busy");
   for (const s of lista) {
     const btn = document.createElement("button");
     btn.className = "skill";
@@ -105,6 +267,7 @@ async function cargarSkills() {
     btn.onclick = () => enviar(s.prompt);
     cont.appendChild(btn);
   }
+  escalonar(cont.children);
 }
 
 /* ---------- Modal de ayuda ---------- */
@@ -116,22 +279,30 @@ async function abrirAyuda(programaId) {
   document.getElementById("ayuda-texto").textContent = (prog && prog.ayuda) || "Sin instrucciones disponibles.";
   document.getElementById("ayuda-resultado").classList.add("oculto");
   const btnAuto = document.getElementById("btn-conectar-auto");
-  btnAuto.textContent = "⚡ Conectar automáticamente";
+  const etiquetaAuto = () => { btnAuto.innerHTML = `${svgIcono("rayo")}Conectar automáticamente`; };
+  etiquetaAuto();
   btnAuto.className = "";
   btnAuto.onclick = async () => {
     btnAuto.disabled = true;
-    btnAuto.textContent = "Conectando…";
-    const r = await (await fetch("/api/conectar/" + programaId, { method: "POST" })).json();
+    btnAuto.innerHTML = conSpinner("Conectando…");
     const res = document.getElementById("ayuda-resultado");
-    res.classList.remove("oculto");
-    if (r.conectado) {
-      res.textContent = "✅ " + programaId + " conectado correctamente.";
-      cargarEstado();
-    } else {
-      res.textContent = "❌ No se pudo conectar. " + (r.error || "Revisa el manual.");
+    let conectado = false;
+    let detalle = "";
+    try {
+      const r = await (await fetch("/api/conectar/" + programaId, { method: "POST" })).json();
+      conectado = !!r.conectado;
+      detalle = r.error || "";
+    } catch (e) {
+      detalle = "No hay respuesta del servidor.";
     }
+    res.classList.remove("oculto", "ok", "fallo");
+    res.classList.add(conectado ? "ok" : "fallo");
+    res.innerHTML = conectado
+      ? lineaConIcono("check", `${escapeHtml(programaId)} conectado correctamente.`)
+      : lineaConIcono("advertencia", `No se pudo conectar. ${escapeHtml(detalle || "Revisa el manual.")}`);
+    if (conectado) cargarEstado();
     btnAuto.disabled = false;
-    btnAuto.textContent = "⚡ Conectar automáticamente";
+    etiquetaAuto();
   };
   modal.classList.remove("oculto");
 }
@@ -147,9 +318,25 @@ document.getElementById("btn-x-ayuda").addEventListener("click", () => {
 
 const lateral = document.getElementById("lateral");
 const fondo = document.getElementById("fondo-lateral");
-document.getElementById("btn-menu").addEventListener("click", () => {
-  lateral.classList.toggle("oculto");
-  fondo.classList.toggle("oculto");
+const esMovil = () => window.matchMedia("(max-width: 860px)").matches;
+const btnMenu = document.getElementById("btn-menu");
+
+// En escritorio el panel se pliega al riel de iconos y recuerda su estado
+function alternarPanel(abrir) {
+  lateral.classList.toggle("abierto", abrir);
+  btnMenu.setAttribute("aria-expanded", String(abrir));
+  try { localStorage.setItem("buildai.panel", abrir ? "abierto" : "cerrado"); } catch (_) { /* sin almacenamiento */ }
+}
+try { if (localStorage.getItem("buildai.panel") === "abierto") lateral.classList.add("abierto"); } catch (_) { /* valor por defecto */ }
+btnMenu.setAttribute("aria-expanded", String(lateral.classList.contains("abierto")));
+
+btnMenu.addEventListener("click", () => {
+  if (esMovil()) {
+    lateral.classList.toggle("oculto");
+    fondo.classList.toggle("oculto");
+  } else {
+    alternarPanel(!lateral.classList.contains("abierto"));
+  }
 });
 fondo.addEventListener("click", () => {
   lateral.classList.add("oculto");
@@ -160,9 +347,15 @@ fondo.addEventListener("click", () => {
 
 const railDerecho = document.getElementById("rail-derecho");
 const fondoRail = document.getElementById("fondo-rail");
+const btnRail = document.getElementById("btn-rail");
 function alternarRail() {
   railDerecho.classList.toggle("oculto");
   fondoRail.classList.toggle("oculto");
+  btnRail.classList.remove("novedad");
+}
+// El cajón está plegado: un punto en su botón avisa de que hay algo nuevo
+function marcarNovedadRail() {
+  if (railDerecho.classList.contains("oculto") && !pintandoHistorial) btnRail.classList.add("novedad");
 }
 document.getElementById("btn-rail").addEventListener("click", alternarRail);
 document.getElementById("btn-x-rail").addEventListener("click", alternarRail);
@@ -175,6 +368,8 @@ function activarTabLateral(tab) {
   tabsLateral.dataset.tabActivo = tab;
   tabsLateral.querySelectorAll(".tab-lateral").forEach((b) => {
     b.classList.toggle("activo", b.dataset.tab === tab);
+    if (b.dataset.tab === tab) b.setAttribute("aria-current", "true");
+    else b.removeAttribute("aria-current");
   });
   document.querySelectorAll(".panel-tab-cuerpo").forEach((p) => {
     p.classList.toggle("oculto", p.dataset.panel !== tab);
@@ -182,8 +377,16 @@ function activarTabLateral(tab) {
 }
 tabsLateral.addEventListener("click", (e) => {
   const btn = e.target.closest(".tab-lateral");
-  if (!btn || btn.classList.contains("activo")) return;
-  activarTabLateral(btn.dataset.tab);
+  if (!btn) return;
+  const activa = btn.classList.contains("activo");
+  if (esMovil()) {
+    if (!activa) activarTabLateral(btn.dataset.tab);
+  } else if (activa && lateral.classList.contains("abierto")) {
+    alternarPanel(false);
+  } else {
+    activarTabLateral(btn.dataset.tab);
+    alternarPanel(true);
+  }
 });
 
 /* ---------- Formato de texto ---------- */
@@ -271,26 +474,29 @@ function agregarMensaje(tipo, contenido, opciones = {}) {
     const btn = d.querySelector(".btn-copiar");
     btn.innerHTML = svgIcono("copiar");
     btn.onclick = async () => {
-      try { await navigator.clipboard.writeText(contenido); } catch (_) { return; }
+      try { await navigator.clipboard.writeText(contenido); } catch (_) {
+        avisar("No se pudo copiar la respuesta", "error");
+        return;
+      }
       btn.innerHTML = svgIcono("check");
+      avisar("Respuesta copiada");
       setTimeout(() => { btn.innerHTML = svgIcono("copiar"); }, 1200);
     };
     transcripcion.push({ rol: "BuildAI", texto: contenido });
-    // Remate visual: solo cuando la respuesta llega en vivo (no al reabrir
-    // una sesión guardada) las letras hacen un barrido arcoíris y vuelven
-    // a su color normal, como señal de que la tarea ha terminado.
+    // Remate: solo cuando la respuesta llega en vivo (no al reabrir una sesión
+    // guardada) la hoja se despliega de izquierda a derecha.
     if (opciones.animarFinal) {
       const burbuja = d.querySelector(".burbuja");
-      burbuja.classList.add("arcoiris");
-      burbuja.addEventListener("animationend", () => burbuja.classList.remove("arcoiris"), { once: true });
+      burbuja.classList.add("despliega");
+      burbuja.addEventListener("animationend", (e) => {
+        if (e.animationName === "despliega") burbuja.classList.remove("despliega");
+      });
     }
   } else {
     d.innerHTML = `<div class="burbuja">${contenido}</div>`;
   }
-  const escribiendo = chat.querySelector(".escribiendo");
-  if (escribiendo) escribiendo.before(d);
-  else chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
+  // Lo que escribe el usuario siempre se muestra, aunque estuviera leyendo más arriba
+  insertarMensaje(d, { forzar: tipo === "usuario" });
 }
 
 function agregarMensajeUsuario(texto, adjuntos) {
@@ -303,19 +509,26 @@ function agregarRender(archivo) {
   const src = "/api/renders/" + encodeURIComponent(archivo);
   const d = document.createElement("div");
   d.className = "mensaje asistente render";
+  // Las imágenes "plano-*" son el control de una reconstrucción de plano (lo
+  // reconstruido encima del original), no un render: rotularlas como render
+  // fotorrealista confundiría al usuario sobre qué está mirando.
+  // Las "ref-*" son fotos reales de referencia (con su autor y licencia en el pie).
+  const esPlano = archivo.startsWith("plano-");
+  const esReferencia = archivo.startsWith("ref-");
+  const etiqueta = esPlano ? "Plano" : esReferencia ? "Referencia" : "Render";
+  const pie = esPlano ? "Reconstrucción sobre el plano original"
+    : esReferencia ? "Foto de referencia (autor y licencia en la imagen)" : "Render fotorrealista";
   d.innerHTML = `<div class="burbuja burbuja-render">
-    <span class="tag-artefacto">Render</span>
-    <img class="imagen-render" loading="lazy" alt="Render fotorrealista">
-    <div class="pie-render"><span>${svgIcono("chispa")} Render fotorrealista</span></div>
+    <span class="tag-artefacto">${etiqueta}</span>
+    <img class="imagen-render" loading="lazy" alt="${pie}">
+    <div class="pie-render"><span>${svgIcono(esPlano ? "planta" : esReferencia ? "imagen" : "chispa")} ${pie}</span></div>
   </div>`;
   const img = d.querySelector("img");
   img.src = src;
   img.onclick = () => abrirLightbox(src, archivo);
   img.onerror = () => d.remove(); // el archivo ya no existe (sesión antigua)
-  const escribiendo = chat.querySelector(".escribiendo");
-  if (escribiendo) escribiendo.before(d);
-  else chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
+  revelarEnVivo(d.querySelector(".burbuja"));
+  insertarMensaje(d);
   transcripcion.push({ rol: "render", archivo });
   agregarEntregableRail(archivo, src);
 }
@@ -346,10 +559,8 @@ function agregarEntregable(ev) {
   const enlace = d.querySelector(".btn-entregable");
   enlace.href = src;
   enlace.setAttribute("download", ev.archivo);
-  const escribiendo = chat.querySelector(".escribiendo");
-  if (escribiendo) escribiendo.before(d);
-  else chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
+  revelarEnVivo(d.querySelector(".burbuja"));
+  insertarMensaje(d);
   transcripcion.push({ rol: "entregable", archivo: ev.archivo, formato: ev.formato });
   agregarEntregableArchivoRail(ev, src);
 }
@@ -371,8 +582,10 @@ function agregarEntregableRail(archivo, src) {
   d.innerHTML = `<img src="${src}" loading="lazy" alt="">`;
   d.onclick = () => abrirLightbox(src, archivo);
   d.querySelector("img").onerror = () => { d.remove(); marcarVacioRail("rail-entregables"); };
+  if (pintandoHistorial) d.classList.add("sin-anim");
   cont.prepend(d);
   marcarVacioRail("rail-entregables");
+  marcarNovedadRail();
 }
 
 function agregarEntregableArchivoRail(ev, src) {
@@ -383,8 +596,10 @@ function agregarEntregableArchivoRail(ev, src) {
   a.href = src;
   a.setAttribute("download", ev.archivo);
   a.innerHTML = `${svgIcono("archivo")}<span>${escapeHtml(ev.formato)}</span>`;
+  if (pintandoHistorial) a.classList.add("sin-anim");
   cont.prepend(a);
   marcarVacioRail("rail-entregables");
+  marcarNovedadRail();
 }
 
 function agregarActividadRail(ev) {
@@ -393,11 +608,13 @@ function agregarActividadRail(ev) {
   d.className = "actividad-item";
   d.innerHTML = `<span class="icono">${svgIcono((ev.programa || "").toLowerCase())}</span>
     <span class="actividad-item-texto"><b>${escapeHtml(ev.nombre)}</b><small>${escapeHtml(ev.programa || "")}</small></span>`;
+  if (pintandoHistorial) d.classList.add("sin-anim");
   cont.prepend(d);
   // Se limita el historial visible del rail para que no crezca sin fin en
   // sesiones largas; la conversación completa sigue íntegra en el chat.
   while (cont.children.length > 30) cont.lastElementChild.remove();
   marcarVacioRail("rail-actividad");
+  marcarNovedadRail();
 }
 
 function abrirLightbox(src, archivo) {
@@ -429,54 +646,128 @@ function lineaConIcono(icono, texto) {
   return `<span class="linea-icono">${svgIcono(icono)} ${texto}</span>`;
 }
 
-/* Indicador de trabajo estilo Claude: chispa animada + estado en vivo + tiempo */
+/* ---------- Tira de fases ----------
+   Recibir → pensar → actuar → entregar. Es el único elemento de la interfaz con
+   movimiento continuo: cada fase tiene su icono giratorio y su propio
+   vocabulario, y la entrega cierra con un trazo que se dibuja. */
 
+const rayoRueda = [[16, 12, 21, 12], [14.83, 14.83, 18.36, 18.36], [12, 16, 12, 21], [9.17, 14.83, 5.64, 18.36],
+  [8, 12, 3, 12], [9.17, 9.17, 5.64, 5.64], [12, 8, 12, 3], [14.83, 9.17, 18.36, 5.64]]
+  .map(([a, b, c, d]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`).join("");
+
+const SVG_FASE = {
+  recibir: `<svg viewBox="0 0 24 24" class="ic-radar"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><g class="barrido"><line x1="12" y1="12" x2="12" y2="3"/></g></svg>`,
+  pensar: `<svg viewBox="0 0 24 24" class="ic-orbita"><circle cx="12" cy="12" r="1.8" fill="currentColor"/><g class="orbita-1"><circle cx="12" cy="3.5" r="1.6" fill="currentColor"/></g><g class="orbita-2"><circle cx="12" cy="12" r="6.5" stroke-dasharray="2 4"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor"/></g></svg>`,
+  actuar: `<svg viewBox="0 0 24 24" class="ic-rueda"><circle cx="12" cy="12" r="1.8" fill="currentColor"/><g class="rayos">${rayoRueda}</g></svg>`,
+  detener: `<svg viewBox="0 0 24 24" class="ic-parar"><rect class="cuadro" x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>`,
+  entregar: `<svg viewBox="0 0 24 24" class="ic-entrega"><circle class="onda" cx="12" cy="12" r="9"/><circle class="aro" cx="12" cy="12" r="10" transform="rotate(-90 12 12)"/><path class="visto" d="M7.5 12.5 L10.5 15.5 L16.5 9"/></svg>`,
+};
+
+// `paso` es la posición en la tira de cuatro pasos; las palabras rotan mientras dura la fase
+const FASES = {
+  recibir: { paso: 0, palabras: ["Recibiendo", "Leyendo tu encargo", "Interpretando"],
+    anuncio: "Recibiendo tu encargo" },
+  pensar: { paso: 1, palabras: ["Meditando", "Trazando ideas", "Proporcionando", "Acotando", "Replanteando"],
+    anuncio: "La IA está pensando" },
+  actuar: { paso: 2, palabras: ["Levantando", "Modelando", "Colocando", "Encofrando", "Nivelando", "Escuadrando"],
+    anuncio: "Trabajando sobre tu programa" },
+  detener: { paso: 1, palabras: ["Deteniendo"], anuncio: "Deteniendo la tarea" },
+  entregar: { paso: 3, palabras: ["Listo"], anuncio: "Resultado listo" },
+};
+const MIN_RECIBIR_MS = 800; // que "recibir" llegue a leerse aunque el servidor responda al instante
+const PERMANENCIA_ENTREGA_MS = 2200;
+
+const panelFases = document.getElementById("fases");
+const elPalabra = document.getElementById("fase-palabra");
+let faseActual = null;
+let faseDesde = 0;
+let indicePalabra = 0;
 let inicioTrabajo = 0;
-let timerEstado = null;
+let timerPalabra = null;
+let timerTiempo = null;
+let timerCierre = null;
+let timerPendiente = null;
 
 function textoTiempo() {
   const s = Math.round((Date.now() - inicioTrabajo) / 1000);
-  return s >= 3 ? `${s} s` : "";
+  if (s < 3) return "";
+  return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s`;
 }
 
-function actualizarTiempoEstado() {
-  const t = chat.querySelector(".escribiendo .tiempo-estado");
-  if (t) t.textContent = textoTiempo();
+function pintarPalabra() {
+  const palabras = FASES[faseActual].palabras;
+  elPalabra.textContent = palabras[indicePalabra % palabras.length];
+  elPalabra.style.animation = "none";
+  void elPalabra.offsetWidth; // reinicia la entrada de la palabra
+  elPalabra.style.animation = "";
 }
 
-function mostrarEscribiendo(texto) {
-  let e = chat.querySelector(".escribiendo");
-  if (!e) {
-    e = document.createElement("div");
-    e.className = "mensaje asistente escribiendo pensando";
-    e.innerHTML = `<div class="burbuja">
-      <span class="chispa">${svgIcono("chispa")}</span>
-      <span class="estado-texto"></span>
-      <span class="puntos-latido"><span></span><span></span><span></span></span>
-      <span class="tiempo-estado"></span>
-      <span class="barra-progreso"><span class="barra-progreso-relleno"></span></span>
-    </div>`;
-    chat.appendChild(e);
+function irAFase(fase, detalle = "") {
+  clearTimeout(timerCierre);
+  clearTimeout(timerPendiente);
+  panelFases.classList.remove("oculto");
+  document.getElementById("fase-detalle").textContent = detalle;
+  if (fase === faseActual) return;
+  faseActual = fase;
+  faseDesde = Date.now();
+  panelFases.dataset.fase = fase;
+  document.getElementById("fase-icono").innerHTML = SVG_FASE[fase];
+  const def = FASES[fase];
+  panelFases.querySelectorAll(".fase-pasos li").forEach((li, i) => {
+    li.classList.toggle("actual", i === def.paso && fase !== "entregar");
+    li.classList.toggle("hecho", i < def.paso);
+    if (i === def.paso && fase !== "entregar") li.setAttribute("aria-current", "step");
+    else li.removeAttribute("aria-current");
+  });
+  // Cada vez que cambia la fase se anuncia una sola vez a lectores de pantalla
+  document.getElementById("fase-anuncio").textContent = def.anuncio;
+  indicePalabra = fase === "recibir" ? 0 : Math.floor(Math.random() * def.palabras.length);
+  pintarPalabra();
+  clearInterval(timerPalabra);
+  timerPalabra = def.palabras.length > 1
+    ? setInterval(() => { indicePalabra++; pintarPalabra(); }, 2600)
+    : null;
+  document.getElementById("fase-tiempo").textContent = fase === "entregar" ? "" : textoTiempo();
+}
+
+// Cambia de fase respetando la permanencia mínima de "recibir"
+function solicitarFase(fase, detalle = "") {
+  const restante = MIN_RECIBIR_MS - (Date.now() - faseDesde);
+  clearTimeout(timerPendiente);
+  if (faseActual === "recibir" && restante > 0) {
+    timerPendiente = setTimeout(() => irAFase(fase, detalle), restante);
+  } else {
+    irAFase(fase, detalle);
   }
-  e.querySelector(".estado-texto").textContent = texto || "Pensando…";
-  e.querySelector(".tiempo-estado").textContent = textoTiempo();
-  chat.scrollTop = chat.scrollHeight;
 }
 
-function ocultarEscribiendo() {
-  const e = chat.querySelector(".escribiendo");
-  if (e) e.remove();
+function comenzarTrabajo() {
+  inicioTrabajo = Date.now();
+  clearInterval(timerTiempo);
+  timerTiempo = setInterval(() => {
+    if (faseActual && faseActual !== "entregar") document.getElementById("fase-tiempo").textContent = textoTiempo();
+  }, 1000);
+  faseActual = null;
+  irAFase("recibir");
 }
 
-// Cuando llega la primera actividad de herramienta, el indicador pasa de
-// "pensando" (razonando) a "desarrollando" (actuando sobre el programa):
-// cambia el icono, el color y añade la barra de progreso.
-function marcarDesarrollando() {
-  const e = chat.querySelector(".escribiendo");
-  if (!e || e.classList.contains("desarrollando")) return;
-  e.classList.remove("pensando");
-  e.classList.add("desarrollando");
-  e.querySelector(".chispa").innerHTML = svgIcono("herramienta");
+function ocultarFases() {
+  clearTimeout(timerCierre);
+  clearTimeout(timerPendiente);
+  clearInterval(timerPalabra);
+  clearInterval(timerTiempo);
+  timerPalabra = timerTiempo = null;
+  faseActual = null;
+  panelFases.classList.add("oculto");
+}
+
+// Entrega: la tira se cierra en verde con el visto dibujado y luego se retira
+function entregarResultado() {
+  clearTimeout(timerPendiente);
+  irAFase("entregar");
+  clearInterval(timerTiempo);
+  timerTiempo = null;
+  timerCierre = setTimeout(ocultarFases, PERMANENCIA_ENTREGA_MS);
 }
 
 /* ---------- Adjuntar imágenes y vídeos ---------- */
@@ -569,10 +860,41 @@ function procesarVideo(file) {
   });
 }
 
+// Planos PDF o DXF: el navegador no sabe convertirlos en imagen, así que los
+// convierte el servidor, que además guarda el original (la alta resolución del
+// PDF y la geometría exacta del DXF) para las herramientas de planos.
+function esPlanoVectorial(file) {
+  return /\.(pdf|dxf)$/i.test(file.name) || file.type === "application/pdf";
+}
+
+function leerBase64(file) {
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(String(lector.result).split(",")[1] || "");
+    lector.onerror = () => reject(new Error("no se pudo leer el archivo"));
+    lector.readAsDataURL(file);
+  });
+}
+
+async function procesarPlano(file) {
+  const datos = await leerBase64(file);
+  const r = await fetch("/api/planos/importar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre: file.name, datos }),
+  });
+  const res = await r.json();
+  if (!res.ok) throw new Error(res.error || "el servidor no pudo convertirlo");
+  const primera = res.adjuntos[0];
+  return { url: `data:${primera.media_type};base64,${primera.datos}`, kind: "plano", imagenes: res.adjuntos };
+}
+
 async function agregarArchivos(files) {
   for (const file of files) {
     try {
-      if (file.type.startsWith("image/")) {
+      if (esPlanoVectorial(file)) {
+        adjuntosPendientes.push(await procesarPlano(file));
+      } else if (file.type.startsWith("image/")) {
         adjuntosPendientes.push(await procesarImagen(file));
       } else if (file.type.startsWith("video/")) {
         adjuntosPendientes.push(await procesarVideo(file));
@@ -581,7 +903,7 @@ async function agregarArchivos(files) {
       }
     } catch (e) {
       agregarMensaje("error", lineaConIcono("advertencia",
-        `No pude leer «${file.name}»: ${e.message}. Prueba con otra imagen o vídeo (JPG, PNG, MP4).`));
+        `No pude leer «${file.name}»: ${e.message}. Prueba con una imagen, un vídeo o un plano (JPG, PNG, MP4, PDF, DXF).`));
     }
   }
   renderAdjuntosPrevia();
@@ -595,7 +917,7 @@ function renderAdjuntosPrevia() {
     const chip = document.createElement("div");
     chip.className = "adjunto-chip";
     chip.innerHTML = `<img alt="">
-      <span class="adjunto-marca">${svgIcono(a.kind === "video" ? "video" : "imagen")}</span>
+      <span class="adjunto-marca">${svgIcono(a.kind === "video" ? "video" : a.kind === "plano" ? "archivo" : "imagen")}</span>
       <button type="button" class="adjunto-quitar" title="Quitar">${svgIcono("cerrar")}</button>`;
     chip.querySelector("img").src = a.url;
     chip.querySelector(".adjunto-quitar").onclick = () => {
@@ -651,7 +973,7 @@ entrada.addEventListener("keydown", (e) => {
 });
 
 async function detenerTarea() {
-  mostrarEscribiendo("Deteniendo… (termino el paso en curso para no dejar nada a medias)");
+  irAFase("detener", "Termino el paso en curso para no dejar nada a medias");
   try {
     await fetch("/api/cancelar", { method: "POST" });
   } catch (_) { /* si falla, el flujo termina igualmente */ }
@@ -683,9 +1005,7 @@ async function enviar(texto) {
   btnEnviar.classList.add("detener");
   btnEnviar.innerHTML = svgIcono("detener");
   btnEnviar.title = "Detener la tarea";
-  inicioTrabajo = Date.now();
-  timerEstado = setInterval(actualizarTiempoEstado, 1000);
-  mostrarEscribiendo();
+  comenzarTrabajo();
 
   try {
     const r = await fetch("/api/chat", {
@@ -706,15 +1026,15 @@ async function enviar(texto) {
         if (!p.startsWith("data: ")) continue;
         const ev = JSON.parse(p.slice(6));
         if (ev.tipo === "respuesta") {
-          ocultarEscribiendo();
           agregarMensaje("asistente", ev.texto, { animarFinal: true });
+          entregarResultado();
         } else if (ev.tipo === "error") {
-          ocultarEscribiendo();
+          ocultarFases();
           agregarMensaje("error", lineaConIcono("advertencia", ev.texto));
         } else if (ev.tipo === "herramienta") {
           // A partir de aquí ya no solo "piensa": está actuando sobre el
           // programa conectado, así que el indicador cambia de fase.
-          marcarDesarrollando();
+          solicitarFase("actuar", `${ev.programa || "Programa"} · ${ev.nombre}`);
           // Se inserta encima del indicador, que sigue mostrando actividad
           agregarActividadHerramienta(ev);
         } else if (ev.tipo === "render") {
@@ -722,19 +1042,18 @@ async function enviar(texto) {
         } else if (ev.tipo === "entregable") {
           agregarEntregable(ev);
         } else if (ev.tipo === "estado") {
-          mostrarEscribiendo(ev.texto);
+          solicitarFase("pensar", /^pensando/i.test(ev.texto || "") ? "" : (ev.texto || ""));
         }
       }
     }
   } catch (err) {
-    ocultarEscribiendo();
+    ocultarFases();
     agregarMensaje("error", lineaConIcono("advertencia", "Error de conexión: " + err.message));
   }
 
   ocupado = false;
-  ocultarEscribiendo();
-  clearInterval(timerEstado);
-  timerEstado = null;
+  // Si acabó con una entrega, la tira se retira sola tras su remate
+  if (faseActual !== "entregar") ocultarFases();
   btnEnviar.classList.remove("detener");
   btnEnviar.innerHTML = svgIcono("enviar");
   btnEnviar.title = "Enviar (Enter)";
@@ -762,8 +1081,13 @@ async function cargarSesiones() {
   } catch (_) {
     return;
   }
+  const activa = datos.sesiones.find((s) => s.id === datos.actual);
+  const hayConversacion = document.querySelector(".bienvenida").classList.contains("oculto");
+  document.getElementById("titulo-barra").textContent =
+    hayConversacion && activa ? activa.titulo : "Nueva conversación";
   const cont = document.getElementById("sesiones");
   cont.innerHTML = "";
+  cont.removeAttribute("aria-busy");
   if (!datos.sesiones.length) {
     cont.innerHTML = `<p class="pista sin-sesiones">Aún no hay conversaciones guardadas.</p>`;
     return;
@@ -785,13 +1109,34 @@ async function cargarSesiones() {
     borrar.className = "icono-btn icono-btn-chico sesion-borrar";
     borrar.title = "Borrar esta conversación";
     borrar.innerHTML = svgIcono("papelera");
+    let reloj = null;
+    const cancelarConfirmacion = () => {
+      clearTimeout(reloj);
+      d.classList.remove("confirmando");
+      borrar.classList.remove("confirmar");
+      borrar.innerHTML = svgIcono("papelera");
+      borrar.title = "Borrar esta conversación";
+    };
     borrar.onclick = async () => {
-      if (!confirm(`¿Borrar la conversación «${s.titulo}» definitivamente?`)) return;
+      // Primer clic: pide confirmar en el propio elemento (el diálogo nativo
+      // bloquea la ventana y rompe el estilo). Segundo clic en 3 s: borra.
+      if (!borrar.classList.contains("confirmar")) {
+        d.classList.add("confirmando");
+        borrar.classList.add("confirmar");
+        borrar.innerHTML = `${svgIcono("papelera")}¿Borrar?`;
+        borrar.title = `Confirmar: borrar «${s.titulo}» definitivamente`;
+        reloj = setTimeout(cancelarConfirmacion, 3000);
+        return;
+      }
+      clearTimeout(reloj);
       const r = await (await fetch("/api/sesiones/" + s.id, { method: "DELETE" })).json();
       if (!r.ok) {
+        cancelarConfirmacion();
         agregarMensaje("error", lineaConIcono("advertencia", r.error));
         return;
       }
+      d.classList.add("saliendo");
+      await esperarAnimacion(d);
       if (s.id === datos.actual) limpiarConversacion();
       cargarSesiones();
     };
@@ -821,6 +1166,7 @@ async function abrirSesion(id) {
 function limpiarConversacion() {
   chat.querySelectorAll(".mensaje:not(.bienvenida)").forEach((m) => m.remove());
   document.querySelector(".bienvenida").classList.remove("oculto");
+  document.getElementById("titulo-barra").textContent = "Nueva conversación";
   transcripcion = [];
   adjuntosPendientes = [];
   renderAdjuntosPrevia();
@@ -833,6 +1179,8 @@ function limpiarConversacion() {
 function pintarConversacion(mensajes) {
   limpiarConversacion();
   document.querySelector(".bienvenida").classList.toggle("oculto", mensajes.length > 0);
+  // Un historial guardado aparece ya colocado: animar cien mensajes a la vez es ruido
+  pintandoHistorial = true;
   for (const ev of mensajes) {
     if (ev.tipo === "usuario") {
       const urls = (ev.adjuntos || []).map((a) => `data:${a.media_type};base64,${a.datos}`);
@@ -843,15 +1191,16 @@ function pintarConversacion(mensajes) {
     else if (ev.tipo === "render") agregarRender(ev.archivo);
     else if (ev.tipo === "entregable") agregarEntregable(ev);
   }
-  chat.scrollTop = chat.scrollHeight;
+  pintandoHistorial = false;
+  bajarChat({ suave: false });
+  actualizarBtnAbajo();
 }
 
 /* ---------- Exportar conversación ---------- */
 
 document.getElementById("btn-exportar").addEventListener("click", () => {
   if (!transcripcion.length) {
-    agregarMensaje("error", lineaConIcono("advertencia",
-      "Todavía no hay nada que exportar: escribe algo primero."));
+    avisar("Todavía no hay nada que exportar: escribe algo primero.", "error");
     return;
   }
   const fecha = new Date();
@@ -873,6 +1222,7 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
   a.download = `BuildAI-${fecha.toISOString().slice(0, 16).replace(/[T:]/g, "-")}.md`;
   a.click();
   URL.revokeObjectURL(a.href);
+  avisar("Conversación descargada en Markdown");
 });
 
 /* ---------- Ajustes ---------- */
@@ -893,7 +1243,13 @@ async function abrirAjustes() {
     selProveedor.appendChild(op);
   }
   refrescarCamposProveedor();
+  const inpPexels = document.getElementById("inp-pexels");
+  inpPexels.value = "";
+  inpPexels.placeholder = configuracion.servicios_configurados?.pexels
+    ? "Clave guardada ✓ (escribe otra para cambiarla)"
+    : "Sin clave se usan fotos de Openverse";
   modalAjustes.classList.remove("oculto");
+  selProveedor.focus({ preventScroll: true });
 }
 
 let peticionModelos = 0; // evita que una respuesta lenta pise al proveedor recién elegido
@@ -902,7 +1258,9 @@ async function cargarModelosProveedor(id) {
   const listaDatos = document.getElementById("lista-modelos");
   const estadoModelos = document.getElementById("estado-modelos");
   listaDatos.innerHTML = "";
-  estadoModelos.textContent = id === "ollama" ? "Buscando tus modelos locales…" : "Cargando modelos…";
+  estadoModelos.classList.remove("aviso-ambar");
+  estadoModelos.innerHTML = conSpinner(id === "ollama" ? "Buscando tus modelos locales…" : "Cargando modelos…");
+  estadoModelos.classList.add("cargando");
   const peticion = ++peticionModelos;
   let datos;
   try {
@@ -917,7 +1275,9 @@ async function cargarModelosProveedor(id) {
     opcion.label = m.nombre;
     listaDatos.appendChild(opcion);
   }
-  estadoModelos.textContent = (datos.disponible ? "" : "⚠️ ") + (datos.nota || "");
+  estadoModelos.classList.remove("cargando");
+  estadoModelos.textContent = datos.nota || "";
+  estadoModelos.classList.toggle("aviso-ambar", !datos.disponible);
   // Si el modelo configurado no existe en Ollama, proponer el primero detectado
   if (id === "ollama" && datos.modelos.length &&
       !datos.modelos.some((m) => m.id === inpModelo.value)) {
@@ -933,6 +1293,7 @@ function refrescarCamposProveedor() {
   inpClave.value = "";
   const necesitaClave = info.requiere_clave !== false;
   document.getElementById("campo-clave").classList.toggle("oculto", !necesitaClave);
+  document.getElementById("estado-clave").classList.remove("aviso-rojo", "aviso-ambar");
   document.getElementById("estado-clave").textContent = !necesitaClave
     ? "Este proveedor no necesita clave: funciona en tu propio ordenador."
     : configuracion.claves_configuradas[id]
@@ -955,6 +1316,15 @@ function refrescarCamposProveedor() {
 }
 selProveedor.addEventListener("change", refrescarCamposProveedor);
 
+// Resultado de guardar/probar la conexión, dentro de Ajustes (donde se arregla).
+function mostrarEstadoClave(texto, tipo) {
+  const estado = document.getElementById("estado-clave");
+  estado.textContent = texto;
+  estado.classList.toggle("aviso-rojo", tipo === "error");
+  estado.classList.toggle("aviso-ambar", tipo === "ambar");
+  estado.setAttribute("role", tipo === "error" ? "alert" : "status");
+}
+
 document.getElementById("btn-ajustes").addEventListener("click", abrirAjustes);
 function cerrarAjustes() {
   modalAjustes.classList.add("oculto");
@@ -965,19 +1335,49 @@ const btnGuardarAjustes = document.getElementById("btn-guardar-ajustes");
 btnGuardarAjustes.addEventListener("click", async () => {
   const id = selProveedor.value;
   btnGuardarAjustes.disabled = true;
-  btnGuardarAjustes.textContent = "Guardando…";
+  btnGuardarAjustes.innerHTML = conSpinner("Guardando…");
   try {
-    await fetch("/api/config", {
+    const r = await fetch("/api/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         proveedor: id,
         claves: { [id]: inpClave.value },
         modelos: { [id]: inpModelo.value },
+        servicios: { pexels: document.getElementById("inp-pexels").value },
       }),
     });
-    cerrarAjustes();
+    const res = r.ok ? await r.json() : { ok: false, error: "No se pudieron guardar los ajustes." };
+    if (!res.ok) {
+      // La clave no se guarda (p. ej. caracteres que se colaron al copiarla):
+      // el modal sigue abierto para que la corrija sin perder lo escrito.
+      mostrarEstadoClave(res.error, "error");
+      avisar("No se guardó: revisa la clave", "error");
+      return;
+    }
+    // Guardado: ahora se comprueba de verdad que la clave y el modelo funcionan,
+    // para que un error aparezca aquí y no a mitad del primer encargo.
+    btnGuardarAjustes.innerHTML = conSpinner("Probando la conexión…");
+    let prueba;
+    try {
+      prueba = await (await fetch("/api/config/probar", { method: "POST" })).json();
+    } catch (e) {
+      prueba = { ok: false, error: "No se pudo comprobar la conexión con BuildAI." };
+    }
     cargarEstado();
+    configuracion = await (await fetch("/api/config")).json();
+    const avisosProveedor = (res.avisos || []).join(" ");
+    if (!prueba.ok) {
+      mostrarEstadoClave([avisosProveedor, prueba.error].filter(Boolean).join(" "), "error");
+      avisar("Guardado, pero la conexión no funciona todavía", "error");
+      return;
+    }
+    if (avisosProveedor) {
+      mostrarEstadoClave(`${prueba.mensaje} Aviso: ${avisosProveedor}`, "ambar");
+      return;
+    }
+    cerrarAjustes();
+    avisar(prueba.mensaje);
   } finally {
     btnGuardarAjustes.disabled = false;
     btnGuardarAjustes.textContent = "Guardar cambios";
@@ -1022,6 +1422,26 @@ document.getElementById("btn-login-oauth").addEventListener("click", () => {
   setTimeout(() => clearInterval(iv), 30000);
 });
 
+/* ---------- Apariencia: tema y tamaño del texto ---------- */
+
+function marcarOpcionApariencia(grupo, valor) {
+  document.querySelectorAll(`.opciones[data-grupo="${grupo}"] .opcion`).forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.valor === valor));
+  });
+}
+function aplicarApariencia(grupo, valor) {
+  document.documentElement.dataset[grupo] = valor;
+  try { localStorage.setItem("buildai." + grupo, valor); } catch (_) { /* sin almacenamiento */ }
+  marcarOpcionApariencia(grupo, valor);
+}
+for (const grupo of ["tema", "texto"]) marcarOpcionApariencia(grupo, document.documentElement.dataset[grupo]);
+document.querySelectorAll(".opciones").forEach((caja) => {
+  caja.addEventListener("click", (e) => {
+    const b = e.target.closest(".opcion");
+    if (b) aplicarApariencia(caja.dataset.grupo, b.dataset.valor);
+  });
+});
+
 /* ---------- Nueva conversación ---------- */
 
 document.getElementById("btn-nueva").addEventListener("click", async () => {
@@ -1035,6 +1455,15 @@ document.getElementById("btn-nueva").addEventListener("click", async () => {
   entrada.focus();
 });
 
+document.getElementById("btn-nueva-lateral").addEventListener("click", () => {
+  document.getElementById("btn-nueva").click();
+  // En pantallas pequeñas el cajón tapa el chat: cerrarlo al empezar
+  if (window.matchMedia("(max-width: 860px)").matches) {
+    lateral.classList.add("oculto");
+    fondo.classList.add("oculto");
+  }
+});
+
 /* ---------- Comodidad: cerrar modales y foco ---------- */
 
 // Clic fuera de la caja cierra el modal
@@ -1045,15 +1474,77 @@ for (const id of ["modal-ajustes", "modal-ayuda"]) {
   });
 }
 
-// Escape cierra cualquier modal abierto
+/* Foco y teclado: mientras haya un modal o un cajón abierto, el resto de la
+   página queda `inert` (no se enfoca ni se lee) y al cerrar el foco vuelve a
+   donde estaba. Escape cierra lo que esté encima. */
+const regionesDeFondo = ["principal", "lateral", "rail-derecho"].map((id) => document.getElementById(id));
+let focoPrevio = null;
+function modalAbierto() { return document.querySelector(".modal:not(.oculto)"); }
+function cajonRailAbierto() { return !railDerecho.classList.contains("oculto"); }
+function cajonLateralAbierto() { return esMovil() && !lateral.classList.contains("oculto"); }
+
+function sincronizarFondo() {
+  const modal = modalAbierto();
+  const cajon = cajonRailAbierto() || cajonLateralAbierto();
+  // Un modal deja inert todo lo que no lo contiene; un cajón, todo menos él mismo
+  regionesDeFondo.forEach((r) => {
+    if (modal) r.inert = !modal.contains(r);
+    else if (cajonRailAbierto()) r.inert = r !== railDerecho;
+    else if (cajonLateralAbierto()) r.inert = r !== lateral;
+    else r.inert = false;
+  });
+  return cajon;
+}
+// Último elemento enfocado fuera de modales y cajones: es donde hay que volver.
+// Se sigue con focusin porque algunos modales enfocan un campo en el mismo
+// instante en que se abren, antes de que nadie pueda leer el foco anterior.
+let ultimoFocoFuera = null;
+document.addEventListener("focusin", (e) => {
+  if (!e.target.closest(".modal, #rail-derecho, #lateral.oculto")) ultimoFocoFuera = e.target;
+});
+function llevarFoco(contenedor) {
+  if (!focoPrevio) focoPrevio = ultimoFocoFuera;
+  const destino = contenedor.querySelector("button, [href], input, select, textarea");
+  if (destino) destino.focus({ preventScroll: true });
+}
+function devolverFoco() {
+  if (focoPrevio && document.contains(focoPrevio)) focoPrevio.focus({ preventScroll: true });
+  focoPrevio = null;
+}
+document.querySelectorAll(".modal").forEach((m) => {
+  new MutationObserver(() => {
+    sincronizarFondo();
+    if (!m.classList.contains("oculto")) llevarFoco(m);
+    else if (!modalAbierto()) devolverFoco();
+  }).observe(m, { attributes: true, attributeFilter: ["class"] });
+});
+[railDerecho, lateral].forEach((cajon) => {
+  new MutationObserver(() => {
+    sincronizarFondo();
+    const abierto = cajon === railDerecho ? cajonRailAbierto() : cajonLateralAbierto();
+    if (abierto) llevarFoco(cajon);
+    else if (!modalAbierto() && !cajonRailAbierto() && !cajonLateralAbierto()) devolverFoco();
+  }).observe(cajon, { attributes: true, attributeFilter: ["class"] });
+});
+
+// Escape cierra lo que esté encima: modal, cajón de actividad o cajón móvil
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
+  if (e.key !== "Escape") return;
+  if (modalAbierto()) {
     document.querySelectorAll(".modal:not(.oculto)").forEach((m) => m.classList.add("oculto"));
+  } else if (cajonRailAbierto()) {
+    alternarRail();
+  } else if (cajonLateralAbierto()) {
+    lateral.classList.add("oculto");
+    fondo.classList.add("oculto");
   }
 });
 
 // El pie con el modelo activo abre Ajustes directamente
 document.getElementById("info-modelo").addEventListener("click", abrirAjustes);
+document.getElementById("info-modelo").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirAjustes(); }
+});
 
 /* ---------- Arranque ---------- */
 

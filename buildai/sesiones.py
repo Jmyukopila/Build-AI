@@ -147,6 +147,8 @@ def para_ui(historial: list) -> list:
     eventos = []
     for m in historial:
         if m["tipo"] == "usuario":
+            if m.get("interno"):
+                continue  # recordatorio de BuildAI al modelo, no un mensaje del usuario
             evento = {"tipo": "usuario", "texto": m["texto"]}
             if m.get("adjuntos"):
                 evento["adjuntos"] = m["adjuntos"]
