@@ -1,0 +1,68 @@
+name: Instalador
+
+# Compila BuildAI-Setup.exe en Windows y lo adjunta a la release de GitHub.
+# La web descarga de releases/latest/download/BuildAI-Setup.exe: si la release
+# no lleva el .exe, el botón sigue sirviendo la versión anterior (o da 404).
+#
+# Dos formas de lanzarlo:
+#   - A mano (Actions → Instalador → Run workflow) con la etiqueta, p. ej. v0.6.0.
+#     Sirve para adjuntar el .exe a un borrador ANTES de publicarlo, que es lo
+#     recomendable: así la release nunca está publicada sin instalador.
+#   - Solo, al publicar una release que aún no lo tenga.
+
+on:
+  workflow_dispatch:
+    inputs:
+      etiqueta:
+        description: "Etiqueta de la release a la que adjuntar el instalador (p. ej. v0.6.0)"
+        required: true
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  instalador:
+    runs-on: windows-latest
+    env:
+      ETIQUETA: ${{ github.event.release.tag_name || inputs.etiqueta }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Una etiqueta que no coincide con la versión del código produciría un
+      # instalador que se anuncia como una versión y es otra: se corta aquí.
+      - name: Comprobar que la versión coincide con la etiqueta
+        shell: pwsh
+        run: |
+          $esperada = $env:ETIQUETA -replace '^v', ''
+          $proyecto = (Select-String -Path pyproject.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          $inno = (Select-String -Path empaquetado\BuildAI.iss -Pattern '#define MyAppVersion "(.+)"').Matches[0].Groups[1].Value
+          Write-Host "Etiqueta: $esperada · pyproject.toml: $proyecto · BuildAI.iss: $inno"
+          if ($proyecto -ne $esperada -or $inno -ne $esperada) {
+            throw "La versión de pyproject.toml ($proyecto) o de BuildAI.iss ($inno) no coincide con la etiqueta ($esperada)."
+          }
+
+      # El runner puede traer Inno Setup o no según la imagen: se instala solo
+      # si falta, en una de las rutas que busca build_installer.ps1.
+      - name: Instalar Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Compilar el instalador
+        shell: pwsh
+        run: ./empaquetado/build_installer.ps1
+
+      # --clobber: relanzar el workflow sustituye el .exe en vez de fallar.
+      - name: Adjuntar a la release
+        shell: pwsh
+        run: gh release upload $env:ETIQUETA empaquetado\Output\BuildAI-Setup.exe --clobber
