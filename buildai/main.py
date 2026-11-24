@@ -472,7 +472,20 @@ def _sse(evento: dict) -> str:
     return f"data: {json.dumps(evento, ensure_ascii=False)}\n\n"
 
 
-app.mount("/ui", StaticFiles(directory=CARPETA_UI), name="ui")
+class _EstaticosRevalidados(StaticFiles):
+    """Estáticos de la interfaz que el WebView revalida siempre (con ETag, así que cuesta un 304).
+
+    Sin cabecera de caché, WebView2 aplica caché heurística y tras actualizar la app seguía
+    pintando el logo y el JS de la versión anterior, porque las rutas no cambian entre versiones.
+    """
+
+    def file_response(self, *args, **kwargs) -> Response:
+        respuesta = super().file_response(*args, **kwargs)
+        respuesta.headers["Cache-Control"] = "no-cache"
+        return respuesta
+
+
+app.mount("/ui", _EstaticosRevalidados(directory=CARPETA_UI), name="ui")
 
 
 def _esperar_servidor(timeout: float = 15.0) -> bool:

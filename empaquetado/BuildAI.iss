@@ -3,7 +3,7 @@
 ; Requiere que antes exista empaquetado\dist\BuildAI\BuildAI.exe (ver empaquetado\buildai.spec).
 
 #define MyAppName "BuildAI"
-#define MyAppVersion "0.6.1"
+#define MyAppVersion "0.6.2"
 #define MyAppPublisher "BuildAI"
 #define MyAppExeName "BuildAI.exe"
 #define MyDistDir "dist\BuildAI"
@@ -25,6 +25,9 @@ OutputDir=Output
 OutputBaseFilename=BuildAI-Setup
 SetupIconFile=..\buildai\ui\assets\buildai.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
+; Al terminar avisa a Explorer (SHChangeNotify) para que refresque los iconos: al actualizar,
+; el acceso directo apunta a la misma ruta y Windows seguía mostrando el logo antiguo de su caché.
+ChangesAssociations=yes
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
