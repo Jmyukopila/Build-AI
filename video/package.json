@@ -1,0 +1,24 @@
+{
+  "name": "buildai-video",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Video promocional de BuildAI (30 s, narrado) hecho con Remotion a partir de una grabación real",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render BuildAIPromo out/tmp/sin-masterizar.mp4 && node scripts/masterizar.mjs out/tmp/sin-masterizar.mp4 out/buildai-promo.mp4",
+    "voz": "node --env-file=.env scripts/generar-voz.mjs",
+    "musica": "node scripts/generar-musica.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.547",
+    "@remotion/fonts": "^4.0.547",
+    "@remotion/transitions": "^4.0.547",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.547"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2"
+  }
+}

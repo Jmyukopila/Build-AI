@@ -1,0 +1,10 @@
+[
+	{"id": "intro", "texto": "Esto es BuildAI."},
+	{"id": "gancho", "texto": "Diseñas con palabras, y la IA lo construye en tu programa."},
+	{"id": "c1", "texto": "Pides una casa amueblada con dos habitaciones."},
+	{"id": "c2", "texto": "La IA revisa la escena y decide las medidas."},
+	{"id": "c3", "texto": "Luego la modela en tu programa de preferencia."},
+	{"id": "c4", "texto": "En un minuto y veintiún segundos, tienes el render."},
+	{"id": "c5", "texto": "Y el modelo queda listo para editar."},
+	{"id": "cierre", "texto": "Cuatro programas, una sola conversación. El próximo proyecto empieza con una frase."}
+]

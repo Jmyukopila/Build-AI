@@ -21,6 +21,13 @@ empaquetado/Output/
 # Cachés de herramientas
 .pytest_cache/
 
+# Video promocional (Remotion): clave de ElevenLabs, dependencias y videos pesados.
+# Solo se versiona el video final de video/out/.
+video/.env
+video/node_modules/
+video/**/*.mp4
+!video/out/*.mp4
+
 # Editores / SO
 .vscode/
 .idea/
