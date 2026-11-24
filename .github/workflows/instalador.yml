@@ -24,6 +24,12 @@ permissions:
 
 jobs:
   instalador:
+    # Al publicar una release que ya lleva el .exe (adjuntado a mano sobre el
+    # borrador) no se recompila: --clobber lo borraría y resubiría, y durante
+    # ese intervalo el botón de la web daría 404.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      !contains(join(github.event.release.assets.*.name, ','), 'BuildAI-Setup.exe')
     runs-on: windows-latest
     env:
       ETIQUETA: ${{ github.event.release.tag_name || inputs.etiqueta }}
